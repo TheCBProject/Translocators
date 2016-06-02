@@ -1,15 +1,16 @@
-package codechicken.translocator;
+package codechicken.translocator.container;
 
 import java.util.List;
 
+import codechicken.core.inventory.ContainerExtended;
+import codechicken.core.inventory.SlotDummy;
+import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import codechicken.lib.inventory.ContainerExtended;
 import codechicken.lib.inventory.InventorySimple;
-import codechicken.lib.inventory.SlotDummy;
 import codechicken.lib.packet.PacketCustom;
 
 public class ContainerItemTranslocator extends ContainerExtended
@@ -27,19 +28,19 @@ public class ContainerItemTranslocator extends ContainerExtended
     }
 
     @Override
-    public boolean func_94530_a(ItemStack stack, Slot slot) {
+    public boolean canMergeSlot(ItemStack stack, Slot slot) {
         return !(slot instanceof SlotDummy);
     }
 
-    public String getInvName() {
-        return inv.getInventoryName();
+    public String getName() {
+        return inv.getName();
     }
 
     @Override
     public void sendLargeStack(ItemStack stack, int slot, List<EntityPlayerMP> players) {
         PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 5);
         packet.writeByte(slot);
-        packet.writeItemStack(stack, true);
+        packet.writeItemStack(stack);
 
         for (EntityPlayerMP player : players)
             packet.sendToPlayer(player);

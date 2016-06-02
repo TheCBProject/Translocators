@@ -1,14 +1,7 @@
-package codechicken.translocator;
+package codechicken.translocator.client.render;
 
-import org.lwjgl.opengl.GL11;
 
-import codechicken.lib.render.CCRenderState;
-import codechicken.lib.vec.Vector3;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.IItemRenderer;
-
-public class ItemTranslocatorRenderer implements IItemRenderer
-{
+public class ItemTranslocatorRenderer {/*implements IItemRenderer {
     @Override
     public boolean handleRenderType(ItemStack item, ItemRenderType type) {
         return true;
@@ -22,10 +15,11 @@ public class ItemTranslocatorRenderer implements IItemRenderer
     @Override
     public void renderItem(ItemRenderType type, ItemStack item, Object... data) {
         Vector3 d = new Vector3();
-        if (type != ItemRenderType.EQUIPPED && type != ItemRenderType.EQUIPPED_FIRST_PERSON)
+        if (type != ItemRenderType.EQUIPPED && type != ItemRenderType.EQUIPPED_FIRST_PERSON) {
             d.add(-0.5, -0.5, -0.5);
-        else
+        } else {
             d.add(0, -0.2, -0.2);
+        }
         d.add(0, 0, 0.5);
 
         GL11.glPushMatrix();
@@ -40,5 +34,5 @@ public class ItemTranslocatorRenderer implements IItemRenderer
         CCRenderState.draw();
 
         GL11.glPopMatrix();
-    }
+    }*/
 }
