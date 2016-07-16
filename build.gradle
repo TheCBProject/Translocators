@@ -93,7 +93,7 @@ artifacts {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "file:///var/www/maven")
+            repository(url: "file://${local_maven}")
             pom {
                 groupId = project.group
                 version = project.version
@@ -101,21 +101,21 @@ uploadArchives {
                 project {
                     name project.archivesBaseName
                     packaging 'jar'
-                    description 'Translocators'
-                    url 'https://github.com/covers1624/Translocators'
+                    description 'Translocator'
+                    url 'https://github.com/TheCBProject/Translocators'
                     scm {
-                        url 'https://github.com/covers1624/Translocators'
-                        connection 'scm:git:git@github.com:covers1624/Translocators.git'
-                        developerConnection 'scm:git:git@github.com:covers1624/Translocators.git'
+                        url 'https://github.com/TheCBProject/Translocators'
+                        connection 'scm:git:git@github.com:TheCBProject/Translocators.git'
+                        developerConnection 'scm:git:git@github.com:TheCBProject/Translocators.git'
                     }
                     issueManagement {
                         system 'github'
-                        url 'https://github.com/covers1624/Translocators/issues'
+                        url 'https://github.com/TheCBProject/Translocators/issues'
                     }
                     licenses {
                         license {
                             name 'License'
-                            url 'https://raw.githubusercontent.com/covers1624/Translocators/master/LICENSE.txt'
+                            url 'https://raw.githubusercontent.com/TheCBProject/Translocators/master/LICENSE.txt'
                             distribution 'repo'
                         }
                     }
