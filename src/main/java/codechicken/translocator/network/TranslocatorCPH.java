@@ -8,6 +8,7 @@ import codechicken.lib.packet.PacketCustom.IClientPacketHandler;
 import codechicken.translocator.client.gui.GuiTranslocator;
 import codechicken.translocator.Translocator;
 import codechicken.translocator.container.ContainerItemTranslocator;
+import codechicken.translocator.tile.TileTranslocator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.tileentity.TileEntity;
@@ -24,8 +25,8 @@ public class TranslocatorCPH implements IClientPacketHandler {
         case 2:
         case 3:
             TileEntity tile = mc.theWorld.getTileEntity(packet.readCoord().pos());
-            if (tile instanceof ICustomPacketTile) {
-                ((ICustomPacketTile) tile).handleDescriptionPacket(packet);
+            if (tile instanceof TileTranslocator) {
+                ((TileTranslocator) tile).handlePacket(packet);
             }
             break;
         case 4:

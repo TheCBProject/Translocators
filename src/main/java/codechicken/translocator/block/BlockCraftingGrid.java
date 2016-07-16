@@ -10,7 +10,6 @@ import codechicken.translocator.tile.TileCraftingGrid;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -38,7 +37,7 @@ public class BlockCraftingGrid extends Block {
     // public IIcon gridIcon;
 
     public BlockCraftingGrid() {
-        super(Material.wood);
+        super(Material.WOOD);
     }
 
     @Override
@@ -160,11 +159,11 @@ public class BlockCraftingGrid extends Block {
 
         IBlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
-        if (side != EnumFacing.UP && block != Blocks.snow_layer) {
+        if (side != EnumFacing.UP && block != Blocks.SNOW_LAYER) {
             return false;
         }
 
-        if (block != Blocks.vine && block != Blocks.tallgrass && block != Blocks.deadbush && !block.isReplaceable(world, pos)) {
+        if (block != Blocks.VINE && block != Blocks.TALLGRASS && block != Blocks.DEADBUSH && !block.isReplaceable(world, pos)) {
             pos = pos.offset(EnumFacing.UP);
         }
 
@@ -194,9 +193,9 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block block) {
+    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn) {
         BlockPos beneath = pos.down();
-        if (!world.isSideSolid(beneath, EnumFacing.UP)) {
+        if (!world.isSideSolid(beneath, EnumFacing.UP, false)) {
             dropBlockAsItem(world, pos, state, 0);
             world.setBlockToAir(pos);
         }

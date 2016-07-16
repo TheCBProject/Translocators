@@ -1,14 +1,13 @@
 package codechicken.translocator.tile;
 
+import codechicken.lib.data.MCDataInput;
+import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.vec.*;
 import codechicken.translocator.network.TranslocatorSPH;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -17,10 +16,12 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.Packet;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ITickable;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -35,10 +36,11 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     public int timeout = 400;//20 seconds
 
     @Override
-    public void writeToNBT(NBTTagCompound tag) {
+    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         tag.setTag("items", InventoryUtils.writeItemStacksToTag(items));
         tag.setInteger("timeout", timeout);
+        return tag;
     }
 
     @Override
@@ -69,19 +71,39 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     }
 
     @Override
-    public Packet getDescriptionPacket() {
+    public SPacketUpdateTileEntity getUpdatePacket() {
         PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
-        packet.writeCoord(pos);
+        writeToPacket(packet);
+        return packet.toTilePacket(getPos());
+    }
+
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
+        writeToPacket(packet);
+        return packet.toNBTTag(super.getUpdateTag());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        readFromPacket(PacketCustom.fromTilePacket(pkt));
+    }
+
+    @Override
+    public void handleUpdateTag(NBTTagCompound tag) {
+        readFromPacket(PacketCustom.fromNBTTag(tag));
+    }
+
+    @Override
+    public void writeToPacket(MCDataOutput packet) {
         packet.writeByte(rotation);
         for (ItemStack item : items) {
             packet.writeItemStack(item);
         }
-
-        return packet.toPacket();
     }
 
     @Override
-    public void handleDescriptionPacket(PacketCustom packet) {
+    public void readFromPacket(MCDataInput packet) {
         rotation = packet.readUByte();
 
         for (int i = 0; i < 9; i++) {

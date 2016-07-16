@@ -205,7 +205,7 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
 
     private void sendTransferPacket(ArrayList<LiquidTransfer> transfers) {
         PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 2);
-        packet.writeCoord(getPos());
+        packet.writePos(getPos());
         packet.writeByte(transfers.size());
         for (LiquidTransfer t : transfers) {
             packet.writeByte(t.key);
@@ -214,8 +214,8 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
         packet.sendToChunk(worldObj, getPos().getX() >> 4, getPos().getZ() >> 4);
     }
 
-    @Override
-    public void handleDescriptionPacket(PacketCustom packet) {
+    //@Override
+    public void handlePacket(PacketCustom packet) {
         if (packet.getType() == 2) {
             ArrayList<LiquidTransfer> transfers = new ArrayList<LiquidTransfer>();
             HashSet<Integer> maintainingKeys = new HashSet<Integer>();
@@ -251,7 +251,7 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
                 }
             }
         } else {
-            super.handleDescriptionPacket(packet);
+            super.handlePacket(packet);
         }
     }
 

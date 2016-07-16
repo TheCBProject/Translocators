@@ -5,20 +5,32 @@ import codechicken.core.ModDescriptionEnhancer;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.render.CCIconRegister;
 import codechicken.lib.render.ModelRegistryHelper;
-import codechicken.translocator.client.render.tile.TileCraftingGridRenderer;
-import codechicken.translocator.client.render.tile.TileTranslocatorRenderer;
+import codechicken.translocator.client.render.TileCraftingGridRenderer;
+import codechicken.translocator.client.render.TileTranslocatorRenderer;
+import codechicken.translocator.client.render.TranslocatorItemRender;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.handler.CraftingGridKeyHandler;
 import codechicken.translocator.init.ModBlocks;
+import codechicken.translocator.init.ModItems;
 import codechicken.translocator.network.TranslocatorCPH;
+import codechicken.translocator.reference.Reference;
 import codechicken.translocator.tile.TileCraftingGrid;
 import codechicken.translocator.tile.TileItemTranslocator;
 import codechicken.translocator.tile.TileLiquidTranslocator;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class ClientProxy extends CommonProxy {
+
+    @Override
+    public void preInit() {
+        super.preInit();
+        ModItems.initModels();
+        ModBlocks.initModels();
+    }
+
     public void init() {
         if (ConfigurationHandler.clientCheckUpdates) {
             CCUpdateChecker.updateCheck("Translocator");
@@ -33,12 +45,7 @@ public class ClientProxy extends CommonProxy {
 
         PacketCustom.assignHandler(TranslocatorCPH.channel, new TranslocatorCPH());
 
-        //MinecraftForgeClient.registerItemRenderer(Item.getItemFromBlock(blockTranslocator), new ItemTranslocatorRenderer());
-
         FMLCommonHandler.instance().bus().register(CraftingGridKeyHandler.instance);
         ClientRegistry.registerKeyBinding(CraftingGridKeyHandler.instance);
-
-        CCIconRegister.registerBlockTexture("translocator:craftingGrid");
-        ModelRegistryHelper.setParticleTexture(ModBlocks.blockCraftingGrid, new ResourceLocation("translocator", "blocks/craftingGrid"));
     }
 }

@@ -2,11 +2,14 @@ package codechicken.translocator.tile;
 
 import codechicken.core.IGuiPacketSender;
 import codechicken.core.ServerUtils;
+import codechicken.lib.data.MCDataInput;
+import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryRange;
 import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.util.TileEntityUtils;
 import codechicken.lib.vec.BlockCoord;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import codechicken.translocator.init.ModItems;
@@ -19,8 +22,11 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraftforge.fml.common.FMLLog;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,9 +48,9 @@ public class TileItemTranslocator extends TileTranslocator {
             if ((signal || !b) && b != a_powering) {
                 a_powering = b;
                 BlockCoord pos = new BlockCoord(TileItemTranslocator.this);
-                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.redstone_wire);
+                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.REDSTONE_WIRE);
                 pos.offset(side);
-                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.redstone_wire);
+                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.REDSTONE_WIRE);
                 markUpdate();
             }
         }
@@ -62,7 +68,7 @@ public class TileItemTranslocator extends TileTranslocator {
                 }
                 markUpdate();
                 return true;
-            } else if (held.getItem() == Items.iron_ingot && !signal) {
+            } else if (held.getItem() == Items.IRON_INGOT && !signal) {
                 signal = true;
 
                 if (!player.capabilities.isCreativeMode) {
@@ -85,7 +91,7 @@ public class TileItemTranslocator extends TileTranslocator {
             if (signal) {
                 setPowering(false);
                 signal = false;
-                dropItem(new ItemStack(Items.iron_ingot));
+                dropItem(new ItemStack(Items.IRON_INGOT));
             }
         }
 
@@ -96,7 +102,7 @@ public class TileItemTranslocator extends TileTranslocator {
                 stuff.add(new ItemStack(ModItems.itemDiamondNugget));
             }
             if (signal) {
-                stuff.add(new ItemStack(Items.iron_ingot));
+                stuff.add(new ItemStack(Items.IRON_INGOT));
             }
             return stuff;
         }
@@ -166,7 +172,7 @@ public class TileItemTranslocator extends TileTranslocator {
         }
 
         @Override
-        public void read(PacketCustom packet, boolean described) {
+        public void read(MCDataInput packet, boolean described) {
             super.read(packet, described);
             regulate = packet.readBoolean();
             signal = packet.readBoolean();
@@ -174,7 +180,7 @@ public class TileItemTranslocator extends TileTranslocator {
         }
 
         @Override
-        public void write(PacketCustom packet) {
+        public void write(MCDataOutput packet) {
             super.write(packet);
             packet.writeBoolean(regulate);
             packet.writeBoolean(signal);
@@ -365,7 +371,7 @@ public class TileItemTranslocator extends TileTranslocator {
     private boolean hasEmptySpace(InventoryRange inv) {
         for (int slot : inv.slots) {
             ItemStack stack = inv.inv.getStackInSlot(slot);
-            if (inv.canInsertItem(slot, new ItemStack(Items.diamond)) && (stack == null || stack.isStackable() && stack.stackSize < Math.min(stack.getMaxStackSize(), inv.inv.getInventoryStackLimit()))) {
+            if (inv.canInsertItem(slot, new ItemStack(Items.DIAMOND)) && (stack == null || stack.isStackable() && stack.stackSize < Math.min(stack.getMaxStackSize(), inv.inv.getInventoryStackLimit()))) {
                 return true;
             }
         }
@@ -440,7 +446,7 @@ public class TileItemTranslocator extends TileTranslocator {
 
     private void sendTransferPacket(int i, int j, ItemStack add) {
         PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 2);
-        packet.writeCoord(getPos());
+        packet.writePos(getPos());
         packet.writeByte(i << 4 | j);
         packet.writeItemStack(add);
         packet.sendToChunk(worldObj, getPos().getX() >> 4, getPos().getZ() >> 4);
@@ -493,11 +499,11 @@ public class TileItemTranslocator extends TileTranslocator {
     }
 
     @Override
-    public void handleDescriptionPacket(PacketCustom packet) {
+    public void handlePacket(PacketCustom packet) {
         if (packet.getType() == 2) {
             movingItems.add(new MovingItem(packet));
         } else {
-            super.handleDescriptionPacket(packet);
+            super.handlePacket(packet);
         }
     }
 

@@ -2,7 +2,6 @@ package codechicken.translocator.block;
 
 import codechicken.lib.block.property.PropertyString;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.raytracer.ExtendedMOP;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.RayTracer;
 import codechicken.lib.vec.BlockCoord;
@@ -32,6 +31,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.IFluidHandler;
+import net.minecraftforge.fml.common.FMLLog;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -45,7 +45,7 @@ public class BlockTranslocator extends Block {
     private static final PropertyString VARIANTS = new PropertyString("type", translocatorNamesList);
 
     public BlockTranslocator() {
-        super(Material.iron);
+        super(Material.IRON);
         setHardness(1.5F);
         setResistance(10.0F);
     }
@@ -93,7 +93,7 @@ public class BlockTranslocator extends Block {
     }
 
     @Override
-    public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block neighborBlock) {
+    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn) {
         TileTranslocator ttrans = (TileTranslocator) world.getTileEntity(pos);
         int meta = getMetaFromState(state);
 

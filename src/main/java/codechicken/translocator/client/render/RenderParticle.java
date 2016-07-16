@@ -1,23 +1,22 @@
 package codechicken.translocator.client.render;
 
 import codechicken.lib.colour.Colour;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 
 public class RenderParticle {
     public static void render(double x, double y, double z, Colour colour, double s, double u1, double v1, double u2, double v2) {
-        x -= EntityFX.interpPosX;
-        y -= EntityFX.interpPosY;
-        z -= EntityFX.interpPosZ;
-        //TODO: check
+        x -= Particle.interpPosX;
+        y -= Particle.interpPosY;
+        z -= Particle.interpPosZ;
 
-        float par3 = ActiveRenderInfo.rotationX;
-        float par4 = ActiveRenderInfo.rotationXZ;
-        float par5 = ActiveRenderInfo.rotationZ;
-        float par6 = ActiveRenderInfo.rotationYZ;
-        float par7 = ActiveRenderInfo.rotationXY;
+        float par3 = ActiveRenderInfo.getRotationX();
+        float par4 = ActiveRenderInfo.getRotationXZ();
+        float par5 = ActiveRenderInfo.getRotationZ();
+        float par6 = ActiveRenderInfo.getRotationYZ();
+        float par7 = ActiveRenderInfo.getRotationXY();
 
         VertexBuffer b = Tessellator.getInstance().getBuffer();
         //t.setColorRGBA(colour.r&0xFF, colour.g&0xFF, colour.b&0xFF, colour.a&0xFF);

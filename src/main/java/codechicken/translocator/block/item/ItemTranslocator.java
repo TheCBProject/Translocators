@@ -23,6 +23,11 @@ public class ItemTranslocator extends ItemBlock {
     }
 
     @Override
+    public int getMetadata(int damage) {
+        return damage;
+    }
+
+    @Override
     public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, IBlockState newState) {
         IBlockState state = world.getBlockState(pos);
         Block block = state.getBlock();

@@ -11,10 +11,14 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class CommonProxy {
 
-    public void init() {
-
+    public void preInit() {
         ModBlocks.init();
         ModItems.init();
+    }
+
+    public void init() {
+
+
 
         //TODO IIndexedCuboidProvider
         //MinecraftForge.EVENT_BUS.register(blockTranslocator);

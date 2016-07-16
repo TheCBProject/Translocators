@@ -1,5 +1,7 @@
 package codechicken.translocator.tile;
 
+import codechicken.lib.data.MCDataInput;
+import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.ICustomPacketTile;
@@ -14,7 +16,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.Packet;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -71,13 +74,13 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             return a_eject ? 1 : 0;
         }
 
-        public void write(PacketCustom packet) {
+        public void write(MCDataOutput packet) {
             packet.writeBoolean(a_eject);
             packet.writeBoolean(redstone);
             packet.writeBoolean(fast);
         }
 
-        public void read(PacketCustom packet, boolean described) {
+        public void read(MCDataInput packet, boolean described) {
             a_eject = packet.readBoolean();
             redstone = packet.readBoolean();
             fast = packet.readBoolean();
@@ -105,7 +108,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
                 } else {
                     openGui(player);
                 }
-            } else if (held.getItem() == Items.redstone && !redstone) {
+            } else if (held.getItem() == Items.REDSTONE && !redstone) {
                 redstone = true;
                 if (!player.capabilities.isCreativeMode) {
                     held.stackSize--;
@@ -115,7 +118,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
                     invert_redstone = !invert_redstone;
                 }
                 markUpdate();
-            } else if (held.getItem() == Items.glowstone_dust && !fast) {
+            } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
                 fast = true;
                 if (!player.capabilities.isCreativeMode) {
                     held.stackSize--;
@@ -131,7 +134,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
         public void stripModifiers() {
             if (redstone) {
                 redstone = false;
-                dropItem(new ItemStack(Items.redstone));
+                dropItem(new ItemStack(Items.REDSTONE));
 
                 if (invert_redstone != a_eject) {
                     invert_redstone = !invert_redstone;
@@ -139,7 +142,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             }
             if (fast) {
                 fast = false;
-                dropItem(new ItemStack(Items.glowstone_dust));
+                dropItem(new ItemStack(Items.GLOWSTONE_DUST));
             }
         }
 
@@ -156,10 +159,10 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             LinkedList<ItemStack> items = new LinkedList<ItemStack>();
             items.add(new ItemStack(getBlockType(), 1, getBlockType().getMetaFromState(state)));
             if (redstone) {
-                items.add(new ItemStack(Items.redstone));
+                items.add(new ItemStack(Items.REDSTONE));
             }
             if (fast) {
-                items.add(new ItemStack(Items.glowstone_dust));
+                items.add(new ItemStack(Items.GLOWSTONE_DUST));
             }
             return items;
         }
@@ -188,10 +191,36 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
     }
 
     @Override
-    public Packet getDescriptionPacket() {
+    public SPacketUpdateTileEntity getUpdatePacket() {
         PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 1);
-        packet.writeCoord(getPos());
+        writeToPacket(packet);
 
+        return packet.toTilePacket(getPos());
+    }
+
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 1);
+        writeToPacket(packet);
+        return packet.toNBTTag(super.getUpdateTag());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        readFromPacket(PacketCustom.fromTilePacket(pkt));
+    }
+
+    public void handlePacket(PacketCustom packetCustom){
+        readFromPacket(packetCustom);
+    }
+
+    @Override
+    public void handleUpdateTag(NBTTagCompound tag) {
+        readFromPacket(PacketCustom.fromNBTTag(tag));
+    }
+
+    @Override
+    public void writeToPacket(MCDataOutput packet) {
         int attachmask = 0;
         for (int i = 0; i < 6; i++) {
             if (attachments[i] != null) {
@@ -205,28 +234,24 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
                 a.write(packet);
             }
         }
-
-        return packet.toPacket();
     }
 
     @Override
-    public void handleDescriptionPacket(PacketCustom packet) {
-        if (packet.getType() == 1) {
-            int attachmask = packet.readUByte();
-            for (int i = 0; i < 6; i++) {
-                if ((attachmask & 1 << i) != 0) {
-                    boolean described = attachments[i] != null;
-                    if (!described) {
-                        createAttachment(i);
-                    }
-                    attachments[i].read(packet, described);
-                } else {
-                    attachments[i] = null;
+    public void readFromPacket(MCDataInput packet) {
+        int attachmask = packet.readUByte();
+        for (int i = 0; i < 6; i++) {
+            if ((attachmask & 1 << i) != 0) {
+                boolean described = attachments[i] != null;
+                if (!described) {
+                    createAttachment(i);
                 }
+                attachments[i].read(packet, described);
+            } else {
+                attachments[i] = null;
             }
-
-            worldObj.markBlockRangeForRenderUpdate(getPos(), getPos());
         }
+
+        worldObj.markBlockRangeForRenderUpdate(getPos(), getPos());
     }
 
     public void createAttachment(int side) {
@@ -234,13 +259,14 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
     }
 
     @Override
-    public void writeToNBT(NBTTagCompound tag) {
+    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         for (int i = 0; i < 6; i++) {
             if (attachments[i] != null) {
                 tag.setTag("atmt" + i, attachments[i].write(new NBTTagCompound()));
             }
         }
+        return tag;
     }
 
     @Override

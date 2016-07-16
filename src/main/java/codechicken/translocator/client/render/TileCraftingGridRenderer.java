@@ -1,4 +1,4 @@
-package codechicken.translocator.client.render.tile;
+package codechicken.translocator.client.render;
 
 import codechicken.core.ClientUtils;
 import codechicken.lib.render.CCRenderState;
@@ -21,7 +21,7 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
     @Override
     public void renderTileEntityAt(TileCraftingGrid tcraft, double x, double y, double z, float partialTicks, int destroyStage) {
-        TextureUtils.changeTexture(TextureMap.locationBlocksTexture);
+        TextureUtils.bindBlockTexture();
         TextureUtils.dissableBlockMipmap();
         TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocator:craftingGrid");
 

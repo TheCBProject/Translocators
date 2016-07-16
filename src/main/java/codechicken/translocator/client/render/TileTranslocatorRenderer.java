@@ -1,12 +1,9 @@
-package codechicken.translocator.client.render.tile;
+package codechicken.translocator.client.render;
 
 import codechicken.core.ClientUtils;
 import codechicken.lib.colour.CustomGradient;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.render.CCModel;
-import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.RenderUtils;
-import codechicken.lib.render.TextureUtils;
+import codechicken.lib.render.*;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.SwapYZ;
 import codechicken.lib.vec.Vector3;
@@ -34,13 +31,13 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     public static CCModel insert;
 
     static {
-        Map<String, CCModel> models = CCModel.parseObjModels(new ResourceLocation("translocator", "models/model.obj"), new SwapYZ());
+        Map<String, CCModel> models = CCOBJParser.parseObjModels(new ResourceLocation("translocator", "models/model.obj"), new SwapYZ());
         plates[0] = models.get("Plate");
         insert = models.get("Insert");
         CCModel.generateSidedModels(plates, 0, new Vector3());
     }
 
-    private CustomGradient gradient = new CustomGradient(new ResourceLocation("translocator", "textures/grad.png"));
+    private CustomGradient gradient = new CustomGradient(new ResourceLocation("translocator", "textures/fx/grad.png"));
 
     public TileTranslocatorRenderer() {
     }
@@ -50,10 +47,9 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         double time = ClientUtils.getRenderTime();
 
         CCRenderState.reset();
-        TextureUtils.changeTexture("translocator:textures/tex.png");
+        TextureUtils.changeTexture("translocator:textures/model/tex.png");
         CCRenderState.pullLightmap();
         CCRenderState.startDrawing(4, DefaultVertexFormats.BLOCK);
-        CCRenderState.pullBuffer();
 
         for (int i = 0; i < 6; i++) {
             TileTranslocator.Attachment a = ttrans.attachments[i];
@@ -91,7 +87,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         GlStateManager.disableLighting();
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        TextureUtils.changeTexture("translocator:textures/particle.png");
+        TextureUtils.changeTexture("translocator:textures/fx/particle.png");
         CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
         CCRenderState.pullBuffer();
         for (int src = 0; src < 6; src++) {
@@ -113,6 +109,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     private void drawLiquidSpiral(int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
+        RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
         //TODO Enable ability to use DefaultVertexFormats.BLOCK
@@ -154,6 +151,8 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
                     Vector3 axis = next[j].copy().subtract(next[i]);
                     double v1 = tex.getInterpolatedV(Math.abs(next[i].scalarProject(axis)) * 16);
                     double v2 = tex.getInterpolatedV(Math.abs(next[j].scalarProject(axis)) * 16);
+
+                    //Vertex5[] vertex5 = new Vertex5[4];
 
                     vertexBuffer.pos(next[i].x, next[i].y, next[i].z).tex(u1, v1).endVertex();
                     vertexBuffer.pos(next[j].x, next[j].y, next[j].z).tex(u1, v2).endVertex();
