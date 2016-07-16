@@ -14,8 +14,8 @@ repositories {
 //add dependency repositories
 repositories {
 	maven {
-		name = "Covers1624 Repo"
-		url = "http://adel.podgeweb.com:1616/maven"
+		name = "CB Repo"
+		url = "http://chickenbones.net/maven"
 	}
 }
 
