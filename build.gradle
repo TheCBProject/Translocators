@@ -38,7 +38,7 @@ configFile.withReader {
 dependencies {
     compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:dev"
     compile "codechicken:CodeChickenCore:${config.mc_version}-${config.ccc_version}:dev"
-    compile "codechicken:NotEnoughItems:${config.mc_version}-${config.nei_version}:dev"
+    //compile "codechicken:NotEnoughItems:${config.mc_version}-${config.nei_version}:dev"
 }
 
 version =  "${project.config.mod_version}." + System.getenv("BUILD_NUMBER") ?: "1"
