@@ -1,6 +1,5 @@
 package codechicken.translocator.init;
 
-import codechicken.translocator.reference.Reference;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
@@ -25,5 +24,6 @@ public class ModItems {
 
     @SideOnly(Side.CLIENT)
     public static void initModels() {
+        ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocator:resource", "type=diamondnugget"));
     }
 }
