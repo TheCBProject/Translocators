@@ -49,7 +49,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         CCRenderState.reset();
         TextureUtils.changeTexture("translocator:textures/model/tex.png");
         CCRenderState.pullLightmap();
-        CCRenderState.startDrawing(4, DefaultVertexFormats.BLOCK);
+        CCRenderState.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
 
         for (int i = 0; i < 6; i++) {
             TileTranslocator.Attachment a = ttrans.attachments[i];
@@ -65,7 +65,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
                 GlStateManager.pushMatrix();
                 double d = MathHelper.interpolate(m.b_progress, m.a_progress, partialTicks);
                 Vector3 pos = getPath(m.src, m.dst, d).add(itemFloat(m.src, m.dst, d));
-                GlStateManager.translate(x + pos.x, y + pos.y - 0.06, z + pos.z);
+                GlStateManager.translate(x + pos.x, y + pos.y - .18, z + pos.z);
                 GlStateManager.scale(0.35, 0.35, 0.35);
                 RenderUtils.renderItemUniform(m.stack);
                 GlStateManager.popMatrix();
@@ -89,7 +89,6 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         TextureUtils.changeTexture("translocator:textures/fx/particle.png");
         CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-        CCRenderState.pullBuffer();
         for (int src = 0; src < 6; src++) {
             TileTranslocator.Attachment asrc = ttrans.attachments[src];
             if (asrc == null || !asrc.a_eject) {
@@ -112,9 +111,8 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
-        //TODO Enable ability to use DefaultVertexFormats.BLOCK
-        CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
-        VertexBuffer vertexBuffer = CCRenderState.pullBuffer();
+
+        VertexBuffer vertexBuffer = CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
         vertexBuffer.setTranslation(x, y, z);
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -152,17 +150,10 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
                     double v1 = tex.getInterpolatedV(Math.abs(next[i].scalarProject(axis)) * 16);
                     double v2 = tex.getInterpolatedV(Math.abs(next[j].scalarProject(axis)) * 16);
 
-                    //Vertex5[] vertex5 = new Vertex5[4];
-
                     vertexBuffer.pos(next[i].x, next[i].y, next[i].z).tex(u1, v1).endVertex();
                     vertexBuffer.pos(next[j].x, next[j].y, next[j].z).tex(u1, v2).endVertex();
                     vertexBuffer.pos(last[j].x, last[j].y, last[j].z).tex(u2, v2).endVertex();
                     vertexBuffer.pos(last[i].x, last[i].y, last[i].z).tex(u2, v1).endVertex();
-
-                    //t.addVertexWithUV(next[i].x, next[i].y, next[i].z, u1, v1);
-                    //t.addVertexWithUV(next[j].x, next[j].y, next[j].z, u1, v2);
-                    //t.addVertexWithUV(last[j].x, last[j].y, last[j].z, u2, v2);
-                    //t.addVertexWithUV(last[i].x, last[i].y, last[i].z, u2, v1);
                 }
             }
 

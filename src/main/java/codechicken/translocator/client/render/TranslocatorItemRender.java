@@ -32,7 +32,7 @@ public class TranslocatorItemRender implements IItemRenderer, IPerspectiveAwareM
         GlStateManager.pushMatrix();
 
         TextureUtils.changeTexture("translocator:textures/model/tex.png");
-        CCRenderState.startDrawing(4, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        CCRenderState.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
         TileTranslocatorRenderer.renderAttachment(2, item.getItemDamage(), 1D, 0, 0.0D, 0.0D, 0.5D);
         CCRenderState.draw();
 
