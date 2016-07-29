@@ -25,8 +25,7 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
         TextureUtils.dissableBlockMipmap();
         TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocator:craftingGrid");
 
-        CCRenderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        VertexBuffer buffer = CCRenderState.pullBuffer();
+        VertexBuffer buffer = CCRenderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
         buffer.setTranslation(x, y + 0.001, z);
         buffer.pos(1, 0, 0).tex(icon.getMinU(), icon.getMinV()).normal(0, 1, 0).endVertex();
         buffer.pos(0, 0, 0).tex(icon.getMinU(), icon.getMaxV()).normal(0, 1, 0).endVertex();
@@ -62,7 +61,7 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
         }
 
         if (tcraft.result != null) {
-            GlStateManager.pushMatrix(); //GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             GlStateManager.translate(0, 0.6 + 0.02 * Math.sin(ClientUtils.getRenderTime() / 10), 0);
             GlStateManager.scale(0.8, 0.8, 0.8);
 

@@ -3,6 +3,7 @@ package codechicken.translocator.client.gui;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.FontUtils;
+import codechicken.lib.render.TextureUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Container;
@@ -22,7 +23,7 @@ public class GuiTranslocator extends GuiContainer {
         GL11.glTranslated(guiLeft, guiTop, 0);
         GL11.glColor4f(1, 1, 1, 1);
 
-        CCRenderState.changeTexture("textures/gui/container/dispenser.png");
+        TextureUtils.changeTexture("textures/gui/container/dispenser.png");
         drawTexturedModalRect(0, 0, 0, 0, xSize, ySize);
 
         fontRendererObj.drawString(I18n.translateToLocal(((ContainerItemTranslocator) inventorySlots).getName()), 6, 6, 0x404040);
