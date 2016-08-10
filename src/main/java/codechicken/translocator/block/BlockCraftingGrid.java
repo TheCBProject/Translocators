@@ -1,10 +1,8 @@
 package codechicken.translocator.block;
 
+import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.RayTracer;
-import codechicken.lib.vec.BlockCoord;
-import codechicken.lib.vec.IIndexedCuboidProvider;
-import codechicken.lib.vec.Vector3;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.tile.TileCraftingGrid;
 import net.minecraft.block.Block;
@@ -31,10 +29,6 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockCraftingGrid extends Block {
-    private RayTracer rayTracer = new RayTracer();
-
-    //@SideOnly(Side.CLIENT)
-    // public IIcon gridIcon;
 
     public BlockCraftingGrid() {
         super(Material.WOOD);
@@ -57,9 +51,9 @@ public class BlockCraftingGrid extends Block {
 
     @Override
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-        IIndexedCuboidProvider provider = (IIndexedCuboidProvider) source.getTileEntity(pos);
-        if (provider != null) {
-            return provider.getBlockBounds().aabb();
+        ICuboidProvider provider = (ICuboidProvider) source.getTileEntity(pos);
+        if (provider != null && !provider.getIndexedCuboids().isEmpty()) {
+            return provider.getIndexedCuboids().get(0).aabb();
         }
         return super.getBoundingBox(state, source, pos);
     }
@@ -120,18 +114,11 @@ public class BlockCraftingGrid extends Block {
         return stacks;
     }
 
-    //public void onBlockHighlight(DrawBlockHighlightEvent event) {
-    //    if (event.target.typeOfHit == MovingObjectType.BLOCK && event.player.worldObj.getBlock(event.target.blockX, event.target.blockY, event.target.blockZ) == this) {
-    //        RayTracer.retraceBlock(event.player.worldObj, event.player, event.target.blockX, event.target.blockY, event.target.blockZ);
-    //    }
-    //}
-
     @Override
     public RayTraceResult collisionRayTrace(IBlockState blockState, World worldIn, BlockPos pos, Vec3d start, Vec3d end) {
-        IIndexedCuboidProvider provider = (IIndexedCuboidProvider) worldIn.getTileEntity(pos);
+        ICuboidProvider provider = (ICuboidProvider) worldIn.getTileEntity(pos);
         List<IndexedCuboid6> cuboids = provider.getIndexedCuboids();
-        cuboids.add((IndexedCuboid6) provider.getBlockBounds().add(new Vector3(pos)));
-        return rayTracer.rayTraceCuboids(new Vector3(start), new Vector3(end), cuboids, new BlockCoord(pos));
+        return RayTracer.rayTraceCuboidsClosest(start, end, cuboids, pos);
     }
 
     @Override

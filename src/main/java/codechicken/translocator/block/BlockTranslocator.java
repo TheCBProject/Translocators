@@ -2,9 +2,9 @@ package codechicken.translocator.block;
 
 import codechicken.lib.block.property.PropertyString;
 import codechicken.lib.math.MathHelper;
+import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.RayTracer;
-import codechicken.lib.vec.BlockCoord;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocator.tile.TileItemTranslocator;
@@ -31,7 +31,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.IFluidHandler;
-import net.minecraftforge.fml.common.FMLLog;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -41,7 +40,6 @@ import java.util.Random;
 import static codechicken.translocator.reference.VariantReference.translocatorNamesList;
 
 public class BlockTranslocator extends Block {
-    private RayTracer rayTracer = new RayTracer();
     private static final PropertyString VARIANTS = new PropertyString("type", translocatorNamesList);
 
     public BlockTranslocator() {
@@ -142,14 +140,13 @@ public class BlockTranslocator extends Block {
         return ai;
     }
 
-    //@Override
-    //public IIcon getIcon(int par1, int par2) {
-    //    return Blocks.obsidian.getIcon(par1, par2);
-    //}
-
     @Override
     public RayTraceResult collisionRayTrace(IBlockState blockState, World world, BlockPos pos, Vec3d start, Vec3d end) {
-        return rayTracer.rayTraceCuboids(new Vector3(start), new Vector3(end), getParts(world, pos), new BlockCoord(pos));
+        ICuboidProvider provider = (ICuboidProvider) world.getTileEntity(pos);
+        if (provider != null) {
+            return RayTracer.rayTraceCuboidsClosest(start, end, provider.getIndexedCuboids(), pos);
+        }
+        return super.collisionRayTrace(blockState, world, pos, start, end);
     }
 
     public List<IndexedCuboid6> getParts(World world, BlockPos pos) {
@@ -165,11 +162,13 @@ public class BlockTranslocator extends Block {
 
     @Override
     public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, Entity entityIn) {
-        List<IndexedCuboid6> cuboids = getParts(world, pos);
-        for (IndexedCuboid6 cb : cuboids) {
-            AxisAlignedBB aabb = cb.aabb();
-            if (aabb.intersectsWith(entityBox)) {
-                collidingBoxes.add(aabb);
+        ICuboidProvider provider = (ICuboidProvider) world.getTileEntity(pos);
+        if (provider != null) {
+            for (IndexedCuboid6 cb : provider.getIndexedCuboids()) {
+                AxisAlignedBB aabb = cb.aabb();
+                if (aabb.intersectsWith(entityBox)) {
+                    collidingBoxes.add(aabb);
+                }
             }
         }
     }
@@ -199,14 +198,6 @@ public class BlockTranslocator extends Block {
         return false;
     }
 
-    //@SideOnly(Side.CLIENT)
-    //@SubscribeEvent
-    //public void onBlockHighlight(DrawBlockHighlightEvent event) {
-    //    if (event.target.typeOfHit == MovingObjectType.BLOCK && event.player.worldObj.getBlock(event.target.blockX, event.target.blockY, event.target.blockZ) == this) {
-    //        RayTracer.retraceBlock(event.player.worldObj, event.player, event.target.blockX, event.target.blockY, event.target.blockZ);
-    //    }
-    //}
-
     @Override
     public void getSubBlocks(Item item, CreativeTabs creativeTab, List<ItemStack> list) {
         list.add(new ItemStack(this, 1, 0));
@@ -224,11 +215,6 @@ public class BlockTranslocator extends Block {
         TileTranslocator ttrans = (TileTranslocator) world.getTileEntity(pos);
         return ttrans.strongPowerLevel(side);
     }
-
-    //@Override
-    //@SideOnly(Side.CLIENT)
-    //public void registerBlockIcons(IIconRegister par1IconRegister) {
-    //}
 
     @Override
     protected BlockStateContainer createBlockState() {

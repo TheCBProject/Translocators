@@ -1,12 +1,6 @@
 package codechicken.translocator.handler;
 
 import codechicken.lib.config.ConfigFile;
-import codechicken.lib.config.ConfigTag;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.oredict.OreDictionary;
 
 import java.io.File;
 

@@ -1,17 +1,12 @@
 package codechicken.translocator;
 
-import codechicken.core.CommonUtils;
 import codechicken.core.launch.CodeChickenCorePlugin;
-import codechicken.lib.config.ConfigFile;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.proxy.CommonProxy;
-import net.minecraft.item.Item;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-
-import java.io.File;
 
 import static codechicken.translocator.reference.Reference.*;
 
@@ -24,8 +19,6 @@ public class Translocator {
     public static Translocator instance;
 
     //public static ConfigFile config;
-
-
 
     //public static boolean disableCraftingGridKey;
 

@@ -5,8 +5,12 @@ import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
-import codechicken.lib.vec.*;
+import codechicken.lib.vec.Cuboid6;
+import codechicken.lib.vec.Rotation;
+import codechicken.lib.vec.Translation;
+import codechicken.lib.vec.Vector3;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -28,7 +32,7 @@ import java.util.List;
 
 import static codechicken.lib.vec.Vector3.center;
 
-public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, ITickable, IIndexedCuboidProvider {
+public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
     public ItemStack[] items = new ItemStack[9];
     public ItemStack result = null;
     public int rotation = 0;
@@ -244,16 +248,13 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     }
 
     @Override
-    public IndexedCuboid6 getBlockBounds() {
-        return new IndexedCuboid6(0, new Cuboid6(0, 0, 0, 1, 0.005, 1));
-    }
-
-    @Override
     public List<IndexedCuboid6> getIndexedCuboids() {
         LinkedList<IndexedCuboid6> parts = new LinkedList<IndexedCuboid6>();
 
+        parts.add(new IndexedCuboid6(0, new Cuboid6(0, 0, 0, 1, 0.005, 1)));
+
         for (int i = 0; i < 9; i++) {
-            Cuboid6 box = new Cuboid6(1 / 16D, 0, 1 / 16D, 5 / 16D, 0.01, 5 / 16D).apply(new Translation((i % 3) * 5 / 16D, 0, (i / 3) * 5 / 16D).with(Rotation.quarterRotations[rotation].at(center)).with(new Translation(new Vector3(pos))));
+            Cuboid6 box = new Cuboid6(1 / 16D, 0, 1 / 16D, 5 / 16D, 0.01, 5 / 16D).apply(new Translation((i % 3) * 5 / 16D, 0, (i / 3) * 5 / 16D).with(Rotation.quarterRotations[rotation].at(center)));
 
             parts.add(new IndexedCuboid6(i + 1, box));
         }

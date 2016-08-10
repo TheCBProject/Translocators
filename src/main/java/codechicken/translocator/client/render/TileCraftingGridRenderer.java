@@ -1,9 +1,9 @@
 package codechicken.translocator.client.render;
 
-import codechicken.core.ClientUtils;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
 import codechicken.lib.render.TextureUtils;
+import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
@@ -11,7 +11,6 @@ import codechicken.translocator.tile.TileCraftingGrid;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
@@ -34,7 +33,6 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
         buffer.setTranslation(0, 0, 0);
         CCRenderState.draw();
         TextureUtils.restoreBlockMipmap();
-
 
         GlStateManager.enableRescaleNormal();
         GlStateManager.pushMatrix();

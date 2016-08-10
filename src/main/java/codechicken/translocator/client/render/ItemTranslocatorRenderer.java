@@ -1,6 +1,5 @@
 package codechicken.translocator.client.render;
 
-
 public class ItemTranslocatorRenderer {/*implements IItemRenderer {
     @Override
     public boolean handleRenderType(ItemStack item, ItemRenderType type) {

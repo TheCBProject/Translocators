@@ -1,19 +1,16 @@
 package codechicken.translocator.network;
 
-import codechicken.core.ClientUtils;
 import codechicken.lib.inventory.InventorySimple;
-import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.packet.PacketCustom.IClientPacketHandler;
-import codechicken.translocator.client.gui.GuiTranslocator;
+import codechicken.lib.util.ClientUtils;
 import codechicken.translocator.Translocator;
+import codechicken.translocator.client.gui.GuiTranslocator;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import codechicken.translocator.tile.TileTranslocator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.FMLLog;
 
 public class TranslocatorCPH implements IClientPacketHandler {
     public static Object channel = Translocator.instance;

@@ -6,9 +6,9 @@ import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.vec.Cuboid6;
-import codechicken.lib.vec.IIndexedCuboidProvider;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.block.state.IBlockState;
@@ -31,7 +31,7 @@ import java.util.List;
 import static codechicken.lib.vec.Rotation.sideRotations;
 import static codechicken.lib.vec.Vector3.center;
 
-public abstract class TileTranslocator extends TileEntity implements ICustomPacketTile, ITickable, IIndexedCuboidProvider {
+public abstract class TileTranslocator extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
     public class Attachment {
         public final int side;
 
@@ -210,7 +210,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
         readFromPacket(PacketCustom.fromTilePacket(pkt));
     }
 
-    public void handlePacket(PacketCustom packetCustom){
+    public void handlePacket(PacketCustom packetCustom) {
         readFromPacket(packetCustom);
     }
 
@@ -282,11 +282,6 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
     }
 
     @Override
-    public IndexedCuboid6 getBlockBounds() {
-        return null;
-    }
-
-    @Override
     public List<IndexedCuboid6> getIndexedCuboids() {
         ArrayList<IndexedCuboid6> cuboids = new ArrayList<IndexedCuboid6>();
         addTraceableCuboids(cuboids);
@@ -294,20 +289,20 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
     }
 
     public void addTraceableCuboids(List<IndexedCuboid6> cuboids) {
-        Vector3 pos = Vector3.fromTile(this);
+
         Cuboid6 base = new Cuboid6(3 / 16D, 0, 3 / 16D, 13 / 16D, 2 / 16D, 13 / 16D);
 
         for (int i = 0; i < 6; i++) {
             Attachment a = attachments[i];
             if (a != null) {
-                cuboids.add(new IndexedCuboid6(i, transformPart(base, pos, i)));
-                cuboids.add(new IndexedCuboid6(i + 6, transformPart(new Cuboid6(6 / 16D, 0, 6 / 16D, 10 / 16D, a.a_insertpos * 2 / 16D + 1 / 16D, 10 / 16D), pos, i)));
+                cuboids.add(new IndexedCuboid6(i, transformPart(base, i)));
+                cuboids.add(new IndexedCuboid6(i + 6, transformPart(new Cuboid6(6 / 16D, 0, 6 / 16D, 10 / 16D, a.a_insertpos * 2 / 16D + 1 / 16D, 10 / 16D), i)));
             }
         }
     }
 
-    private Cuboid6 transformPart(Cuboid6 box, Vector3 pos, int i) {
-        return box.copy().apply(sideRotations[i].at(center)).add(pos);
+    private Cuboid6 transformPart(Cuboid6 box, int i) {
+        return box.copy().apply(sideRotations[i].at(center));
     }
 
     @Override

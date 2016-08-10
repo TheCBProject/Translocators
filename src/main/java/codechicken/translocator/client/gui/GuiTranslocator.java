@@ -1,7 +1,6 @@
 package codechicken.translocator.client.gui;
 
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.FontUtils;
 import codechicken.lib.render.TextureUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;

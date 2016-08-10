@@ -1,28 +1,29 @@
 package codechicken.translocator.container;
 
-import java.util.List;
-
 import codechicken.core.inventory.ContainerExtended;
 import codechicken.core.inventory.SlotDummy;
+import codechicken.lib.inventory.InventorySimple;
+import codechicken.lib.packet.PacketCustom;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import codechicken.lib.inventory.InventorySimple;
-import codechicken.lib.packet.PacketCustom;
 
-public class ContainerItemTranslocator extends ContainerExtended
-{
+import java.util.List;
+
+public class ContainerItemTranslocator extends ContainerExtended {
     IInventory inv;
 
     public ContainerItemTranslocator(InventorySimple inv, InventoryPlayer playerInv) {
         this.inv = inv;
 
-        for (int x = 0; x < 3; x++)
-            for (int y = 0; y < 3; y++)
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
                 this.addSlotToContainer(new SlotDummy(inv, y + x * 3, 62 + y * 18, 17 + x * 18, inv.limit));
+            }
+        }
 
         bindPlayerInventory(playerInv);
     }
@@ -42,7 +43,8 @@ public class ContainerItemTranslocator extends ContainerExtended
         packet.writeByte(slot);
         packet.writeItemStack(stack);
 
-        for (EntityPlayerMP player : players)
+        for (EntityPlayerMP player : players) {
             packet.sendToPlayer(player);
+        }
     }
 }

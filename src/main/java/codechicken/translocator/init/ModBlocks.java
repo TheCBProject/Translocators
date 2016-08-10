@@ -8,6 +8,9 @@ import codechicken.translocator.block.item.ItemTranslocator;
 import codechicken.translocator.client.render.TranslocatorItemRender;
 import codechicken.translocator.reference.Reference;
 import codechicken.translocator.reference.VariantReference;
+import codechicken.translocator.tile.TileCraftingGrid;
+import codechicken.translocator.tile.TileItemTranslocator;
+import codechicken.translocator.tile.TileLiquidTranslocator;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
@@ -28,12 +31,15 @@ public class ModBlocks {
     public static void init() {
         blockTranslocator = new BlockTranslocator();
         blockTranslocator.setUnlocalizedName("translocator").setCreativeTab(CreativeTabs.REDSTONE);
-        blockCraftingGrid = new BlockCraftingGrid();
-        blockCraftingGrid.setUnlocalizedName("craftingGrid");
-
         GameRegistry.register(blockTranslocator.setRegistryName("translocator"));
         GameRegistry.register(new ItemTranslocator(blockTranslocator).setRegistryName("translocator"));
+        GameRegistry.registerTileEntity(TileItemTranslocator.class, "itemTranslocator");
+        GameRegistry.registerTileEntity(TileLiquidTranslocator.class, "liquidTranslocator");
+
+        blockCraftingGrid = new BlockCraftingGrid();
+        blockCraftingGrid.setUnlocalizedName("craftingGrid");
         GameRegistry.register(blockCraftingGrid.setRegistryName("craftingGrid"));
+        GameRegistry.registerTileEntity(TileCraftingGrid.class, "craftingGrid");
     }
 
     @SideOnly(Side.CLIENT)

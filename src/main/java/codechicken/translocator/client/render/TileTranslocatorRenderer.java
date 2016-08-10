@@ -1,13 +1,12 @@
 package codechicken.translocator.client.render;
 
-import codechicken.core.ClientUtils;
 import codechicken.lib.colour.CustomGradient;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.*;
+import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.SwapYZ;
 import codechicken.lib.vec.Vector3;
-import codechicken.translocator.client.render.RenderParticle;
 import codechicken.translocator.tile.TileItemTranslocator;
 import codechicken.translocator.tile.TileLiquidTranslocator;
 import codechicken.translocator.tile.TileTranslocator;
@@ -110,7 +109,6 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     private void drawLiquidSpiral(int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
-
 
         VertexBuffer vertexBuffer = CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
         vertexBuffer.setTranslation(x, y, z);
