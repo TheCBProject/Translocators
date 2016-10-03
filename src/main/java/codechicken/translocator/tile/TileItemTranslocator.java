@@ -9,7 +9,6 @@ import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.vec.BlockCoord;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import codechicken.translocator.init.ModItems;
 import codechicken.translocator.network.TranslocatorSPH;
@@ -22,6 +21,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,10 +42,10 @@ public class TileItemTranslocator extends TileTranslocator {
         public void setPowering(boolean b) {
             if ((signal || !b) && b != a_powering) {
                 a_powering = b;
-                BlockCoord pos = new BlockCoord(TileItemTranslocator.this);
-                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.REDSTONE_WIRE);
-                pos.offset(side);
-                worldObj.notifyNeighborsOfStateChange(pos.pos(), Blocks.REDSTONE_WIRE);
+                BlockPos pos = new BlockPos(TileItemTranslocator.this.getPos());
+                worldObj.notifyNeighborsOfStateChange(pos, Blocks.REDSTONE_WIRE);
+                pos.offset(EnumFacing.VALUES[side]);
+                worldObj.notifyNeighborsOfStateChange(pos, Blocks.REDSTONE_WIRE);
                 markUpdate();
             }
         }
@@ -239,7 +239,7 @@ public class TileItemTranslocator extends TileTranslocator {
             }
         } else {
             //move those items
-            BlockCoord pos = new BlockCoord(this);//TODO Change to BlockPos
+            BlockPos pos = new BlockPos(this.getPos());//TODO Change to BlockPos
             InventoryRange[] attached = new InventoryRange[6];
 
             for (int i = 0; i < 6; i++) {
@@ -248,8 +248,8 @@ public class TileItemTranslocator extends TileTranslocator {
                     continue;
                 }
 
-                BlockCoord invpos = pos.copy().offset(i);
-                IInventory inv = InventoryUtils.getInventory(worldObj, invpos.pos());
+                BlockPos invpos = pos.offset(EnumFacing.VALUES[i]);
+                IInventory inv = InventoryUtils.getInventory(worldObj, invpos);
                 if (inv == null) {
                     harvestPart(i, true);
                     continue;

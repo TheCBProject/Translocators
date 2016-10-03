@@ -21,7 +21,7 @@ public class TranslocatorCPH implements IClientPacketHandler {
         case 1:
         case 2:
         case 3:
-            TileEntity tile = mc.theWorld.getTileEntity(packet.readCoord().pos());
+            TileEntity tile = mc.theWorld.getTileEntity(packet.readPos());
             if (tile instanceof TileTranslocator) {
                 ((TileTranslocator) tile).handlePacket(packet);
             }

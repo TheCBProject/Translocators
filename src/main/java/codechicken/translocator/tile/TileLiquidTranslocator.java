@@ -4,10 +4,10 @@ import codechicken.core.fluid.FluidUtils;
 import codechicken.core.fluid.TankAccess;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.vec.BlockCoord;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
@@ -116,7 +116,7 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
                 }
             }
         } else {
-            BlockCoord pos = new BlockCoord(this);
+            BlockPos pos = new BlockPos(this.getPos());
             TankAccess[] attached = new TankAccess[6];
             int[] outputs = null;
             int[] r_outputs = null;
@@ -127,8 +127,8 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
                     continue;
                 }
 
-                BlockCoord invpos = pos.copy().offset(i);
-                TileEntity tile = worldObj.getTileEntity(invpos.pos());
+                BlockPos invpos = pos.offset(EnumFacing.VALUES[i]);
+                TileEntity tile = worldObj.getTileEntity(invpos);
                 if (!(tile instanceof IFluidHandler)) {
                     harvestPart(i, true);
                     continue;
