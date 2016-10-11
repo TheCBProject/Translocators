@@ -3,6 +3,7 @@ package codechicken.translocator.client.render;
 import codechicken.lib.colour.CustomGradient;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.*;
+import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.SwapYZ;
@@ -44,19 +45,19 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     @Override
     public void renderTileEntityAt(TileTranslocator ttrans, double x, double y, double z, float partialTicks, int destroyStage) {
         double time = ClientUtils.getRenderTime();
-
-        CCRenderState.reset();
+        CCRenderState ccrs = CCRenderState.instance();
+        ccrs.reset();
         TextureUtils.changeTexture("translocator:textures/model/tex.png");
-        CCRenderState.pullLightmap();
-        CCRenderState.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+        ccrs.pullLightmap();
+        ccrs.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
 
         for (int i = 0; i < 6; i++) {
             TileTranslocator.Attachment a = ttrans.attachments[i];
             if (a != null) {
-                renderAttachment(i, ttrans.getBlockMetadata(), MathHelper.interpolate(a.b_insertpos, a.a_insertpos, partialTicks), a.getIconIndex(), x, y, z);
+                renderAttachment(ccrs, i, ttrans.getBlockMetadata(), MathHelper.interpolate(a.b_insertpos, a.a_insertpos, partialTicks), a.getIconIndex(), x, y, z);
             }
         }
-        CCRenderState.draw();
+        ccrs.draw();
 
         if (ttrans instanceof TileItemTranslocator) {
             TileItemTranslocator titrans = (TileItemTranslocator) ttrans;
@@ -76,9 +77,9 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
                 double start = MathHelper.interpolate(m.b_start, m.a_start, partialTicks);
                 double end = MathHelper.interpolate(m.b_end, m.a_end, partialTicks);
 
-                drawLiquidSpiral(m.src, m.dst, m.liquid, start, end, time, 0, x, y, z);
+                drawLiquidSpiral(ccrs, m.src, m.dst, m.liquid, start, end, time, 0, x, y, z);
                 if (m.fast) {
-                    drawLiquidSpiral(m.src, m.dst, m.liquid, start, end, time, 0.5, x, y, z);
+                    drawLiquidSpiral(ccrs, m.src, m.dst, m.liquid, start, end, time, 0.5, x, y, z);
                 }
             }
         }
@@ -87,7 +88,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         TextureUtils.changeTexture("translocator:textures/fx/particle.png");
-        CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
+        ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
         for (int src = 0; src < 6; src++) {
             TileTranslocator.Attachment asrc = ttrans.attachments[src];
             if (asrc == null || !asrc.a_eject) {
@@ -101,16 +102,16 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
                 }
             }
         }
-        CCRenderState.draw();
+        ccrs.draw();
         GlStateManager.disableBlend();
         GlStateManager.enableLighting();
     }
 
-    private void drawLiquidSpiral(int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
+    private void drawLiquidSpiral(CCRenderState ccrs, int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
-        VertexBuffer vertexBuffer = CCRenderState.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
+        VertexBuffer vertexBuffer = ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
         vertexBuffer.setTranslation(x, y, z);
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -160,7 +161,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
             next = tmp;
         }
 
-        CCRenderState.draw();
+        ccrs.draw();
         vertexBuffer.setTranslation(0, 0, 0);
 
         RenderUtils.postFluidRender();
@@ -242,14 +243,14 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         return vsrc.multiply(sind).add(vdst.multiply(cosd)).normalize();
     }
 
-    public static void renderAttachment(int side, int type, double insertpos, int field, double x, double y, double z) {
+    public static void renderAttachment(CCRenderState ccrs, int side, int type, double insertpos, int field, double x, double y, double z) {
         double tx = field / 64D;
         double ty = type / 2D;
 
-        plates[side].render(x + 0.5, y + 0.5, z + 0.5, tx, ty);
+        plates[side].render(ccrs, x + 0.5, y + 0.5, z + 0.5, tx, ty);
 
         Matrix4 matrix = new Matrix4().translate(new Vector3(x + 0.5, y + 0.5, z + 0.5)).apply(sideRotations[side]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, insertpos * 2 / 3 + 1 / 3D, 1));
 
-        insert.render(matrix, tx, ty);
+        insert.render(ccrs, matrix, tx, ty);
     }
 }

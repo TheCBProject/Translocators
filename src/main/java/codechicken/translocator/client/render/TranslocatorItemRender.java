@@ -1,9 +1,9 @@
 package codechicken.translocator.client.render;
 
 import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.IItemRenderer;
-import codechicken.lib.render.TextureUtils;
-import codechicken.lib.render.TransformUtils;
+import codechicken.lib.render.item.IItemRenderer;
+import codechicken.lib.texture.TextureUtils;
+import codechicken.lib.util.TransformUtils;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -32,9 +32,10 @@ public class TranslocatorItemRender implements IItemRenderer, IPerspectiveAwareM
         GlStateManager.pushMatrix();
 
         TextureUtils.changeTexture("translocator:textures/model/tex.png");
-        CCRenderState.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-        TileTranslocatorRenderer.renderAttachment(2, item.getItemDamage(), 1D, 0, 0.0D, 0.0D, 0.5D);
-        CCRenderState.draw();
+        CCRenderState ccrs = CCRenderState.instance();
+        ccrs.startDrawing(4, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+        TileTranslocatorRenderer.renderAttachment(ccrs, 2, item.getItemDamage(), 1D, 0, 0.0D, 0.0D, 0.5D);
+        ccrs.draw();
 
         GlStateManager.popMatrix();
     }

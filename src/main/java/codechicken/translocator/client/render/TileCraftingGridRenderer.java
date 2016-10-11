@@ -2,7 +2,7 @@ package codechicken.translocator.client.render;
 
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
-import codechicken.lib.render.TextureUtils;
+import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
@@ -24,14 +24,15 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
         TextureUtils.dissableBlockMipmap();
         TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocator:craftingGrid");
 
-        VertexBuffer buffer = CCRenderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        CCRenderState ccrs = CCRenderState.instance();
+        VertexBuffer buffer = ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
         buffer.setTranslation(x, y + 0.001, z);
         buffer.pos(1, 0, 0).tex(icon.getMinU(), icon.getMinV()).normal(0, 1, 0).endVertex();
         buffer.pos(0, 0, 0).tex(icon.getMinU(), icon.getMaxV()).normal(0, 1, 0).endVertex();
         buffer.pos(0, 0, 1).tex(icon.getMaxU(), icon.getMaxV()).normal(0, 1, 0).endVertex();
         buffer.pos(1, 0, 1).tex(icon.getMaxU(), icon.getMinV()).normal(0, 1, 0).endVertex();
         buffer.setTranslation(0, 0, 0);
-        CCRenderState.draw();
+        ccrs.draw();
         TextureUtils.restoreBlockMipmap();
 
         GlStateManager.enableRescaleNormal();

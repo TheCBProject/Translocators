@@ -1,7 +1,7 @@
 package codechicken.translocator.init;
 
 import codechicken.lib.render.CCIconRegister;
-import codechicken.lib.render.ModelRegistryHelper;
+import codechicken.lib.model.ModelRegistryHelper;
 import codechicken.translocator.block.BlockCraftingGrid;
 import codechicken.translocator.block.BlockTranslocator;
 import codechicken.translocator.block.item.ItemTranslocator;

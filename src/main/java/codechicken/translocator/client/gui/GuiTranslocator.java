@@ -1,8 +1,8 @@
 package codechicken.translocator.client.gui;
 
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.render.FontUtils;
-import codechicken.lib.render.TextureUtils;
+import codechicken.lib.util.FontUtils;
+import codechicken.lib.texture.TextureUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Container;
