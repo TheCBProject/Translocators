@@ -1,6 +1,6 @@
 package codechicken.translocator;
 
-import codechicken.core.launch.CodeChickenCorePlugin;
+import codechicken.lib.CodeChickenLib;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.proxy.CommonProxy;
 import net.minecraftforge.fml.common.Mod;
@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import static codechicken.translocator.reference.Reference.*;
 
-@Mod(modid = MOD_ID, dependencies = DEPENDENCIES, acceptedMinecraftVersions = CodeChickenCorePlugin.mcVersion)
+@Mod(modid = MOD_ID, dependencies = DEPENDENCIES, acceptedMinecraftVersions = CodeChickenLib.mcVersion)
 public class Translocator {
     @SidedProxy(clientSide = CLIENT_PROXY, serverSide = COMMON_PROXY)
     public static CommonProxy proxy;
