@@ -22,7 +22,7 @@ public class ItemTranslocatorRenderer {/*implements IItemRenderer {
         d.add(0, 0, 0.5);
 
         GL11.glPushMatrix();
-        GL11.glScaled(1.5, 1.5, 1.5);
+        GlStateManager.scale(1.5, 1.5, 1.5);
 
         CCRenderState.changeTexture("translocator:textures/tex.png");
         CCRenderState.pullLightmap();
@@ -32,6 +32,6 @@ public class ItemTranslocatorRenderer {/*implements IItemRenderer {
         TileTranslocatorRenderer.renderAttachment(2, item.getItemDamage(), 1, 0, d.x, d.y, d.z);
         CCRenderState.draw();
 
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
     }*/
 }

@@ -5,6 +5,7 @@ import codechicken.lib.util.FontUtils;
 import codechicken.lib.texture.TextureUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -18,16 +19,16 @@ public class GuiTranslocator extends GuiContainer {
 
     @Override
     protected void drawGuiContainerBackgroundLayer(float f, int i, int j) {
-        GL11.glPushMatrix();
-        GL11.glTranslated(guiLeft, guiTop, 0);
-        GL11.glColor4f(1, 1, 1, 1);
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(guiLeft, guiTop, 0);
+        GlStateManager.color(1, 1, 1, 1);
 
         TextureUtils.changeTexture("textures/gui/container/dispenser.png");
         drawTexturedModalRect(0, 0, 0, 0, xSize, ySize);
 
         fontRendererObj.drawString(I18n.translateToLocal(((ContainerItemTranslocator) inventorySlots).getName()), 6, 6, 0x404040);
         fontRendererObj.drawString(I18n.translateToLocal("container.inventory"), 6, 72, 0x404040);
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
     }
 
     //@Override //TODO NEI Method.
