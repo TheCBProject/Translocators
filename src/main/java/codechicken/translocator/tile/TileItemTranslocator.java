@@ -1,7 +1,6 @@
 package codechicken.translocator.tile;
 
-import codechicken.core.IGuiPacketSender;
-import codechicken.core.ServerUtils;
+import codechicken.lib.gui.IGuiPacketSender;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryRange;
@@ -9,6 +8,7 @@ import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.util.ServerUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;
 import codechicken.translocator.init.ModItems;
 import codechicken.translocator.network.TranslocatorSPH;
