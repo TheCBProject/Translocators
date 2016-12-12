@@ -15,6 +15,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.IFluidHandler;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 
 public class ItemTranslocator extends ItemBlock {
     public ItemTranslocator(Block block) {
@@ -86,7 +87,7 @@ public class ItemTranslocator extends ItemBlock {
         case 0:
             return world.getTileEntity(pos) instanceof IInventory;
         case 1:
-            return world.getTileEntity(pos) instanceof IFluidHandler;
+            return world.getTileEntity(pos).hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
         }
         return false;
     }

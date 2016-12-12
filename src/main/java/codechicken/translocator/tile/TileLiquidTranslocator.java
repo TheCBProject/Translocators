@@ -1,23 +1,22 @@
 package codechicken.translocator.tile;
 
 import codechicken.core.fluid.FluidUtils;
-import codechicken.core.fluid.TankAccess;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTankInfo;
-import net.minecraftforge.fluids.IFluidHandler;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.FluidTankProperties;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 import java.util.*;
 
-public class TileLiquidTranslocator extends TileTranslocator implements IFluidHandler
-
-{
+public class TileLiquidTranslocator extends TileTranslocator {
     public class MovingLiquid {
         public int src;
         public int dst;
@@ -117,11 +116,12 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
             }
         } else {
             BlockPos pos = new BlockPos(this.getPos());
-            TankAccess[] attached = new TankAccess[6];
+            IFluidHandler[] attached = new IFluidHandler[6];
             int[] outputs = null;
             int[] r_outputs = null;
 
             for (int i = 0; i < 6; i++) {
+                EnumFacing face = EnumFacing.VALUES[i];
                 Attachment a = attachments[i];
                 if (a == null) {
                     continue;
@@ -129,11 +129,11 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
 
                 BlockPos invpos = pos.offset(EnumFacing.VALUES[i]);
                 TileEntity tile = worldObj.getTileEntity(invpos);
-                if (!(tile instanceof IFluidHandler)) {
+                if (!(tile.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, face.getOpposite()))) {
                     harvestPart(i, true);
                     continue;
                 }
-                attached[i] = new TankAccess((IFluidHandler) tile, i ^ 1);
+                attached[i] = tile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, face.getOpposite());
             }
 
             ArrayList<LiquidTransfer> transfers = new ArrayList<LiquidTransfer>();
@@ -144,7 +144,7 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
                     continue;
                 }
 
-                TankAccess t = attached[i];
+                IFluidHandler t = attached[i];
                 FluidStack drain = t.drain(a.fast ? 1000 : 100, false);
                 if (drain == null || drain.amount == 0) {
                     continue;
@@ -167,10 +167,10 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
         }
     }
 
-    private void spreadOutput(FluidStack move, int src, int[] outputs, TankAccess[] attached, ArrayList<LiquidTransfer> transfers) {
+    private void spreadOutput(FluidStack move, int src, int[] outputs, IFluidHandler[] attached, ArrayList<LiquidTransfer> transfers) {
         for (int k = 0; k < outputs.length && move.amount > 0; k++) {
             int dst = outputs[k];
-            TankAccess outaccess = attached[dst];
+            IFluidHandler outaccess = attached[dst];
 
             int fit = outaccess.fill(move, false);
             int spread = outputs.length - k;
@@ -263,47 +263,36 @@ public class TileLiquidTranslocator extends TileTranslocator implements IFluidHa
     }
 
     @Override
-    public int fill(EnumFacing from, FluidStack resource, boolean doFill) {
-        return 0;
+    public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
+        return capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY;
     }
 
     @Override
-    public FluidStack drain(EnumFacing from, int maxDrain, boolean doDrain) {
-        return null;
-    }
-
-    @Override
-    public FluidStack drain(EnumFacing from, FluidStack resource, boolean doDrain) {
-        return null;
-    }
-
-    @Override
-    public boolean canFill(EnumFacing from, Fluid fluid) {
-        return false;
-    }
-
-    @Override
-    public boolean canDrain(EnumFacing from, Fluid fluid) {
-        return false;
-    }
-
-    @Override
-    public FluidTankInfo[] getTankInfo(EnumFacing from) {
-        if (from != null) {
-            List<FluidTankInfo> list = new LinkedList<FluidTankInfo>();
-            for (Attachment a : attachments) {
-                if (a != null) {
-                    list.add(new FluidTankInfo(null, 0));
+    public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
+        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+            if (facing == null) {
+                final List<IFluidTankProperties> properties = new LinkedList<IFluidTankProperties>();
+                for (Attachment a : attachments) {
+                    if (a != null) {
+                        properties.add(new FluidTankProperties(null, 0));
+                    }
                 }
+                return  CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(new DummyFluidCapability() {
+                    @Override
+                    public IFluidTankProperties[] getTankProperties() {
+                        return properties.toArray(new IFluidTankProperties[0]);
+                    }
+                });
             }
-
-            return list.toArray(new FluidTankInfo[0]);
+            if (attachments[facing.ordinal()] != null) {
+                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(new DummyFluidCapability() {
+                    @Override
+                    public IFluidTankProperties[] getTankProperties() {
+                        return new IFluidTankProperties[]{new FluidTankProperties(null, 0)};
+                    }
+                });
+            }
         }
-
-        if (attachments[from.ordinal()] != null) {
-            return new FluidTankInfo[] { new FluidTankInfo(null, 0) };
-        }
-
-        return new FluidTankInfo[0];
+        return null;
     }
 }
