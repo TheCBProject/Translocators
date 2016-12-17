@@ -182,7 +182,7 @@ public class BlockTranslocator extends Block {
         RayTraceResult hit = RayTracer.retraceBlock(world, player, pos);
         TileTranslocator ttrans = (TileTranslocator) world.getTileEntity(pos);
 
-        if (hit != null) {
+        if (hit != null && ttrans != null) {
             if (hit.subHit < 6) {
                 Vector3 vhit = new Vector3(hit.hitVec);
                 vhit.add(-pos.getX() - 0.5, -pos.getY() - 0.5, -pos.getZ() - 0.5);
@@ -207,7 +207,7 @@ public class BlockTranslocator extends Block {
     @Override
     public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
         TileTranslocator ttrans = (TileTranslocator) world.getTileEntity(pos);
-        return ttrans.connectRedstone();
+        return ttrans != null && ttrans.connectRedstone();
     }
 
     @Override

@@ -69,9 +69,13 @@ processResources {
 }
 
 version = "${project.minecraft.version}-${project.version}"
+def commonManifest = {
+    attributes 'CCTransformerExclusions' : 'codechicken.translocator.FingerprintChecker'
+}
 
 jar {
     classifier = 'universal'
+    manifest commonManifest
 }
 
 task srcJar(type: Jar) {
@@ -82,7 +86,24 @@ task srcJar(type: Jar) {
 task deobfJar(type: Jar) {
     from sourceSets.main.output
     classifier = 'deobf'
+    manifest commonManifest
 }
+
+
+task signJar(type: SignJar, dependsOn: reobfJar) {
+    onlyIf { // Skip the task if our secret data isn't available
+        project.hasProperty('keyStore')
+    }
+
+    keyStore = project.keyStore // This needs to be a path to the keystore file
+    alias = project.keyStoreAlias
+    storePass = project.keyStorePass
+    keyPass = project.keyStoreKeyPass
+    inputFile = jar.archivePath
+    outputFile = jar.archivePath
+}
+
+build.dependsOn signJar
 
 // Tell the artifact system about our extra jars
 artifacts {

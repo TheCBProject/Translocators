@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import static codechicken.translocator.reference.Reference.*;
 
-@Mod(modid = MOD_ID, dependencies = DEPENDENCIES, acceptedMinecraftVersions = CodeChickenLib.mcVersion)
+@Mod(modid = MOD_ID, dependencies = DEPENDENCIES, acceptedMinecraftVersions = CodeChickenLib.mcVersion, certificateFingerprint = "f1850c39b2516232a2108a7bd84d1cb5df93b261")
 public class Translocator {
     @SidedProxy(clientSide = CLIENT_PROXY, serverSide = COMMON_PROXY)
     public static CommonProxy proxy;
@@ -28,6 +28,7 @@ public class Translocator {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        FingerprintChecker.runFingerprintChecks();
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
         //config = new ConfigFile(new File(CommonUtils.getMinecraftDir() + "/config", "Translocator.cfg")).setComment("Translocator Configuration File\nDeleting any element will restore it to it's default value\nBlock ID's will be automatically generated the first time it's run");
         proxy.preInit();
