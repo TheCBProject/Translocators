@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -81,12 +82,13 @@ public class ItemTranslocator extends ItemBlock {
         if (state.getBlock() == block && state.getBlock().getMetaFromState(state) != stack.getItemDamage()) {
             return false;
         }
+        TileEntity tile =  world.getTileEntity(pos);
 
         switch (stack.getItemDamage()) {
         case 0:
-            return world.getTileEntity(pos) instanceof IInventory;
+            return tile != null && tile instanceof IInventory;
         case 1:
-            return world.getTileEntity(pos).hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
+            return tile != null && tile.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
         }
         return false;
     }
