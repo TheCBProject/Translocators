@@ -22,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.oredict.OreDictionary;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ public class TileItemTranslocator extends TileTranslocator {
         boolean signal = false;
 
         ItemStack[] filters = new ItemStack[9];
+        ItemStack regulate_item = null;
 
         public ItemAttachment(int side) {
             super(side);
@@ -55,8 +57,10 @@ public class TileItemTranslocator extends TileTranslocator {
             ItemStack held = player.inventory.getCurrentItem();
             if (held == null) {
                 return super.activate(player, subPart);
-            } else if (held.getItem() == ModItems.itemDiamondNugget && !regulate) {
+            } else if (OreDictionary.containsMatch(true, OreDictionary.getOres("nuggetDiamond"), held) && !regulate) {
                 regulate = true;
+                regulate_item = held.copy();
+                regulate_item.stackSize = 1;
 
                 if (!player.capabilities.isCreativeMode) {
                     held.stackSize--;
@@ -81,7 +85,11 @@ public class TileItemTranslocator extends TileTranslocator {
             super.stripModifiers();
             if (regulate) {
                 regulate = false;
-                dropItem(new ItemStack(ModItems.itemDiamondNugget));
+                if (regulate_item != null) {
+                    dropItem(regulate_item);
+                    regulate_item = null;
+                } else
+                    dropItem(new ItemStack(ModItems.itemDiamondNugget));
             }
             if (signal) {
                 setPowering(false);
@@ -94,7 +102,10 @@ public class TileItemTranslocator extends TileTranslocator {
         public Collection<ItemStack> getDrops(IBlockState state) {
             Collection<ItemStack> stuff = super.getDrops(state);
             if (regulate) {
-                stuff.add(new ItemStack(ModItems.itemDiamondNugget));
+                if (regulate_item != null)
+                    stuff.add(regulate_item);
+                else
+                    stuff.add(new ItemStack(ModItems.itemDiamondNugget));
             }
             if (signal) {
                 stuff.add(new ItemStack(Items.IRON_INGOT));
@@ -154,6 +165,8 @@ public class TileItemTranslocator extends TileTranslocator {
             regulate = tag.getBoolean("regulate");
             signal = tag.getBoolean("signal");
             a_powering = tag.getBoolean("powering");
+            if (tag.hasKey("regulate_item"))
+                regulate_item = ItemStack.loadItemStackFromNBT(tag.getCompoundTag("regulate_item"));
             InventoryUtils.readItemStacksFromTag(filters, tag.getTagList("filters", 10));
         }
 
@@ -162,6 +175,8 @@ public class TileItemTranslocator extends TileTranslocator {
             tag.setBoolean("regulate", regulate);
             tag.setBoolean("signal", signal);
             tag.setBoolean("powering", a_powering);
+            if (regulate_item != null)
+                tag.setTag("regulate_item", regulate_item.writeToNBT(new NBTTagCompound()));
             tag.setTag("filters", InventoryUtils.writeItemStacksToTag(filters, 65536));
             return super.write(tag);
         }
