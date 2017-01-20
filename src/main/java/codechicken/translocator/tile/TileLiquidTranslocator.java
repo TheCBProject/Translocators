@@ -264,7 +264,10 @@ public class TileLiquidTranslocator extends TileTranslocator {
 
     @Override
     public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-        return capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
+    	if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+		    return facing == null || attachments[facing.ordinal()] != null;
+	    }
+        return super.hasCapability(capability, facing);
     }
 
     @Override
