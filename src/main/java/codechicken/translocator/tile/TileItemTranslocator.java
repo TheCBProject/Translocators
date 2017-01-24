@@ -8,8 +8,10 @@ import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
 import codechicken.translocator.container.ContainerItemTranslocator;
+import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.init.ModItems;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.block.state.IBlockState;
@@ -55,7 +57,7 @@ public class TileItemTranslocator extends TileTranslocator {
             ItemStack held = player.inventory.getCurrentItem();
             if (held == null) {
                 return super.activate(player, subPart);
-            } else if (held.getItem() == ModItems.itemDiamondNugget && !regulate) {
+            } else if (ItemUtils.areStacksSameType(held, ConfigurationHandler.nugget) && !regulate) {
                 regulate = true;
 
                 if (!player.capabilities.isCreativeMode) {
@@ -81,7 +83,7 @@ public class TileItemTranslocator extends TileTranslocator {
             super.stripModifiers();
             if (regulate) {
                 regulate = false;
-                dropItem(new ItemStack(ModItems.itemDiamondNugget));
+                dropItem(ItemUtils.copyStack(ConfigurationHandler.nugget, 1));
             }
             if (signal) {
                 setPowering(false);
@@ -94,7 +96,7 @@ public class TileItemTranslocator extends TileTranslocator {
         public Collection<ItemStack> getDrops(IBlockState state) {
             Collection<ItemStack> stuff = super.getDrops(state);
             if (regulate) {
-                stuff.add(new ItemStack(ModItems.itemDiamondNugget));
+                stuff.add(ItemUtils.copyStack(ConfigurationHandler.nugget, 1));
             }
             if (signal) {
                 stuff.add(new ItemStack(Items.IRON_INGOT));

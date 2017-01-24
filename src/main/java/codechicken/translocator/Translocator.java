@@ -36,6 +36,7 @@ public class Translocator {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        ConfigurationHandler.loadConfig();
         //disableCraftingGridKey = config.getTag("disable-crafting-grid-key").setComment("Set to true to disable placement of crafting grids by keyboard shortcut.").getBooleanValue(false);
         proxy.init();
     }
