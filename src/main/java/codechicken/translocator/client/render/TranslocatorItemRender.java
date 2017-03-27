@@ -47,7 +47,7 @@ public class TranslocatorItemRender implements IItemRenderer, IPerspectiveAwareM
 
     @Override
     public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {
-        return new ArrayList<BakedQuad>();
+        return new ArrayList<>();
     }
 
     @Override

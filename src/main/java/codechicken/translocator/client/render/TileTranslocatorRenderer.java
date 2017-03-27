@@ -2,7 +2,10 @@ package codechicken.translocator.client.render;
 
 import codechicken.lib.colour.CustomGradient;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.render.*;
+import codechicken.lib.render.CCModel;
+import codechicken.lib.render.OBJParser;
+import codechicken.lib.render.CCRenderState;
+import codechicken.lib.render.RenderUtils;
 import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
@@ -24,14 +27,31 @@ import java.util.Map;
 import static codechicken.lib.vec.Rotation.sideRotations;
 
 public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTranslocator> {
-    public static Vector3[] sidePos = new Vector3[] { new Vector3(0.5, 0, 0.5), new Vector3(0.5, 1, 0.5), new Vector3(0.5, 0.5, 0), new Vector3(0.5, 0.5, 1), new Vector3(0, 0.5, 0.5), new Vector3(1, 0.5, 0.5) };
-    public static Vector3[] sideVec = new Vector3[] { new Vector3(0, -1, 0), new Vector3(0, 1, 0), new Vector3(0, 0, -1), new Vector3(0, 0, 1), new Vector3(-1, 0, 0), new Vector3(1, 0, 0) };
+
+    //@formatter:off
+    public static Vector3[] sidePos = new Vector3[] {
+            new Vector3(0.5, 0, 0.5),
+            new Vector3(0.5, 1, 0.5),
+            new Vector3(0.5, 0.5, 0),
+            new Vector3(0.5, 0.5, 1),
+            new Vector3(0, 0.5, 0.5),
+            new Vector3(1, 0.5, 0.5)
+    };
+    public static Vector3[] sideVec = new Vector3[] {
+            new Vector3(0, -1, 0),
+            new Vector3(0, 1, 0),
+            new Vector3(0, 0, -1),
+            new Vector3(0, 0, 1),
+            new Vector3(-1, 0, 0),
+            new Vector3(1, 0, 0)
+    };
+    //@formatter:on
 
     public static CCModel[] plates = new CCModel[6];
     public static CCModel insert;
 
     static {
-        Map<String, CCModel> models = CCOBJParser.parseObjModels(new ResourceLocation("translocator", "models/model.obj"), new SwapYZ());
+        Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocator", "models/model.obj"), new SwapYZ());
         plates[0] = models.get("Plate");
         insert = models.get("Insert");
         CCModel.generateSidedModels(plates, 0, new Vector3());
@@ -40,10 +60,12 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     private CustomGradient gradient = new CustomGradient(new ResourceLocation("translocator", "textures/fx/grad.png"));
 
     public TileTranslocatorRenderer() {
+
     }
 
     @Override
     public void renderTileEntityAt(TileTranslocator ttrans, double x, double y, double z, float partialTicks, int destroyStage) {
+
         double time = ClientUtils.getRenderTime();
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
@@ -98,7 +120,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
             for (int dst = 0; dst < 6; dst++) {
                 TileTranslocator.Attachment adst = ttrans.attachments[dst];
                 if (adst != null && !adst.a_eject) {
-                    renderLink(src, dst, time, new Vector3(ttrans.getPos()));
+                    renderLink(src, dst, time, Vector3.fromBlockPos(ttrans.getPos()));
                 }
             }
         }
@@ -108,6 +130,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     private void drawLiquidSpiral(CCRenderState ccrs, int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
+
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
@@ -168,10 +191,12 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     private double sum(Vector3 v) {
+
         return v.x + v.y + v.z;
     }
 
     private void renderLink(int src, int dst, double time, Vector3 tPos) {
+
         double d = ((time + src + dst * 2) % 10) / 6;
         //0 is head
         for (int n = 0; n < 20; n++) {
@@ -195,10 +220,12 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     private Vector3 itemFloat(int src, int dst, double d) {
+
         return getPerp(src, dst).multiply(0.01 * MathHelper.sin(d * 4 * Math.PI));
     }
 
     public static Vector3 getPath(int src, int dst, double d) {
+
         Vector3 v;
         if ((src ^ 1) == dst)//opposite
         {
@@ -216,6 +243,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     public static Vector3 getPerp(int src, int dst) {
+
         if ((src ^ 1) == dst) {
             return sideVec[(src + 2) % 6].copy();
         }
@@ -230,6 +258,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     private static Vector3 getPathNormal(int srcSide, int dstSide, double d) {
+
         if ((srcSide ^ 1) == dstSide) {
             return sideVec[(srcSide + 4) % 6].copy();
         }
@@ -244,6 +273,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     public static void renderAttachment(CCRenderState ccrs, int side, int type, double insertpos, int field, double x, double y, double z) {
+
         double tx = field / 64D;
         double ty = type / 2D;
 

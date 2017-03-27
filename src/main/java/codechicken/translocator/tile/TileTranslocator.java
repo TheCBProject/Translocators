@@ -2,12 +2,12 @@ package codechicken.translocator.tile;
 
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
-import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
+import codechicken.lib.util.ItemUtils;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocator.network.TranslocatorSPH;
@@ -99,10 +99,10 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
 
         public boolean activate(EntityPlayer player, int subPart) {
             ItemStack held = player.inventory.getCurrentItem();
-            if (held == null && player.isSneaking()) {
+            if (held.isEmpty() && player.isSneaking()) {
                 stripModifiers();
                 markUpdate();
-            } else if (held == null) {
+            } else if (held.isEmpty()) {
                 if (subPart == 1) {
                     invert_redstone = !invert_redstone;
                 } else {
@@ -111,7 +111,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             } else if (held.getItem() == Items.REDSTONE && !redstone) {
                 redstone = true;
                 if (!player.capabilities.isCreativeMode) {
-                    held.stackSize--;
+                    held.shrink(1);
                 }
 
                 if ((gettingPowered() != invert_redstone) != a_eject) {
@@ -121,7 +121,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
                 fast = true;
                 if (!player.capabilities.isCreativeMode) {
-                    held.stackSize--;
+                    held.shrink(1);
                 }
                 markUpdate();
             } else {
@@ -150,13 +150,13 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
         }
 
         public void markUpdate() {
-            IBlockState state = worldObj.getBlockState(getPos());
-            worldObj.notifyBlockUpdate(getPos(), state, state, 3);
+            IBlockState state = world.getBlockState(getPos());
+            world.notifyBlockUpdate(getPos(), state, state, 3);
             markDirty();
         }
 
         public Collection<ItemStack> getDrops(IBlockState state) {
-            LinkedList<ItemStack> items = new LinkedList<ItemStack>();
+            LinkedList<ItemStack> items = new LinkedList<>();
             items.add(new ItemStack(getBlockType(), 1, getBlockType().getMetaFromState(state)));
             if (redstone) {
                 items.add(new ItemStack(Items.REDSTONE));
@@ -185,7 +185,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
     public void update() {
         for (Attachment a : attachments) {
             if (a != null) {
-                a.update(worldObj.isRemote);
+                a.update(world.isRemote);
             }
         }
     }
@@ -251,7 +251,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             }
         }
 
-        worldObj.markBlockRangeForRenderUpdate(getPos(), getPos());
+        world.markBlockRangeForRenderUpdate(getPos(), getPos());
     }
 
     public void createAttachment(int side) {
@@ -283,7 +283,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
 
     @Override
     public List<IndexedCuboid6> getIndexedCuboids() {
-        ArrayList<IndexedCuboid6> cuboids = new ArrayList<IndexedCuboid6>();
+        ArrayList<IndexedCuboid6> cuboids = new ArrayList<>();
         addTraceableCuboids(cuboids);
         return cuboids;
     }
@@ -307,13 +307,13 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
 
     @Override
     public AxisAlignedBB getRenderBoundingBox() {
-        return new Cuboid6(new Vector3(getPos()), new Vector3(getPos().add(1, 1, 1))).aabb();
+        return new Cuboid6(getPos(), getPos().add(1, 1, 1)).aabb();
     }
 
     public boolean harvestPart(int i, boolean drop) {
         Attachment a = attachments[i];
-        IBlockState state = worldObj.getBlockState(getPos());
-        if (!worldObj.isRemote && drop) {
+        IBlockState state = world.getBlockState(getPos());
+        if (!world.isRemote && drop) {
             for (ItemStack stack : a.getDrops(state)) {
                 dropItem(stack);
             }
@@ -321,23 +321,23 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
 
         attachments[i] = null;
 
-        worldObj.notifyBlockUpdate(getPos(), state, state, 3);
+        world.notifyBlockUpdate(getPos(), state, state, 3);
         for (Attachment a1 : attachments) {
             if (a1 != null) {
                 return false;
             }
         }
 
-        worldObj.setBlockToAir(getPos());
+        world.setBlockToAir(getPos());
         return true;
     }
 
     public void dropItem(ItemStack stack) {
-        InventoryUtils.dropItem(stack, worldObj, Vector3.fromTileCenter(this));
+        ItemUtils.dropItem(stack, world, Vector3.fromTileCenter(this));
     }
 
     public boolean gettingPowered() {
-        return worldObj.isBlockPowered(getPos());
+        return world.isBlockPowered(getPos());
     }
 
     public boolean connectRedstone() {

@@ -1,7 +1,7 @@
 package codechicken.translocator.network;
 
+import codechicken.lib.packet.ICustomPacketHandler.IServerPacketHandler;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.packet.PacketCustom.IServerPacketHandler;
 import codechicken.translocator.Translocator;
 import codechicken.translocator.init.ModBlocks;
 import codechicken.translocator.tile.TileCraftingGrid;
@@ -17,10 +17,10 @@ public class TranslocatorSPH implements IServerPacketHandler {
     public void handlePacket(PacketCustom packet, EntityPlayerMP sender, INetHandlerPlayServer handler) {
         switch (packet.getType()) {
         case 1:
-            ModBlocks.blockCraftingGrid.placeBlock(sender.worldObj, sender, packet.readBlockPos(), EnumFacing.VALUES[packet.readUByte()]);
+            ModBlocks.blockCraftingGrid.placeBlock(sender.world, sender, packet.readPos(), EnumFacing.VALUES[packet.readUByte()]);
             break;
         case 2:
-            TileEntity tile = sender.worldObj.getTileEntity(packet.readBlockPos());
+            TileEntity tile = sender.world.getTileEntity(packet.readPos());
             if (tile instanceof TileCraftingGrid) {
                 ((TileCraftingGrid) tile).craft(sender);
             }

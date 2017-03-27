@@ -6,7 +6,7 @@ import codechicken.translocator.init.ModItems;
 import codechicken.translocator.init.Recipes;
 import codechicken.translocator.network.TranslocatorSPH;
 
-public class CommonProxy {
+public class Proxy {
 
     public void preInit() {
         ModBlocks.init();

@@ -50,16 +50,16 @@ public class CraftingGridKeyHandler extends KeyBinding {
         if (hit == null || hit.typeOfHit != Type.BLOCK) {
             return;
         }
-        IBlockState state = mc.theWorld.getBlockState(hit.getBlockPos());
+        IBlockState state = mc.world.getBlockState(hit.getBlockPos());
         if (state.getBlock() == ModBlocks.blockCraftingGrid) {
             PacketCustom packet = new PacketCustom(TranslocatorCPH.channel, 2);
-            packet.writeBlockPos(hit.getBlockPos());
+            packet.writePos(hit.getBlockPos());
             packet.sendToServer();
 
-            mc.thePlayer.swingArm(EnumHand.MAIN_HAND);
-        } else if (ModBlocks.blockCraftingGrid.placeBlock(mc.theWorld, mc.thePlayer, hit.getBlockPos(), hit.sideHit)) {
+            mc.player.swingArm(EnumHand.MAIN_HAND);
+        } else if (ModBlocks.blockCraftingGrid.placeBlock(mc.world, mc.player, hit.getBlockPos(), hit.sideHit)) {
             PacketCustom packet = new PacketCustom(TranslocatorCPH.channel, 1);
-            packet.writeBlockPos(hit.getBlockPos());
+            packet.writePos(hit.getBlockPos());
             packet.writeByte(hit.sideHit.ordinal());
             packet.sendToServer();
         }

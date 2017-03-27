@@ -12,18 +12,21 @@ public abstract class DummyFluidCapability implements IFluidHandler {
 
     @Override
     public int fill(FluidStack resource, boolean doFill) {
+
         return 0;
     }
 
     @Nullable
     @Override
     public FluidStack drain(FluidStack resource, boolean doDrain) {
+
         return null;
     }
 
     @Nullable
     @Override
     public FluidStack drain(int maxDrain, boolean doDrain) {
+
         return null;
     }
 }

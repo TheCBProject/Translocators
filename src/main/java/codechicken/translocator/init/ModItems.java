@@ -24,6 +24,6 @@ public class ModItems {
 
     @SideOnly(Side.CLIENT)
     public static void initModels() {
-        ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocator:resource", "type=diamondnugget"));
+        ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocator:resource", "type=diamond_nugget"));
     }
 }

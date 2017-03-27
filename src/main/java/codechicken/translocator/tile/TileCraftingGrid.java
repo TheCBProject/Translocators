@@ -7,6 +7,8 @@ import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
+import codechicken.lib.util.ArrayUtils;
+import codechicken.lib.util.ItemUtils;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Translation;
@@ -33,11 +35,18 @@ import java.util.List;
 import static codechicken.lib.vec.Vector3.center;
 
 public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
-    public ItemStack[] items = new ItemStack[9];
-    public ItemStack result = null;
+    public ItemStack[] items;
+    public ItemStack result;
     public int rotation = 0;
 
     public int timeout = 400;//20 seconds
+
+    public TileCraftingGrid() {
+
+        items = new ItemStack[9];
+        ArrayUtils.fillArray(items, ItemStack.EMPTY);
+        result = ItemStack.EMPTY;
+    }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound tag) {
@@ -56,11 +65,11 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
 
     @Override
     public void update() {
-        if (!worldObj.isRemote) {
+        if (!world.isRemote) {
             timeout--;
             if (timeout == 0) {
                 dropItems();
-                worldObj.setBlockToAir(getPos());
+                world.setBlockToAir(getPos());
             }
         }
     }
@@ -68,8 +77,8 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     public void dropItems() {
         Vector3 drop = Vector3.fromTileCenter(this);
         for (ItemStack item : items) {
-            if (item != null) {
-                InventoryUtils.dropItem(item, worldObj, drop);
+            if (!item.isEmpty()) {
+                ItemUtils.dropItem(item, world, drop);
             }
         }
     }
@@ -119,26 +128,26 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
 
     public void activate(int subHit, EntityPlayer player) {
         ItemStack held = player.inventory.getCurrentItem();
-        if (held == null) {
-            if (items[subHit] != null) {
+        if (held.isEmpty()) {
+            if (!items[subHit].isEmpty()) {
                 giveOrDropItem(items[subHit], player);
             }
-            items[subHit] = null;
+            items[subHit] = ItemStack.EMPTY;
         } else {
             if (!InventoryUtils.areStacksIdentical(held, items[subHit])) {
                 ItemStack old = items[subHit];
-                items[subHit] = InventoryUtils.copyStack(held, 1);
+                items[subHit] = ItemUtils.copyStack(held, 1);
                 player.inventory.decrStackSize(player.inventory.currentItem, 1);
 
-                if (old != null) {
+                if (!old.isEmpty()) {
                     giveOrDropItem(old, player);
                 }
             }
         }
 
         timeout = 2400;
-        IBlockState state = worldObj.getBlockState(getPos());
-        worldObj.notifyBlockUpdate(getPos(), state, state, 3);
+        IBlockState state = world.getBlockState(getPos());
+        world.notifyBlockUpdate(getPos(), state, state, 3);
         markDirty();
     }
 
@@ -146,8 +155,8 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         InventoryCrafting craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, worldObj);
-            if (mresult != null) {
+            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, world);
+            if (!mresult.isEmpty()) {
                 result = mresult;
                 return;
             }
@@ -155,14 +164,14 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
             rotateItems(craftMatrix);
         }
 
-        result = null;
+        result = ItemStack.EMPTY;
     }
 
     private void giveOrDropItem(ItemStack stack, EntityPlayer player) {
         if (player.inventory.addItemStackToInventory(stack)) {
             player.inventoryContainer.detectAndSendChanges();
         } else {
-            InventoryUtils.dropItem(stack, worldObj, Vector3.fromTileCenter(this));
+            ItemUtils.dropItem(stack, world, Vector3.fromTileCenter(this));
         }
     }
 
@@ -170,8 +179,8 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         InventoryCrafting craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, worldObj);
-            if (mresult != null) {
+            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, world);
+            if (!mresult.isEmpty()) {
                 doCraft(mresult, craftMatrix, player);
                 break;
             }
@@ -180,7 +189,7 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         }
         player.swingArm(EnumHand.MAIN_HAND);
         dropItems();
-        worldObj.setBlockToAir(getPos());
+        world.setBlockToAir(getPos());
     }
 
     private InventoryCrafting getCraftMatrix() {
@@ -202,11 +211,11 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         giveOrDropItem(mresult, player);
 
         FMLCommonHandler.instance().firePlayerCraftingEvent(player, mresult, craftMatrix);
-        mresult.onCrafting(worldObj, player, mresult.stackSize);
+        mresult.onCrafting(world, player, mresult.getCount());
 
         for (int slot = 0; slot < 9; ++slot) {
             ItemStack stack = craftMatrix.getStackInSlot(slot);
-            if (stack == null) {
+            if (stack.isEmpty()) {
                 continue;
             }
 
@@ -214,9 +223,9 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
             if (stack.getItem().hasContainerItem(stack)) {
                 ItemStack container = stack.getItem().getContainerItem(stack);
 
-                if (container != null) {
+                if (!container.isEmpty()) {
                     if (container.isItemStackDamageable() && container.getItemDamage() > container.getMaxDamage()) {
-                        container = null;
+                        container = ItemStack.EMPTY;
                     }
 
                     craftMatrix.setInventorySlotContents(slot, container);
@@ -249,7 +258,7 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
 
     @Override
     public List<IndexedCuboid6> getIndexedCuboids() {
-        LinkedList<IndexedCuboid6> parts = new LinkedList<IndexedCuboid6>();
+        LinkedList<IndexedCuboid6> parts = new LinkedList<>();
 
         parts.add(new IndexedCuboid6(0, new Cuboid6(0, 0, 0, 1, 0.005, 1)));
 

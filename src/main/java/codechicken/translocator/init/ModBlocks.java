@@ -1,12 +1,11 @@
 package codechicken.translocator.init;
 
-import codechicken.lib.render.CCIconRegister;
 import codechicken.lib.model.ModelRegistryHelper;
+import codechicken.lib.render.CCIconRegister;
 import codechicken.translocator.block.BlockCraftingGrid;
 import codechicken.translocator.block.BlockTranslocator;
 import codechicken.translocator.block.item.ItemTranslocator;
 import codechicken.translocator.client.render.TranslocatorItemRender;
-import codechicken.translocator.reference.Reference;
 import codechicken.translocator.reference.VariantReference;
 import codechicken.translocator.tile.TileCraftingGrid;
 import codechicken.translocator.tile.TileItemTranslocator;
@@ -29,6 +28,7 @@ public class ModBlocks {
     public static BlockCraftingGrid blockCraftingGrid;
 
     public static void init() {
+
         blockTranslocator = new BlockTranslocator();
         blockTranslocator.setUnlocalizedName("translocator").setCreativeTab(CreativeTabs.REDSTONE);
         GameRegistry.register(blockTranslocator.setRegistryName("translocator"));
@@ -42,19 +42,19 @@ public class ModBlocks {
         GameRegistry.registerTileEntity(TileCraftingGrid.class, "craftingGrid");
     }
 
-    @SideOnly(Side.CLIENT)
+    @SideOnly (Side.CLIENT)
     public static void initModels() {
 
         for (int i = 0; i < VariantReference.translocatorNamesList.size(); i++) {
             String variant = VariantReference.translocatorNamesList.get(i);
-            ModelResourceLocation location = new ModelResourceLocation(Reference.MOD_PREFIX + "translocator", "type=" + variant);
+            ModelResourceLocation location = new ModelResourceLocation("translocator:translocator", "type=" + variant);
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(blockTranslocator), i, location);
         }
 
-        CCIconRegister.registerBlockTexture("translocator:craftingGrid");
+        CCIconRegister.registerBlockTexture("translocator:crafting_grid");
         ModelRegistryHelper.setParticleTexture(ModBlocks.blockCraftingGrid, new ResourceLocation("translocator", "blocks/craftingGrid"));
 
-        ModelRegistryHelper.register(new ModelResourceLocation(Reference.MOD_PREFIX + "translocator", "type=item"), new TranslocatorItemRender());
-        ModelRegistryHelper.register(new ModelResourceLocation(Reference.MOD_PREFIX + "translocator", "type=liquid"), new TranslocatorItemRender());
+        ModelRegistryHelper.register(new ModelResourceLocation("translocator:translocator", "type=item"), new TranslocatorItemRender());
+        ModelRegistryHelper.register(new ModelResourceLocation("translocator:translocator", "type=liquid"), new TranslocatorItemRender());
     }
 }

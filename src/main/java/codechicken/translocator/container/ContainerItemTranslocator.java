@@ -1,8 +1,8 @@
 package codechicken.translocator.container;
 
-import codechicken.core.inventory.ContainerExtended;
-import codechicken.core.inventory.SlotDummy;
 import codechicken.lib.inventory.InventorySimple;
+import codechicken.lib.inventory.container.ContainerExtended;
+import codechicken.lib.inventory.container.SlotDummy;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocator.network.TranslocatorSPH;
 import net.minecraft.entity.player.EntityPlayerMP;

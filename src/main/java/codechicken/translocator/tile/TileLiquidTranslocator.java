@@ -1,6 +1,6 @@
 package codechicken.translocator.tile;
 
-import codechicken.core.fluid.FluidUtils;
+import codechicken.lib.fluid.FluidUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocator.network.TranslocatorSPH;
@@ -17,7 +17,9 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import java.util.*;
 
 public class TileLiquidTranslocator extends TileTranslocator {
+
     public class MovingLiquid {
+
         public int src;
         public int dst;
         public FluidStack liquid;
@@ -79,6 +81,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
     }
 
     private class LiquidTransfer {
+
         public LiquidTransfer(int src, int dst, FluidStack liquid) {
             key = src << 4 | dst;
             this.liquid = liquid;
@@ -93,14 +96,14 @@ public class TileLiquidTranslocator extends TileTranslocator {
         FluidStack liquid;
     }
 
-    public LinkedList<MovingLiquid> movingLiquids = new LinkedList<MovingLiquid>();
-    public LinkedList<MovingLiquid> exitingLiquids = new LinkedList<MovingLiquid>();
+    public LinkedList<MovingLiquid> movingLiquids = new LinkedList<>();
+    public LinkedList<MovingLiquid> exitingLiquids = new LinkedList<>();
 
     @Override
     public void update() {
         super.update();
 
-        if (worldObj.isRemote) {
+        if (world.isRemote) {
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
                 if (m.update()) {
@@ -109,11 +112,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
                 }
             }
 
-            for (Iterator<MovingLiquid> iterator = exitingLiquids.iterator(); iterator.hasNext(); ) {
-                if (iterator.next().update()) {
-                    iterator.remove();
-                }
-            }
+            exitingLiquids.removeIf(MovingLiquid::update);
         } else {
             BlockPos pos = new BlockPos(this.getPos());
             IFluidHandler[] attached = new IFluidHandler[6];
@@ -128,7 +127,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
                 }
 
                 BlockPos invpos = pos.offset(EnumFacing.VALUES[i]);
-                TileEntity tile = worldObj.getTileEntity(invpos);
+                TileEntity tile = world.getTileEntity(invpos);
                 if (!(tile.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, face.getOpposite()))) {
                     harvestPart(i, true);
                     continue;
@@ -136,7 +135,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
                 attached[i] = tile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, face.getOpposite());
             }
 
-            ArrayList<LiquidTransfer> transfers = new ArrayList<LiquidTransfer>();
+            ArrayList<LiquidTransfer> transfers = new ArrayList<>();
 
             for (int i = 0; i < 6; i++) {
                 Attachment a = attachments[i];
@@ -174,7 +173,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
 
             int fit = outaccess.fill(move, false);
             int spread = outputs.length - k;
-            fit = Math.min(fit, move.amount / spread + worldObj.rand.nextInt(move.amount % spread + 1));
+            fit = Math.min(fit, move.amount / spread + world.rand.nextInt(move.amount % spread + 1));
 
             if (fit == 0) {
                 continue;
@@ -211,14 +210,14 @@ public class TileLiquidTranslocator extends TileTranslocator {
             packet.writeByte(t.key);
             packet.writeFluidStack(t.liquid);
         }
-        packet.sendToChunk(worldObj, getPos().getX() >> 4, getPos().getZ() >> 4);
+        packet.sendToChunk(world, getPos().getX() >> 4, getPos().getZ() >> 4);
     }
 
     //@Override
     public void handlePacket(PacketCustom packet) {
         if (packet.getType() == 2) {
-            ArrayList<LiquidTransfer> transfers = new ArrayList<LiquidTransfer>();
-            HashSet<Integer> maintainingKeys = new HashSet<Integer>();
+            ArrayList<LiquidTransfer> transfers = new ArrayList<>();
+            HashSet<Integer> maintainingKeys = new HashSet<>();
 
             int k = packet.readUByte();
             for (int i = 0; i < k; i++) {
@@ -256,7 +255,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
     }
 
     public Iterable<MovingLiquid> movingLiquids() {
-        ArrayList<MovingLiquid> comp = new ArrayList<TileLiquidTranslocator.MovingLiquid>();
+        ArrayList<MovingLiquid> comp = new ArrayList<>();
         comp.addAll(movingLiquids);
         comp.addAll(exitingLiquids);
         return comp;
@@ -264,9 +263,9 @@ public class TileLiquidTranslocator extends TileTranslocator {
 
     @Override
     public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-    	if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
-		    return facing == null || attachments[facing.ordinal()] != null;
-	    }
+        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+            return facing == null || attachments[facing.ordinal()] != null;
+        }
         return super.hasCapability(capability, facing);
     }
 
@@ -274,13 +273,13 @@ public class TileLiquidTranslocator extends TileTranslocator {
     public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
         if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
             if (facing == null) {
-                final List<IFluidTankProperties> properties = new LinkedList<IFluidTankProperties>();
+                final List<IFluidTankProperties> properties = new LinkedList<>();
                 for (Attachment a : attachments) {
                     if (a != null) {
                         properties.add(new FluidTankProperties(null, 0));
                     }
                 }
-                return  CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(new DummyFluidCapability() {
+                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(new DummyFluidCapability() {
                     @Override
                     public IFluidTankProperties[] getTankProperties() {
                         return properties.toArray(new IFluidTankProperties[0]);
@@ -291,7 +290,7 @@ public class TileLiquidTranslocator extends TileTranslocator {
                 return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(new DummyFluidCapability() {
                     @Override
                     public IFluidTankProperties[] getTankProperties() {
-                        return new IFluidTankProperties[]{new FluidTankProperties(null, 0)};
+                        return new IFluidTankProperties[] { new FluidTankProperties(null, 0) };
                     }
                 });
             }

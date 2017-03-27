@@ -9,9 +9,9 @@
   },
   "variants": {
     "type": {
-      "diamondnugget": {
+      "diamond_nugget": {
         "textures": {
-          "layer0": "translocator:items/diamondNugget"
+          "layer0": "translocator:items/diamond_nugget"
         }
       }
     }

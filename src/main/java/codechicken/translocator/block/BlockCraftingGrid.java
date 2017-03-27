@@ -45,7 +45,7 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos) {
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos) {
         return NULL_AABB;
     }
 
@@ -79,7 +79,7 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public boolean isVisuallyOpaque() {
+    public boolean causesSuffocation(IBlockState state) {
         return false;
     }
 
@@ -101,7 +101,7 @@ public class BlockCraftingGrid extends Block {
 
     @Override
     public ArrayList<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
-        ArrayList<ItemStack> stacks = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> stacks = new ArrayList<>();
         TileCraftingGrid tcraft = (TileCraftingGrid) world.getTileEntity(pos);
         if (tcraft != null) {
             for (ItemStack item : tcraft.items) {
@@ -118,11 +118,11 @@ public class BlockCraftingGrid extends Block {
     public RayTraceResult collisionRayTrace(IBlockState blockState, World worldIn, BlockPos pos, Vec3d start, Vec3d end) {
         ICuboidProvider provider = (ICuboidProvider) worldIn.getTileEntity(pos);
         List<IndexedCuboid6> cuboids = provider.getIndexedCuboids();
-        return RayTracer.rayTraceCuboidsClosest(start, end, cuboids, pos);
+        return RayTracer.rayTraceCuboidsClosest(start, end, pos, cuboids);
     }
 
     @Override
-    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float hitX, float hitY, float hitZ) {
         if (world.isRemote) {
             return true;
         }
@@ -158,7 +158,7 @@ public class BlockCraftingGrid extends Block {
             return false;
         }
 
-        if (!world.canBlockBePlaced(this, pos, false, EnumFacing.UP, null, null)) {
+        if (!world.mayPlace(this, pos, false, EnumFacing.UP, null)) {
             return false;
         }
 
@@ -171,7 +171,7 @@ public class BlockCraftingGrid extends Block {
         return true;
     }
 
-    ThreadLocal<BlockPos> replaceCheck = new ThreadLocal<BlockPos>();
+    ThreadLocal<BlockPos> replaceCheck = new ThreadLocal<>();
 
     @Override
     public boolean isReplaceable(IBlockAccess world, BlockPos pos) {
@@ -180,7 +180,7 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn) {
+    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
         BlockPos beneath = pos.down();
         if (!world.isSideSolid(beneath, EnumFacing.UP, false)) {
             dropBlockAsItem(world, pos, state, 0);
