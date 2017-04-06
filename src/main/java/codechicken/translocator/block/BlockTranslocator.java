@@ -31,6 +31,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.IFluidHandler;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -81,11 +82,12 @@ public class BlockTranslocator extends Block {
     }
 
     public static boolean canExistOnSide(World world, BlockPos pos, EnumFacing side, int meta) {
+        TileEntity tileEntity = world.getTileEntity(pos.offset(side));
         switch (meta) {
         case 0:
-            return world.getTileEntity(pos.offset(side)) instanceof IInventory;
+            return  tileEntity instanceof IInventory;
         case 1:
-            return world.getTileEntity(pos.offset(side)) instanceof IFluidHandler;
+            return tileEntity != null && tileEntity.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side.getOpposite());
         }
         return false;
     }
