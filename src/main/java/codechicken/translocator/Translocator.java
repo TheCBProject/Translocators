@@ -1,7 +1,6 @@
 package codechicken.translocator;
 
 import codechicken.lib.CodeChickenLib;
-import codechicken.lib.internal.MigrationManager;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.proxy.Proxy;
 import net.minecraftforge.fml.common.Mod;
@@ -30,7 +29,6 @@ public class Translocator {
     public void preInit(FMLPreInitializationEvent event) {
 
         FingerprintChecker.runFingerprintChecks();
-        MigrationManager.registerMigrationHandler("Translocator", "translocator");
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
         proxy.preInit();
     }
