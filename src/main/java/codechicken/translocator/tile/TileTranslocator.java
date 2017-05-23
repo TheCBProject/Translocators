@@ -177,6 +177,10 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
             }
             return i;
         }
+
+        public boolean canConnectRedstone() {
+            return redstone;
+        }
     }
 
     public Attachment[] attachments = new Attachment[6];
@@ -342,7 +346,7 @@ public abstract class TileTranslocator extends TileEntity implements ICustomPack
 
     public boolean connectRedstone() {
         for (Attachment a : attachments) {
-            if (a != null && a.redstone) {
+            if (a != null && a.canConnectRedstone()) {
                 return true;
             }
         }

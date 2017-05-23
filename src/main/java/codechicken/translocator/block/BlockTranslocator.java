@@ -225,10 +225,20 @@ public class BlockTranslocator extends Block {
     }
 
     @Override
+    public boolean canProvidePower(IBlockState state) {
+        return true;
+    }
+
+    @Override
     public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
 
         TileTranslocator ttrans = (TileTranslocator) world.getTileEntity(pos);
         return ttrans != null && ttrans.connectRedstone();
+    }
+
+    @Override
+    public int getWeakPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side) {
+        return getStrongPower(blockState, blockAccess, pos, side);
     }
 
     @Override

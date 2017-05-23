@@ -60,7 +60,7 @@ public class TileItemTranslocator extends TileTranslocator {
         public boolean activate(EntityPlayer player, int subPart) {
 
             ItemStack held = player.inventory.getCurrentItem();
-            if (!held.isEmpty()) {
+            if (held.isEmpty()) {
                 return super.activate(player, subPart);
             } else if (ItemUtils.areStacksSameType(held, ConfigurationHandler.nugget) && !regulate) {
                 regulate = true;
@@ -195,6 +195,11 @@ public class TileItemTranslocator extends TileTranslocator {
             packet.writeBoolean(regulate);
             packet.writeBoolean(signal);
             packet.writeBoolean(a_powering);
+        }
+
+        @Override
+        public boolean canConnectRedstone() {
+            return super.canConnectRedstone() || signal;
         }
     }
 
@@ -530,7 +535,7 @@ public class TileItemTranslocator extends TileTranslocator {
     @Override
     public int strongPowerLevel(EnumFacing facing) {
 
-        ItemAttachment ia = (ItemAttachment) attachments[facing.ordinal() ^ 1];
+        ItemAttachment ia = (ItemAttachment) attachments[facing.ordinal()];
         if (ia != null && ia.a_powering) {
             return 15;
         }
