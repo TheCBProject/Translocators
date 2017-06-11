@@ -261,7 +261,6 @@ public class TileItemTranslocator extends TileTranslocator {
             movingItems.removeIf(MovingItem::update);
         } else {
             //move those items
-            BlockPos pos = new BlockPos(this.getPos());//TODO Change to BlockPos
             InventoryRange[] attached = new InventoryRange[6];
 
             for (int i = 0; i < 6; i++) {
