@@ -1,5 +1,5 @@
-tile.translocator|0.name=Přemisťovač předmětů
-tile.translocator|1.name=Přemisťovač tekutin
+item.translocators.part_item.name=Přemisťovač předmětů
+item.translocators.part_fluid.name=Přemisťovač tekutin
 tile.craftingGrid.name=Výrobní rámeček
 item.translocator:diamondNugget.name=Diamantová hrudka
 

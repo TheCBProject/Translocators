@@ -1,14 +1,14 @@
 buildscript {
-repositories {
-        jcenter()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
-    }
+	repositories {
+		jcenter()
+		maven {
+			name = "forge"
+			url = "http://files.minecraftforge.net/maven"
+		}
+	}
+	dependencies {
+		classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+	}
 }
 
 //add dependency repositories
@@ -32,124 +32,127 @@ sourceCompatibility = "1.8"
 ext.configFile = file "build.properties"
 
 configFile.withReader {
-    // Load config.  It shall from now be referenced as simply config or project.config
-    def prop = new Properties()
-    prop.load(it)
-    project.ext.config = new ConfigSlurper().parse prop
+	// Load config.  It shall from now be referenced as simply config or project.config
+	def prop = new Properties()
+	prop.load(it)
+	project.ext.config = new ConfigSlurper().parse prop
 }
 
 dependencies {
-    compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
+	compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
+	compile "codechicken:ForgeMultipart:${config.mc_version}-${config.fmp_version}:deobf"
 }
 
-version =  "${project.config.mod_version}." + System.getenv("BUILD_NUMBER") ?: "1"
+version = "${project.config.mod_version}." + System.getenv("BUILD_NUMBER") ?: "1"
 
-println  config.mc_version + "-" + config.forge_version
+println config.mc_version + "-" + config.forge_version
 // Setup the forge minecraft plugin data. Specify the preferred forge/minecraft version here
 minecraft {
-    version = config.mc_version + "-" + config.forge_version
-    mappings = config.mappings
+	version = config.mc_version + "-" + config.forge_version
+	mappings = config.mappings
 	makeObfSourceJar = false
 	runDir = "run"
 }
 
 processResources {
-    //redo task if any of these properties change
-    inputs.property "version", project.version
-    inputs.property "mc_version", config.mc_version
+	//redo task if any of these properties change
+	inputs.property "version", project.version
+	inputs.property "mc_version", config.mc_version
 
-    // Replace properties in info files
-    from(sourceSets.main.resources.srcDirs) {
-        include '*.info'
-        expand 'version':project.version,'mc_version':config.mc_version
-    }
-    // Copy everything else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'assets/**/*.*'
-    }
+	// Replace properties in info files
+	from(sourceSets.main.resources.srcDirs) {
+		include '*.info'
+		expand 'version': project.version, 'mc_version': config.mc_version
+	}
+	// Copy everything else
+	from(sourceSets.main.resources.srcDirs) {
+		include 'assets/**/*.*'
+	}
 }
 
 version = "${project.minecraft.version}-${project.version}"
 def commonManifest = {
-    attributes 'CCTransformerExclusions' : 'codechicken.translocator.FingerprintChecker'
+	attributes 'CCTransformerExclusions': 'codechicken.translocator.FingerprintChecker'
 }
 
 jar {
-    classifier = 'universal'
-    manifest commonManifest
+	classifier = 'universal'
+	manifest commonManifest
 }
 
 task srcJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
+	from sourceSets.main.allSource
+	classifier = 'sources'
 }
 
 task deobfJar(type: Jar) {
-    from sourceSets.main.output
-    classifier = 'deobf'
-    manifest commonManifest
+	from sourceSets.main.output
+	classifier = 'deobf'
+	manifest commonManifest
 }
 
 
 task signJar(type: SignJar, dependsOn: reobfJar) {
-    onlyIf { // Skip the task if our secret data isn't available
-        project.hasProperty('keyStore')
-    }
+	onlyIf { // Skip the task if our secret data isn't available
+		project.hasProperty('keyStore')
+	}
 
-    keyStore = project.keyStore // This needs to be a path to the keystore file
-    alias = project.keyStoreAlias
-    storePass = project.keyStorePass
-    keyPass = project.keyStoreKeyPass
-    inputFile = jar.archivePath
-    outputFile = jar.archivePath
+	keyStore = project.keyStore // This needs to be a path to the keystore file
+	alias = project.keyStoreAlias
+	storePass = project.keyStorePass
+	keyPass = project.keyStoreKeyPass
+	inputFile = jar.archivePath
+	outputFile = jar.archivePath
 }
 
 build.dependsOn signJar
 
 // Tell the artifact system about our extra jars
 artifacts {
-    archives srcJar, deobfJar
+	archives srcJar, deobfJar
 }
 
 // Configure an upload task.
 uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "file://${local_maven}")
-            pom {
-                groupId = project.group
-                version = project.version
-                artifactId = project.archivesBaseName
-                project {
-                    name project.archivesBaseName
-                    packaging 'jar'
-                    description 'Translocator'
-                    url 'https://github.com/TheCBProject/Translocators'
-                    scm {
-                        url 'https://github.com/TheCBProject/Translocators'
-                        connection 'scm:git:git@github.com:TheCBProject/Translocators.git'
-                        developerConnection 'scm:git:git@github.com:TheCBProject/Translocators.git'
-                    }
-                    issueManagement {
-                        system 'github'
-                        url 'https://github.com/TheCBProject/Translocators/issues'
-                    }
-                    licenses {
-                        license {
-                            name 'License'
-                            url 'https://raw.githubusercontent.com/TheCBProject/Translocators/master/LICENSE.txt'
-                            distribution 'repo'
-                        }
-                    }
-                    developers {
-						developer {
-                            id 'chicken-bones'
-                            name 'chicken-bones'
-                            roles { role 'developer' }
-                        }
-                    }
-                }
-            }
-        }
-    }
+	repositories {
+		mavenDeployer {
+			if (project.hasProperty("local_maven")) {
+				repository(url: "file://${local_maven}")
+				pom {
+					groupId = project.group
+					version = project.version
+					artifactId = project.archivesBaseName
+					project {
+						name project.archivesBaseName
+						packaging 'jar'
+						description 'Translocator'
+						url 'https://github.com/TheCBProject/Translocators'
+						scm {
+							url 'https://github.com/TheCBProject/Translocators'
+							connection 'scm:git:git@github.com:TheCBProject/Translocators.git'
+							developerConnection 'scm:git:git@github.com:TheCBProject/Translocators.git'
+						}
+						issueManagement {
+							system 'github'
+							url 'https://github.com/TheCBProject/Translocators/issues'
+						}
+						licenses {
+							license {
+								name 'License'
+								url 'https://raw.githubusercontent.com/TheCBProject/Translocators/master/LICENSE.txt'
+								distribution 'repo'
+							}
+						}
+						developers {
+							developer {
+								id 'chicken-bones'
+								name 'chicken-bones'
+								roles { role 'developer' }
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

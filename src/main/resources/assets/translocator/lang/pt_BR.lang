@@ -1,5 +1,5 @@
-tile.translocator|0.name=Translocador de Itens
-tile.translocator|1.name=Translocador de Líquidos
+item.translocators.part_item.name=Translocador de Itens
+item.translocators.part_fluid.name=Translocador de Líquidos
 tile.craftingGrid.name=Grade de Trabalho
 item.translocator:diamondNugget.name=Pepita de Diamante
 

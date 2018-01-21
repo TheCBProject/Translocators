@@ -2,11 +2,13 @@ package codechicken.translocator.proxy;
 
 import codechicken.lib.internal.ModDescriptionEnhancer;
 import codechicken.lib.packet.PacketCustom;
+import codechicken.lib.texture.TextureUtils;
 import codechicken.translocator.client.render.TileCraftingGridRenderer;
 import codechicken.translocator.client.render.TileTranslocatorRenderer;
 import codechicken.translocator.handler.CraftingGridKeyHandler;
 import codechicken.translocator.init.ModBlocks;
 import codechicken.translocator.init.ModItems;
+import codechicken.translocator.init.TranslocatorTextures;
 import codechicken.translocator.network.TranslocatorCPH;
 import codechicken.translocator.tile.TileCraftingGrid;
 import codechicken.translocator.tile.TileItemTranslocator;
@@ -22,6 +24,7 @@ public class ProxyClient extends Proxy {
         super.preInit();
         ModItems.initModels();
         ModBlocks.initModels();
+        TextureUtils.addIconRegister(new TranslocatorTextures());
     }
 
     public void init() {

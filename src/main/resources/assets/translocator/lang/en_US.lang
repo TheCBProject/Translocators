@@ -1,5 +1,5 @@
-tile.translocator|0.name=Item Translocator
-tile.translocator|1.name=Liquid Translocator
+item.translocators.part_item.name=Item Translocator
+item.translocators.part_fluid.name=Liquid Translocator
 tile.craftingGrid.name=Crafting Grid
 item.translocator:diamondNugget.name=Diamond Nugget
 

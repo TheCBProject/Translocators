@@ -16,7 +16,7 @@ public class Translocator {
     public static final String MOD_ID = "translocator";
     public static final String MOD_NAME = "Translocator";
     public static final String VERSION = "${mod_version}";
-    public static final String DEPENDENCIES = "required-after:codechickenlib@[" + CodeChickenLib.MOD_VERSION + ",)";
+    public static final String DEPENDENCIES = "required-after:codechickenlib@[" + CodeChickenLib.MOD_VERSION + ",);required-after:forgemultipartcbe";
     static final String UPDATE_URL = "http://chickenbones.net/Files/notification/version.php?query=forge&version=" + MC_VERSION + "&file=Translocator";
 
     @SidedProxy (clientSide = "codechicken.translocator.proxy.ProxyClient", serverSide = "codechicken.translocator.proxy.Proxy")
@@ -27,7 +27,6 @@ public class Translocator {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        FingerprintChecker.runFingerprintChecks();
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
         proxy.preInit();
     }

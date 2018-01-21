@@ -287,6 +287,7 @@ public class TileItemTranslocator extends TileTranslocator {
                 int largestQuantity = 0;
                 int largestSlot = 0;
                 InventoryRange access = attached[i];
+                //Find the largest stack and slot.
                 for (int slot : access.slots) {
                     ItemStack stack = access.inv.getStackInSlot(slot);
                     if (stack.isEmpty() || !access.canExtractItem(slot, stack) || stack.getCount() == 0)//stack size 0 hack
@@ -299,7 +300,7 @@ public class TileItemTranslocator extends TileTranslocator {
                         continue;
                     }
 
-                    quantity = Math.min(quantity, extractAmount(stack, ia, access));
+                    quantity = Math.min(quantity, extractableAmount(stack, ia, access));
                     if (quantity <= largestQuantity) {
                         continue;
                     }
@@ -313,15 +314,20 @@ public class TileItemTranslocator extends TileTranslocator {
                     largestQuantity = quantity;
                 }
 
+                //Move stuff from the largest slot.
                 if (largestQuantity > 0) {
+                    //Copy and mutate the stack.
                     ItemStack move = ItemUtils.copyStack(access.inv.getStackInSlot(largestSlot), largestQuantity);
+                    //Spread, prioritizing non redstone.
                     spreadOutput(move, i, false, attached);
                     spreadOutput(move, i, true, attached);
 
+                    //Decrement the actual slot.
                     InventoryUtils.decrStackSize(access.inv, largestSlot, largestQuantity - move.getCount());
                 }
             }
 
+            //Set power levels.
             boolean allSatisfied = true;
             for (int i = 0; i < 6; i++) {
                 ItemAttachment ia = (ItemAttachment) attachments[i];
@@ -395,14 +401,23 @@ public class TileItemTranslocator extends TileTranslocator {
         return false;
     }
 
+    /**
+     * Grabs the amount specified in the filter for the stack provided.
+     *
+     * @param ia The attachment to check the filter of.
+     * @param stack The stack to match against.
+     * @return The requested amount, -1 if none, 0 means there is a filter but the item doesnt match.
+     */
     private int filterCount(ItemAttachment ia, ItemStack stack) {
 
         boolean filterSet = false;
         int match = 0;
         for (ItemStack filter : ia.filters) {
             if (!filter.isEmpty()) {
+                //k, we are filtering.
                 filterSet = true;
                 if (matches(stack, filter)) {
+                    //Ok, inc match.
                     match += filter.getCount();
                 }
             }
@@ -413,6 +428,7 @@ public class TileItemTranslocator extends TileTranslocator {
 
     private void spreadOutput(ItemStack move, int src, boolean rspass, InventoryRange[] attached) {
 
+        //If there is nothing don't do the do.
         if (move.getCount() == 0) {
             return;
         }
@@ -451,12 +467,23 @@ public class TileItemTranslocator extends TileTranslocator {
         }
     }
 
-    private int countMatchingStacks(InventoryRange inv, ItemStack filter, boolean insertable) {
+    /**
+     * Counts the matching stacks.
+     * Checks for insertion or extraction.
+     *
+     * @param inv The inventory.
+     * @param filter What we are checking for.
+     * @param insert If we are checking for insertion or extraction.
+     * @return The total number of items of the specified filter type.
+     */
+    private int countMatchingStacks(InventoryRange inv, ItemStack filter, boolean insert) {
 
         int c = 0;
+        //For all the slots in the inventory.
         for (int slot : inv.slots) {
+            //Get the stack.
             ItemStack stack = inv.inv.getStackInSlot(slot);
-            if (!stack.isEmpty() && matches(filter, stack) && (insertable ? inv.canInsertItem(slot, stack) : inv.canExtractItem(slot, stack))) {
+            if (!stack.isEmpty() && matches(filter, stack) && (insert ? inv.canInsertItem(slot, stack) : inv.canExtractItem(slot, stack))) {
                 c += stack.getCount();
             }
         }
@@ -505,19 +532,34 @@ public class TileItemTranslocator extends TileTranslocator {
         return fit > 0 ? fit : 0;
     }
 
-    private int extractAmount(ItemStack stack, ItemAttachment ia, InventoryRange range) {
+    /**
+     * Gets the amount able to be extracted from the specified inventory.
+     *
+     * @param stack The stack we are counting.
+     * @param ia The attachment we are.
+     * @param range The inventory we are extracting from.
+     * @return The total extractable amount for the specified ItemStack.
+     */
+    private int extractableAmount(ItemStack stack, ItemAttachment ia, InventoryRange range) {
 
+        //Grab the filter.
         int filter = filterCount(ia, stack);
+        //If we have a filter but this doesnt match.
         if (filter == 0) {
+            //we are regulating, let it through, otherwise nope.
             return ia.regulate ? stack.getMaxStackSize() : 0;
         }
 
+        //If the filter doesnt match, max otherwise filter.
         int qty = filter < 0 ? stack.getMaxStackSize() : filter;
 
+        //If we are regulating and have a filter.
         if (ia.regulate && filter > 0) {
+            //count how many things we can extract.
             qty = Math.min(qty, countMatchingStacks(range, stack, false) - filter);
         }
 
+        //Clamp at 0.
         return qty > 0 ? qty : 0;
     }
 

@@ -184,7 +184,7 @@ public class BlockTranslocator extends Block {
         if (provider != null) {
             for (IndexedCuboid6 cb : provider.getIndexedCuboids()) {
                 AxisAlignedBB aabb = cb.aabb();
-                if (aabb.intersectsWith(entityBox)) {
+                if (aabb.intersects(entityBox)) {
                     collidingBoxes.add(aabb);
                 }
             }
@@ -218,7 +218,7 @@ public class BlockTranslocator extends Block {
     }
 
     @Override
-    public void getSubBlocks(Item item, CreativeTabs creativeTab, NonNullList<ItemStack> list) {
+    public void getSubBlocks(CreativeTabs creativeTab, NonNullList<ItemStack> list) {
 
         list.add(new ItemStack(this, 1, 0));
         list.add(new ItemStack(this, 1, 1));

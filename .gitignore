@@ -1,10 +1,8 @@
-#Stolen form AE2 Repo. :D
-# exclude all
-
+#Exclude all the things!
 /*
 
-# Include important folders
 
+#Add back the things that matter.
 # Gradle stuff
 !gradle/
 !gradlew
@@ -17,6 +15,7 @@
 !LICENSE.txt
 !README.md
 !curse_upload.json
+!name_textures.py
 
 # Include git important files
 !.gitmodules

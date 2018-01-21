@@ -21,6 +21,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -155,9 +156,9 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         InventoryCrafting craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, world);
-            if (!mresult.isEmpty()) {
-                result = mresult;
+            IRecipe mresult = CraftingManager.findMatchingRecipe(craftMatrix, world);
+            if (mresult != null) {
+                result = mresult.getCraftingResult(craftMatrix);
                 return;
             }
 
@@ -179,9 +180,9 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         InventoryCrafting craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            ItemStack mresult = CraftingManager.getInstance().findMatchingRecipe(craftMatrix, world);
-            if (!mresult.isEmpty()) {
-                doCraft(mresult, craftMatrix, player);
+            IRecipe mresult = CraftingManager.findMatchingRecipe(craftMatrix, world);
+            if (mresult != null) {
+                doCraft(mresult.getCraftingResult(craftMatrix), craftMatrix, player);
                 break;
             }
 

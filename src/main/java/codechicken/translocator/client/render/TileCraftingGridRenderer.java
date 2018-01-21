@@ -8,8 +8,8 @@ import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocator.tile.TileCraftingGrid;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -19,14 +19,14 @@ import org.lwjgl.opengl.GL11;
 public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraftingGrid> {
 
     @Override
-    public void renderTileEntityAt(TileCraftingGrid tcraft, double x, double y, double z, float partialTicks, int destroyStage) {
+    public void render(TileCraftingGrid tcraft, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 
         TextureUtils.bindBlockTexture();
         TextureUtils.dissableBlockMipmap();
         TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocator:crafting_grid");
 
         CCRenderState ccrs = CCRenderState.instance();
-        VertexBuffer buffer = ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        BufferBuilder buffer = ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
         buffer.setTranslation(x, y + 0.001, z);
         buffer.pos(1, 0, 0).tex(icon.getMinU(), icon.getMinV()).normal(0, 1, 0).endVertex();
         buffer.pos(0, 0, 0).tex(icon.getMinU(), icon.getMaxV()).normal(0, 1, 0).endVertex();

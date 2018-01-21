@@ -1,5 +1,5 @@
-tile.translocator|0.name=Предметный транслокатор
-tile.translocator|1.name=Жидкостный транслокатор
+item.translocators.part_item.name=Предметный транслокатор
+item.translocators.part_fluid.name=Жидкостный транслокатор
 tile.craftingGrid.name=Сетка создания
 item.translocator:diamondNugget.name=Алмазный самородок
 

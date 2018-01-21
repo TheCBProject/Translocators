@@ -14,8 +14,8 @@ import codechicken.lib.vec.Vector3;
 import codechicken.translocator.tile.TileItemTranslocator;
 import codechicken.translocator.tile.TileLiquidTranslocator;
 import codechicken.translocator.tile.TileTranslocator;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -64,7 +64,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
     }
 
     @Override
-    public void renderTileEntityAt(TileTranslocator ttrans, double x, double y, double z, float partialTicks, int destroyStage) {
+    public void render(TileTranslocator ttrans, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 
         double time = ClientUtils.getRenderTime();
         CCRenderState ccrs = CCRenderState.instance();
@@ -134,7 +134,7 @@ public class TileTranslocatorRenderer extends TileEntitySpecialRenderer<TileTran
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
-        VertexBuffer vertexBuffer = ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
+        BufferBuilder vertexBuffer = ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
         vertexBuffer.setTranslation(x, y, z);
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };

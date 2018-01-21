@@ -18,6 +18,13 @@ public class GuiTranslocator extends GuiContainer {
     }
 
     @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
+        super.drawScreen(mouseX, mouseY, partialTicks);
+        renderHoveredToolTip(mouseX, mouseY);
+    }
+
+    @Override
     protected void drawGuiContainerBackgroundLayer(float f, int i, int j) {
         GlStateManager.pushMatrix();
         GlStateManager.translate(guiLeft, guiTop, 0);
@@ -26,8 +33,8 @@ public class GuiTranslocator extends GuiContainer {
         TextureUtils.changeTexture("textures/gui/container/dispenser.png");
         drawTexturedModalRect(0, 0, 0, 0, xSize, ySize);
 
-        fontRendererObj.drawString(I18n.translateToLocal(((ContainerItemTranslocator) inventorySlots).getName()), 6, 6, 0x404040);
-        fontRendererObj.drawString(I18n.translateToLocal("container.inventory"), 6, 72, 0x404040);
+        fontRenderer.drawString(I18n.translateToLocal(((ContainerItemTranslocator) inventorySlots).getName()), 6, 6, 0x404040);
+        fontRenderer.drawString(I18n.translateToLocal("container.inventory"), 6, 72, 0x404040);
         GlStateManager.popMatrix();
     }
 
@@ -35,6 +42,6 @@ public class GuiTranslocator extends GuiContainer {
     public void drawSlotItem(Slot par1Slot, ItemStack itemstack, int i, int j, String s) {
         itemRender.renderItemAndEffectIntoGUI(itemstack, i, j);
         FontUtils.drawItemQuantity(i, j, itemstack, null, 0);
-        itemRender.renderItemOverlayIntoGUI(fontRendererObj, ItemUtils.copyStack(itemstack, 1), i, j, null);
+        itemRender.renderItemOverlayIntoGUI(fontRenderer, ItemUtils.copyStack(itemstack, 1), i, j, null);
     }
 }
