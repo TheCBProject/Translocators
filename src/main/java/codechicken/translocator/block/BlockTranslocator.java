@@ -40,6 +40,7 @@ import java.util.Random;
 
 import static codechicken.translocator.reference.VariantReference.translocatorNamesList;
 
+@Deprecated
 public class BlockTranslocator extends Block {
 
     private static final PropertyString VARIANTS = new PropertyString("type", translocatorNamesList);

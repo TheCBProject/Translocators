@@ -1,0 +1,35 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"result": {
+		"item": "translocator:translocator_part",
+		"data": 0,
+		"count": 2
+	},
+	"pattern": [
+		"RER",
+		"IPI",
+		"RGR"
+	],
+	"key": {
+		"R": {
+			"type": "forge:ore_dict",
+			"ore": "dustRedstone"
+		},
+		"E": {
+			"type": "forge:ore_dict",
+			"ore": "enderpearl"
+		},
+		"I": {
+			"type": "forge:ore_dict",
+			"ore": "ingotIron"
+		},
+		"P": {
+			"type": "minecraft:item",
+			"item": "minecraft:piston"
+		},
+		"G": {
+			"type": "forge:ore_dict",
+			"ore": "ingotGold"
+		}
+	}
+}

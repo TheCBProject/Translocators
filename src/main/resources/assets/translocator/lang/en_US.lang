@@ -1,7 +1,7 @@
 item.translocators.part_item.name=Item Translocator
 item.translocators.part_fluid.name=Liquid Translocator
 tile.craftingGrid.name=Crafting Grid
-item.translocator:diamondNugget.name=Diamond Nugget
+item.translocator:diamond_nugget.name=Diamond Nugget
 
 translocator.regulate=Regulate
 translocator.filter=Filter

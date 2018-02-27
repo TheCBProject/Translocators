@@ -19,9 +19,9 @@ public class ModItems {
     public static TranslocatorPartItem translocatorPart;
 
     public static void init() {
-        itemDiamondNugget = new Item().setUnlocalizedName("translocator:diamondNugget").setCreativeTab(CreativeTabs.MATERIALS);
+        itemDiamondNugget = new Item().setUnlocalizedName("translocator:diamond_nugget").setCreativeTab(CreativeTabs.MATERIALS);
         translocatorPart = new TranslocatorPartItem();
-        ForgeRegistries.ITEMS.register(itemDiamondNugget.setRegistryName("diamondNugget"));
+        ForgeRegistries.ITEMS.register(itemDiamondNugget.setRegistryName("diamond_nugget"));
         ForgeRegistries.ITEMS.register(translocatorPart);
         OreDictionary.registerOre("nuggetDiamond", itemDiamondNugget);
     }

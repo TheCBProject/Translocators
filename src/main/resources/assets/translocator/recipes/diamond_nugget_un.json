@@ -1,0 +1,46 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"result": {
+		"item": "minecraft:diamond",
+		"data": 0,
+		"count": 1
+	},
+	"ingredients": [
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		},
+		{
+			"type": "minecraft:item",
+			"item": "translocator:diamond_nugget"
+		}
+	]
+}

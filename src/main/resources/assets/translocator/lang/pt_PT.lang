@@ -1,7 +1,7 @@
 item.translocators.part_item.name=Translocador de Itens
 item.translocators.part_fluid.name=Translocador de Líquidos
 tile.craftingGrid.name=Grade de Trabalho
-item.translocator:diamondNugget.name=Pepita de Diamante
+item.translocator:diamond_nugget.name=Pepita de Diamante
 
 translocator.regulate=Regular
 translocator.filter=Filtrar

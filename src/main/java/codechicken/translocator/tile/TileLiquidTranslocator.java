@@ -16,6 +16,7 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 import java.util.*;
 
+@Deprecated
 public class TileLiquidTranslocator extends TileTranslocator {
 
     public class MovingLiquid {

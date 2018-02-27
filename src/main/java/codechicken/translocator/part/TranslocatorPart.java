@@ -21,6 +21,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ITickable;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart, TFacePart, TNormalOcclusionPart, ITickable {
+public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart, TFacePart, TNormalOcclusionPart, ITickable, TDynamicRenderPart, TFastRenderPart {
 
     public static Cuboid6 base = new Cuboid6(3 / 16D, 0, 3 / 16D, 13 / 16D, 2 / 16D, 13 / 16D);
     public static Cuboid6[] boxes = new Cuboid6[6];
@@ -388,14 +390,10 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    public void renderDynamic(Vector3 pos, int pass, float frame) {
-        RenderTranslocator.renderDynamic(this, pos, frame);
-    }
-
-    @Override
+    @SideOnly(Side.CLIENT)
     public boolean renderStatic(Vector3 pos, BlockRenderLayer layer, CCRenderState ccrs) {
         if (layer == BlockRenderLayer.SOLID) {
-            RenderTranslocator.renderWorld(ccrs, this, pos);
+            RenderTranslocator.renderStatic(ccrs, this, pos);
             return true;
         }
         return false;
@@ -408,5 +406,30 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Cuboid6 getRenderBounds() {
+        return getBounds();
+    }
+
+    @Override
+    public void renderDynamic(Vector3 pos, int pass, float frame) {
+        RenderTranslocator.renderDynamic(this, pos, frame);
+    }
+
+    @Override
+    public boolean canRenderDynamic(int pass) {
+        return pass == 0 && a_eject;
+    }
+
+    @Override
+    public void renderFast(CCRenderState ccrs, Vector3 pos, int pass, float frameDelta) {
+        RenderTranslocator.renderFast(ccrs, this, pos, frameDelta);
+    }
+
+    @Override
+    public boolean canRenderFast(int pass) {
+        return pass == 0;
     }
 }

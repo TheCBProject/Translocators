@@ -3,6 +3,7 @@ package codechicken.translocator.client.render;
 import codechicken.lib.colour.Colour;
 import codechicken.lib.colour.CustomGradient;
 import codechicken.lib.lighting.LightModel;
+import codechicken.lib.lighting.PlanarLightModel;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.CCModel;
 import codechicken.lib.render.CCRenderState;
@@ -25,7 +26,6 @@ import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -33,7 +33,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
 
-import javax.vecmath.Matrix4f;
 import java.util.Map;
 
 import static codechicken.lib.vec.Rotation.sideRotations;
@@ -78,12 +77,21 @@ public class RenderTranslocator {
         }
     }
 
-    public static void renderWorld(CCRenderState ccrs, TranslocatorPart p, Vector3 pos) {
+    public static void renderStatic(CCRenderState ccrs, TranslocatorPart p, Vector3 pos) {
         Vector3 trans = pos.copy().add(Vector3.center);
         IconTransformation i_trans = new IconTransformation(TEXTURES[p.getTType()][p.getIconIndex()]);
         ccrs.reset();
-        ccrs.pullLightmap();
+        ccrs.setBrightness(p.world(), p.pos());
         plates[p.side].render(ccrs, trans.translation(), i_trans);
+    }
+
+    public static void renderFast(CCRenderState ccrs, TranslocatorPart p, Vector3 pos, float delta) {
+        double insertpos = MathHelper.interpolate(p.b_insertpos, p.a_insertpos, delta);
+        IconTransformation i_trans = new IconTransformation(TEXTURES[p.getTType()][p.getIconIndex()]);
+        Matrix4 matrix = new Matrix4().translate(pos.copy().add(Vector3.center)).apply(sideRotations[p.side]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, insertpos * 2 / 3 + 1 / 3D, 1));
+        ccrs.reset();
+        ccrs.setBrightness(p.world(), p.pos());
+        insert.render(ccrs, PlanarLightModel.standardLightModel, matrix, i_trans);
     }
 
     public static void renderItem(ItemStack stack) {
@@ -101,17 +109,6 @@ public class RenderTranslocator {
     public static void renderDynamic(TranslocatorPart p, Vector3 pos, float delta) {
         CCRenderState ccrs = CCRenderState.instance();
         double time = ClientUtils.getRenderTime();
-
-        //Render the insert.
-        TextureUtils.bindBlockTexture();
-        double insertpos = MathHelper.interpolate(p.b_insertpos, p.a_insertpos, delta);
-        IconTransformation i_trans = new IconTransformation(TEXTURES[p.getTType()][p.getIconIndex()]);
-        Matrix4 matrix = new Matrix4().translate(pos.copy().add(Vector3.center)).apply(sideRotations[p.side]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, insertpos * 2 / 3 + 1 / 3D, 1));
-        ccrs.reset();
-        ccrs.pullLightmap();
-        ccrs.startDrawing(0x07, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-        insert.render(ccrs, matrix, i_trans);
-        ccrs.draw();
 
         //Render the particles.
         TileMultipart tile = p.tile();
@@ -135,7 +132,6 @@ public class RenderTranslocator {
             ccrs.draw();
             GlStateManager.disableBlend();
             GlStateManager.enableLighting();
-
         }
     }
 

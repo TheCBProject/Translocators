@@ -1,14 +1,15 @@
 package codechicken.translocator.handler;
 
-import codechicken.lib.config.ConfigFile;
-import codechicken.lib.config.ConfigTag;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
+import codechicken.lib.configuration.ConfigFile;
+import codechicken.lib.configuration.ConfigFile.ConfigException;
+import codechicken.lib.configuration.ConfigTag;
+import codechicken.translocator.init.ModItems;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
-import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
@@ -17,47 +18,62 @@ import java.io.File;
  */
 public class ConfigurationHandler {
 
+    private static final Logger logger = LogManager.getLogger("Translocator");
+
     private static boolean initialized;
 
     public static ConfigFile config;
-    public static boolean clientCheckUpdates;
+    private static File cFile;
     public static boolean disableCraftingGrid;
     public static ItemStack nugget;
 
     public static void init(File file) {
+        cFile = file;
         if (!initialized) {
-            config = new ConfigFile(file).setComment("Translocator Configuration File\n" + "Deleting any element will restore it to it's default value");
+            config = new ConfigFile(file, false);
             initialized = true;
         }
     }
 
     public static void loadConfig() {
-        clientCheckUpdates = config.getTag("clientUpdateCheck").getBooleanValue(true);
-        disableCraftingGrid = config.getTag("disableCraftingGrid").setComment("Setting this to true will disable the placement of the CraftingGrid.").getBooleanValue(false);
-
-        ConfigTag tag = config.getTag("nuggetReplacement").setComment("The name of the item used to set the Translocator to filter mode. Diamond Nugget by default. Format <modid>:<registeredItemName>|<meta>, Meta can be replaced with \"WILD\"");
-        String name = tag.getValue("translocator:diamondNugget|0");
-        Item item;
-        int meta;
         try {
-            int pipeIndex = name.lastIndexOf("|");
-            item = Item.REGISTRY.getObject(new ResourceLocation(name.substring(0, pipeIndex)));
-            if (item == null) {
-                throw new Exception("Item does not exist!");
+            config.load();
+        } catch (ConfigException ignored) {
+            //Old config! Migrate.
+            try {
+                logger.warn("Found old translocators config, Attempting migration.");
+                codechicken.lib.config.ConfigFile oldConfig = new codechicken.lib.config.ConfigFile(cFile);
+                config.getTag("disable_crafting_grid").setBoolean(oldConfig.getTag("disableCraftingGrid").getBooleanValue(false));
+                String old = oldConfig.getTag("nuggetReplacement").getValue();
+                ConfigTag filterTag = config.getTag("filter_item");
+                int pipe = old.lastIndexOf("|");
+                String meta = old.substring(pipe + 1);
+                filterTag.getTag("registry_name").setString(old.substring(0, pipe));
+                filterTag.getTag("meta").setInt(meta.equalsIgnoreCase("WILD") ? OreDictionary.WILDCARD_VALUE : Integer.parseInt(meta));
+                logger.info("Migration successful!");
+            } catch (Throwable t) {
+                logger.error("Failed to migrate Translocators config, Resetting to defaults.", t);
             }
-            String metaString = name.substring(pipeIndex + 1);
-            if (metaString.equalsIgnoreCase("WILD")) {
-                meta = OreDictionary.WILDCARD_VALUE;
-            } else {
-                meta = Integer.parseInt(metaString);
-            }
-        } catch (Exception e) {
-            tag.setValue("translocator:diamondNugget|0");
-            FMLLog.log("Translocators", Level.ERROR, e, "Failed to parse Nugget Replacement config entry, It has been reset to default.");
-            //LogHelper.error("Failed to parse PersonalItem config entry, It has been reset to default. Reason: %s", e.getMessage());
-            item = Items.DIAMOND;
-            meta = 0;
         }
-        nugget = new ItemStack(item, 1, meta);
+
+        ConfigTag grid = config.getTag("disable_crafting_grid").setComment("Setting this to true will disable the placement of the CraftingGrid.");
+        disableCraftingGrid = grid.setDefaultBoolean(false).getBoolean();
+
+        ConfigTag filterItem = config.getTag("filter_item").setComment("Allows controlling what item is used to attach filtering mode.");
+        {
+            ConfigTag itemTag = filterItem.getTag("registry_name").setDefaultString(ModItems.itemDiamondNugget.getRegistryName().toString());
+            ConfigTag metaTag = filterItem.getTag("meta").setComment("Use '32767' for wild card.");
+            ResourceLocation name = new ResourceLocation(itemTag.getString());
+            int meta = metaTag.setDefaultInt(0).getInt();
+            if (!ForgeRegistries.ITEMS.containsKey(name)) {
+                logger.error("Unable to locate item {}, Resetting to default.", name);
+                name = ModItems.itemDiamondNugget.getRegistryName();
+                meta = 0;
+                itemTag.setString(name.toString());
+                metaTag.setInt(meta);
+            }
+            nugget = new ItemStack(ForgeRegistries.ITEMS.getValue(name), 1, meta);
+        }
+        config.save();
     }
 }

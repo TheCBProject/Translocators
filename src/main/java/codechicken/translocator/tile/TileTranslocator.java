@@ -31,6 +31,7 @@ import java.util.List;
 import static codechicken.lib.vec.Rotation.sideRotations;
 import static codechicken.lib.vec.Vector3.center;
 
+@Deprecated
 public abstract class TileTranslocator extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
     public class Attachment {
         public final int side;

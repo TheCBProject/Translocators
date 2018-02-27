@@ -11,6 +11,7 @@ import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
 import codechicken.lib.vec.Vector3;
+import codechicken.multipart.IRedstonePart;
 import codechicken.multipart.TMultiPart;
 import codechicken.translocator.client.render.RenderTranslocator;
 import codechicken.translocator.container.ContainerItemTranslocator;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public class ItemTranslocatorPart extends TranslocatorPart {
+public class ItemTranslocatorPart extends TranslocatorPart implements IRedstonePart {
 
     public boolean regulate;
     public boolean signal;
@@ -133,22 +134,29 @@ public class ItemTranslocatorPart extends TranslocatorPart {
                     sendTransferPacket(transfers);
                 }
             }
-
-            //TODO, This needs to either go away or be heavily optimized.
-//            if (!a_eject) {
-//                setPowering(isSatisfied(handle));
-//            } else if (signal) {
-//                IItemHandler[] handlers = new IItemHandler[6];
-//                IItemHandler myHandler = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[side]), side ^ 1);
-//                for (int i = 0; i < 6; i++) {
-//                    if (i == side) {
-//                        handlers[i] = myHandler;
-//                        continue;
-//                    }
-//                    handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
-//                }
-//                setPowering(isSatisfied(myHandler) || !canTransferFilter(myHandler, handlers));
-//            }
+            if (signal) {
+                IItemHandler[] handlers = new IItemHandler[6];
+                for (int i = 0; i < 6; i++) {
+                    handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                }
+                if (a_eject) {
+                    boolean allSatisfied = true;
+                    for (int i = 0; i < 6; i++) {
+                        TMultiPart other = tile().partMap(i);
+                        if (other instanceof ItemTranslocatorPart) {
+                            ItemTranslocatorPart otherPart = (ItemTranslocatorPart) other;
+                            if (!otherPart.a_eject) {
+                                if (!otherPart.isSatisfied(handlers[i])) {
+                                    allSatisfied = false;
+                                }
+                            }
+                        }
+                    }
+                    setPowering(allSatisfied);
+                } else {
+                    setPowering(!canTransferFilter(handlers[side], handlers));
+                }
+            }
         }
     }
 
@@ -222,7 +230,7 @@ public class ItemTranslocatorPart extends TranslocatorPart {
                 if (!part.canEject() && part.redstone == rspass && i != side) {
                     outputQuantities[i] = getInsertableAmount(move, part, attached[i]);
                     if (outputQuantities[i] > 0) {
-                        outputCount ++;
+                        outputCount++;
                     }
                 }
             }
@@ -469,6 +477,26 @@ public class ItemTranslocatorPart extends TranslocatorPart {
     public void renderDynamic(Vector3 pos, int pass, float frame) {
         RenderTranslocator.renderItem(this, pos, frame);
         super.renderDynamic(pos, pass, frame);
+    }
+
+    @Override
+    public boolean canRenderDynamic(int pass) {
+        return super.canRenderDynamic(pass) || (pass == 0 && !movingItems.isEmpty());
+    }
+
+    @Override
+    public int strongPowerLevel(int side) {
+        return a_powering && side == this.side ? 15 : 0;
+    }
+
+    @Override
+    public int weakPowerLevel(int side) {
+        return 0;
+    }
+
+    @Override
+    public boolean canConnectRedstone(int side) {
+        return redstone;
     }
 
     public class MovingItem {

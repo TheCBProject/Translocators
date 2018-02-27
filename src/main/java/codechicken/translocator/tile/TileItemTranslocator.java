@@ -27,6 +27,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Collection;
 import java.util.LinkedList;
 
+@Deprecated
 public class TileItemTranslocator extends TileTranslocator {
 
     public class ItemAttachment extends Attachment {
@@ -576,7 +577,7 @@ public class TileItemTranslocator extends TileTranslocator {
     @Override
     public int strongPowerLevel(EnumFacing facing) {
 
-        ItemAttachment ia = (ItemAttachment) attachments[facing.ordinal()];
+        ItemAttachment ia = (ItemAttachment) attachments[facing.ordinal() ^ 1];
         if (ia != null && ia.a_powering) {
             return 15;
         }
