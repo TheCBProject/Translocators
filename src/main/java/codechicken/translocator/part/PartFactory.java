@@ -23,7 +23,7 @@ public class PartFactory implements IPartFactory {
     }
 
     public static void init() {
-        MultiPartRegistry.registerParts(instance, parts.keySet().toArray(new ResourceLocation[0]));
+        MultiPartRegistry.registerParts(instance, parts.keySet());
     }
 
     @Override
