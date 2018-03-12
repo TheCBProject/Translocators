@@ -1,7 +1,7 @@
 [
 	{
-		"modid": "translocator",
-		"name": "Translocator",
+		"modid": "translocators",
+		"name": "Translocators",
 		"description": "Translocates stuff!",
 		"version": "${version}",
 		"mcversion": "${mc_version}",
