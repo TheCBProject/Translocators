@@ -3,7 +3,6 @@ package codechicken.translocators.proxy;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocators.init.ModBlocks;
 import codechicken.translocators.init.ModItems;
-import codechicken.translocators.init.Recipes;
 import codechicken.translocators.network.TranslocatorSPH;
 import codechicken.translocators.part.PartFactory;
 
