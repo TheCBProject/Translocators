@@ -17,7 +17,6 @@ public class ProxyClient extends Proxy {
 
     @Override
     public void preInit() {
-
         super.preInit();
         ModItems.initModels();
         ModBlocks.initModels();
@@ -25,9 +24,6 @@ public class ProxyClient extends Proxy {
     }
 
     public void init() {
-
-        ModDescriptionEnhancer.enhanceMod("translocator");
-
         super.init();
 
         ClientRegistry.bindTileEntitySpecialRenderer(TileCraftingGrid.class, new TileCraftingGridRenderer());

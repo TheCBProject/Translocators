@@ -1,9 +1,11 @@
 package codechicken.translocator;
 
 import codechicken.lib.CodeChickenLib;
+import codechicken.lib.internal.ModDescriptionEnhancer;
 import codechicken.translocator.handler.ConfigurationHandler;
 import codechicken.translocator.proxy.Proxy;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ModMetadata;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -18,7 +20,7 @@ public class Translocator {
     public static final String MOD_NAME = "Translocator";
     public static final String VERSION = "${mod_version}";
     public static final String DEPENDENCIES = CodeChickenLib.MOD_VERSION_DEP + "required-after:forgemultipartcbe";
-    static final String UPDATE_URL = "http://chickenbones.net/Files/notification/version.php?query=forge&version=" + MC_VERSION + "&file=Translocator";
+    static final String UPDATE_URL = "http://chickenbones.net/Files/notification/version.php?query=forge&version=" + MC_VERSION + "&file=Translocators";
 
     @SidedProxy (clientSide = "codechicken.translocator.proxy.ProxyClient", serverSide = "codechicken.translocator.proxy.Proxy")
     public static Proxy proxy;
@@ -30,11 +32,20 @@ public class Translocator {
     public void preInit(FMLPreInitializationEvent event) {
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
         proxy.preInit();
+        ModMetadata metadata = event.getModMetadata();
+        metadata.description = modifyDesc(metadata.description);
+        ModDescriptionEnhancer.registerEnhancement(MOD_ID, "Translocators");
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         ConfigurationHandler.loadConfig();
         proxy.init();
+    }
+
+    private static String modifyDesc(String desc) {
+        desc += "\n";
+        desc += "    Credits: MouseCop - Textures\n";
+        return desc;
     }
 }
