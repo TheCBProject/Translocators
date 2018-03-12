@@ -1,7 +1,7 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"result": {
-		"item": "translocator:diamond_nugget",
+		"item": "translocators:diamond_nugget",
 		"data": 0,
 		"count": 9
 	},

@@ -23,7 +23,7 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
         TextureUtils.bindBlockTexture();
         TextureUtils.dissableBlockMipmap();
-        TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocator:crafting_grid");
+        TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocators:crafting_grid");
 
         CCRenderState ccrs = CCRenderState.instance();
         BufferBuilder buffer = ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);

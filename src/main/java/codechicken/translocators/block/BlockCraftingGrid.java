@@ -3,7 +3,7 @@ package codechicken.translocators.block;
 import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.RayTracer;
-import codechicken.translocators.handler.ConfigurationHandler;
+import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.tile.TileCraftingGrid;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -140,7 +140,7 @@ public class BlockCraftingGrid extends Block {
     }
 
     public boolean placeBlock(World world, EntityPlayer player, BlockPos pos, EnumFacing side) {
-        if (ConfigurationHandler.disableCraftingGrid) {
+        if (ConfigHandler.disableCraftingGrid) {
             return false;
         }
 

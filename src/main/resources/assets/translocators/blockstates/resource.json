@@ -11,7 +11,7 @@
     "type": {
       "diamond_nugget": {
         "textures": {
-          "layer0": "translocator:items/diamond_nugget"
+          "layer0": "translocators:items/diamond_nugget"
         }
       }
     }

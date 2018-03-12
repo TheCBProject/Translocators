@@ -24,6 +24,6 @@ public class ModBlocks {
 
     @SideOnly (Side.CLIENT)
     public static void initModels() {
-        CCIconRegister.registerBlockTexture("translocator:crafting_grid");
+        CCIconRegister.registerBlockTexture("translocators:crafting_grid");
     }
 }

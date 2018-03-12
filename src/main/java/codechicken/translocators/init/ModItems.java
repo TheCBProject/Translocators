@@ -19,7 +19,7 @@ public class ModItems {
     public static TranslocatorPartItem translocatorPart;
 
     public static void init() {
-        itemDiamondNugget = new Item().setUnlocalizedName("translocator:diamond_nugget").setCreativeTab(CreativeTabs.MATERIALS);
+        itemDiamondNugget = new Item().setUnlocalizedName("translocators:diamond_nugget").setCreativeTab(CreativeTabs.MATERIALS);
         translocatorPart = new TranslocatorPartItem();
         ForgeRegistries.ITEMS.register(itemDiamondNugget.setRegistryName("diamond_nugget"));
         ForgeRegistries.ITEMS.register(translocatorPart);
@@ -28,7 +28,7 @@ public class ModItems {
 
     @SideOnly (Side.CLIENT)
     public static void initModels() {
-        ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocator:resource", "type=diamond_nugget"));
+        ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocators:resource", "type=diamond_nugget"));
         translocatorPart.initModels();
     }
 }

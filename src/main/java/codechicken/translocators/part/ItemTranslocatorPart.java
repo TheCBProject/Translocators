@@ -15,7 +15,7 @@ import codechicken.multipart.IRedstonePart;
 import codechicken.multipart.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.container.ContainerItemTranslocator;
-import codechicken.translocators.handler.ConfigurationHandler;
+import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.ModItems;
 import codechicken.translocators.network.TranslocatorSPH;
 import net.minecraft.entity.player.EntityPlayer;
@@ -354,7 +354,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             return true;
         }
         ItemStack stack = player.getHeldItem(hand);
-        if (ItemUtils.areStacksSameType(stack, ConfigurationHandler.nugget) && !regulate) {
+        if (ItemUtils.areStacksSameType(stack, ConfigHandler.nugget) && !regulate) {
             regulate = true;
             if (!player.capabilities.isCreativeMode) {
                 stack.shrink(1);
@@ -377,7 +377,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         super.stripModifiers();
         if (regulate) {
             regulate = false;
-            dropItem(ItemUtils.copyStack(ConfigurationHandler.nugget, 1));
+            dropItem(ItemUtils.copyStack(ConfigHandler.nugget, 1));
         }
         if (signal) {
             setPowering(false);
@@ -388,7 +388,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public void openGui(EntityPlayer player) {
-        openItemGui(player, filters, regulate ? "translocator.regulate" : "translocator.filter");
+        openItemGui(player, filters, regulate ? "translocators.regulate" : "translocators.filter");
     }
 
     private void openItemGui(EntityPlayer player, ItemStack[] filters, String string) {

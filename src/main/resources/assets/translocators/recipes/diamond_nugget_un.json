@@ -8,39 +8,39 @@
 	"ingredients": [
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		},
 		{
 			"type": "minecraft:item",
-			"item": "translocator:diamond_nugget"
+			"item": "translocators:diamond_nugget"
 		}
 	]
 }

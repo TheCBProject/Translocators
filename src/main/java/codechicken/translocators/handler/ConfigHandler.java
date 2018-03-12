@@ -16,9 +16,9 @@ import java.io.File;
 /**
  * Created by covers1624 on 5/17/2016.
  */
-public class ConfigurationHandler {
+public class ConfigHandler {
 
-    private static final Logger logger = LogManager.getLogger("Translocator");
+    private static final Logger logger = LogManager.getLogger("Translocators");
 
     private static boolean initialized;
 

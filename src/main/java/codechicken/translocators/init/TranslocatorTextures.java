@@ -16,7 +16,7 @@ public class TranslocatorTextures implements IIconRegister {
     public static TextureAtlasSprite[][] TEXTURES;
     public static TextureAtlasSprite missing;
 
-    private static final String BLOCKS_ = "translocator:blocks/";
+    private static final String BLOCKS_ = "translocators:blocks/";
     private static final String TRANSLOCATOR_ = BLOCKS_ + "translocator/";
     private static final String ITEM_ = TRANSLOCATOR_ + "item/";
     private static final String FLUID_ = TRANSLOCATOR_ + "fluid/";

@@ -1,7 +1,7 @@
 {
 	"type": "minecraft:crafting_shaped",
 	"result": {
-		"item": "translocator:translocator_part",
+		"item": "translocators:translocator_part",
 		"data": 1,
 		"count": 2
 	},

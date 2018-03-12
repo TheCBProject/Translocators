@@ -65,10 +65,10 @@ public class RenderTranslocator {
     private static CCModel[] plates = new CCModel[6];
     private static CCModel insert;
 
-    private static CustomGradient gradient = new CustomGradient(new ResourceLocation("translocator", "textures/fx/grad.png"));
+    private static CustomGradient gradient = new CustomGradient(new ResourceLocation("translocators", "textures/fx/grad.png"));
 
     static {
-        Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocator", "models/model_new.obj"), 0x07, new SwapYZ());
+        Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocators", "models/model_new.obj"), 0x07, new SwapYZ());
         plates[0] = models.get("Plate");
         insert = models.get("Insert");
         CCModel.generateSidedModels(plates, 0, new Vector3());
@@ -116,7 +116,7 @@ public class RenderTranslocator {
             GlStateManager.disableLighting();
             GlStateManager.enableBlend();
             GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            TextureUtils.changeTexture("translocator:textures/fx/particle.png");
+            TextureUtils.changeTexture("translocators:textures/fx/particle.png");
             ccrs.startDrawing(0x07, DefaultVertexFormats.POSITION_TEX_COLOR);
             for (int dst = 0; dst < 6; dst++) {
                 if (dst == p.side) {

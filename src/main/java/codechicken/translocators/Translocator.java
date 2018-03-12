@@ -2,7 +2,7 @@ package codechicken.translocators;
 
 import codechicken.lib.CodeChickenLib;
 import codechicken.lib.internal.ModDescriptionEnhancer;
-import codechicken.translocators.handler.ConfigurationHandler;
+import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.proxy.Proxy;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ModMetadata;
@@ -22,7 +22,7 @@ public class Translocator {
     public static final String DEPENDENCIES = CodeChickenLib.MOD_VERSION_DEP + "required-after:forgemultipartcbe";
     static final String UPDATE_URL = "http://chickenbones.net/Files/notification/version.php?query=forge&version=" + MC_VERSION + "&file=Translocators";
 
-    @SidedProxy (clientSide = "codechicken.translocator.proxy.ProxyClient", serverSide = "codechicken.translocator.proxy.Proxy")
+    @SidedProxy (clientSide = "codechicken.translocators.proxy.ProxyClient", serverSide = "codechicken.translocators.proxy.Proxy")
     public static Proxy proxy;
 
     @Mod.Instance (MOD_ID)
@@ -30,16 +30,16 @@ public class Translocator {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ConfigurationHandler.init(event.getSuggestedConfigurationFile());
+        ConfigHandler.init(event.getSuggestedConfigurationFile());
         proxy.preInit();
         ModMetadata metadata = event.getModMetadata();
         metadata.description = modifyDesc(metadata.description);
-        ModDescriptionEnhancer.registerEnhancement(MOD_ID, "Translocators");
+        ModDescriptionEnhancer.registerEnhancement(MOD_ID, MOD_NAME);
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        ConfigurationHandler.loadConfig();
+        ConfigHandler.loadConfig();
         proxy.init();
     }
 
