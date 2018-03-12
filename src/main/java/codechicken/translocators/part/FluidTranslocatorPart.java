@@ -176,9 +176,9 @@ public class FluidTranslocatorPart extends TranslocatorPart {
             updatedDests.add(dst);
         }
 
-        for(FluidTransfer t : transfers) {
+        for (FluidTransfer t : transfers) {
             boolean found = false;
-            for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext();) {
+            for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
                 if (m.liquid.isFluidEqual(t.fluid) && m.dst == t.dst) {
                     m.addLiquid(t.fluid.amount);

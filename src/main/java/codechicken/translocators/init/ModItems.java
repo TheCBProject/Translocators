@@ -26,7 +26,7 @@ public class ModItems {
         OreDictionary.registerOre("nuggetDiamond", itemDiamondNugget);
     }
 
-    @SideOnly(Side.CLIENT)
+    @SideOnly (Side.CLIENT)
     public static void initModels() {
         ModelLoader.setCustomModelResourceLocation(itemDiamondNugget, 0, new ModelResourceLocation("translocator:resource", "type=diamond_nugget"));
         translocatorPart.initModels();

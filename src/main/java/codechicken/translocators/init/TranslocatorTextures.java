@@ -107,7 +107,6 @@ public class TranslocatorTextures implements IIconRegister {
         FLUID_ICONS[0x01 | 0x08]               = register(FLUID_ + "fluid_10_0_1_00");
         //@formatter:on
 
-
         TEXTURES = new TextureAtlasSprite[][] { ITEM_ICONS, FLUID_ICONS };
 
     }

@@ -16,6 +16,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 public class CraftingGridKeyHandler extends KeyBinding {
+
     public static final CraftingGridKeyHandler instance = new CraftingGridKeyHandler();
     private boolean wasPressed = false;
 
@@ -24,7 +25,7 @@ public class CraftingGridKeyHandler extends KeyBinding {
     }
 
     @SubscribeEvent
-    @SideOnly(Side.CLIENT)
+    @SideOnly (Side.CLIENT)
     public void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;

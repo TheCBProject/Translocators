@@ -14,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import java.util.List;
 
 public class ContainerItemTranslocator extends ContainerExtended {
+
     IInventory inv;
 
     public ContainerItemTranslocator(InventorySimple inv, InventoryPlayer playerInv) {

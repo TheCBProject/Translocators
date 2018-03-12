@@ -390,7 +390,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
+    @SideOnly (Side.CLIENT)
     public boolean renderStatic(Vector3 pos, BlockRenderLayer layer, CCRenderState ccrs) {
         if (layer == BlockRenderLayer.SOLID) {
             RenderTranslocator.renderStatic(ccrs, this, pos);

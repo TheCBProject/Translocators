@@ -36,6 +36,7 @@ import java.util.List;
 import static codechicken.lib.vec.Vector3.center;
 
 public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
+
     public ItemStack[] items;
     public ItemStack result;
     public int rotation = 0;

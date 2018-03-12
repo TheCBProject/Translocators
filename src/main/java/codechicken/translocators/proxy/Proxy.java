@@ -12,7 +12,6 @@ public class Proxy {
     public void preInit() {
         ModBlocks.init();
         ModItems.init();
-        Recipes.init();
         PartFactory.init();
     }
 

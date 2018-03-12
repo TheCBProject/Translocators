@@ -92,7 +92,6 @@ public class TranslocatorPartItem extends JItemMultiPart {
         return super.getUnlocalizedName(stack) + "_" + name;
     }
 
-
     @SideOnly (Side.CLIENT)
     public void initModels() {
         ModelResourceLocation loc = new ModelResourceLocation(getRegistryName(), "inventory");
