@@ -127,10 +127,11 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                     }
                     ItemStack move = myHandler.extractItem(largestSlot, largestSize, true);
                     move = move.copy();
+                    int initialCount = move.getCount();
                     List<MovingItem> transfers = new ArrayList<>();
                     spreadOutput(move, false, handlers, transfers);
                     spreadOutput(move, true, handlers, transfers);
-                    myHandler.extractItem(largestSlot, largestSize - move.getCount(), false);
+                    myHandler.extractItem(largestSlot, initialCount - move.getCount(), false);
                     sendTransferPacket(transfers);
                 }
             }
@@ -251,11 +252,11 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
             IItemHandler handler = attached[dst];
             ItemStack add = ItemUtils.copyStack(move, qty);
-            ItemStack ret = InventoryUtils.insertItem(handler, add, false);
-            int consumed = ret.isEmpty() ? move.getCount() : ret.getCount();
-            move.shrink(consumed);
-
-            transfers.add(new MovingItem(dst, add));
+            ItemStack remain = InventoryUtils.insertItem(handler, add, false);
+            move.shrink(qty - remain.getCount());
+            add.shrink(remain.getCount());
+            if(!add.isEmpty())
+                transfers.add(new MovingItem(dst, add));
         }
     }
 
