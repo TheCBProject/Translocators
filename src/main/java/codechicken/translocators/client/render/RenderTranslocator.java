@@ -193,8 +193,7 @@ public class RenderTranslocator {
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
-        BufferBuilder vertexBuffer = ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
-        vertexBuffer.setTranslation(x, y, z);
+        ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
         Vector3[] next = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -231,10 +230,14 @@ public class RenderTranslocator {
                     double v1 = tex.getInterpolatedV(Math.abs(next[i].scalarProject(axis)) * 16);
                     double v2 = tex.getInterpolatedV(Math.abs(next[j].scalarProject(axis)) * 16);
 
-                    vertexBuffer.pos(next[i].x, next[i].y, next[i].z).tex(u1, v1).endVertex();
-                    vertexBuffer.pos(next[j].x, next[j].y, next[j].z).tex(u1, v2).endVertex();
-                    vertexBuffer.pos(last[j].x, last[j].y, last[j].z).tex(u2, v2).endVertex();
-                    vertexBuffer.pos(last[i].x, last[i].y, last[i].z).tex(u2, v1).endVertex();
+                    ccrs.vert.set(next[i], u1, v1).vec.add(x, y, z);
+                    ccrs.writeVert();
+                    ccrs.vert.set(next[j], u1, v2).vec.add(x, y, z);
+                    ccrs.writeVert();
+                    ccrs.vert.set(last[j], u2, v2).vec.add(x, y, z);
+                    ccrs.writeVert();
+                    ccrs.vert.set(last[i], u2, v1).vec.add(x, y, z);
+                    ccrs.writeVert();
                 }
             }
 
@@ -244,7 +247,6 @@ public class RenderTranslocator {
         }
 
         ccrs.draw();
-        vertexBuffer.setTranslation(0, 0, 0);
 
         RenderUtils.postFluidRender();
     }
