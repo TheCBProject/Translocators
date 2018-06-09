@@ -255,8 +255,9 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             ItemStack remain = InventoryUtils.insertItem(handler, add, false);
             move.shrink(qty - remain.getCount());
             add.shrink(remain.getCount());
-            if(!add.isEmpty())
+            if (!add.isEmpty()) {
                 transfers.add(new MovingItem(dst, add));
+            }
         }
     }
 
