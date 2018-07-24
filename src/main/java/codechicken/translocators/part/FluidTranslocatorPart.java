@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
 
 import java.util.*;
 
@@ -66,24 +67,20 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         } else {
             //If we can eject stuffs.
             if (a_eject) {
-                IFluidHandler myHandler;
                 IFluidHandler[] attached = new IFluidHandler[6];
-                myHandler = FluidUtils.getFluidHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[side]), side ^ 1);
+                for (int i = 0; i < 6; i++) {
+                    //Fill with empty if the translocator doesnt exist or is the incorrect type.
+                    if (canInsert(i) || i == side) {
+                        attached[i] = FluidUtils.getFluidHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                    } else {
+                        attached[i] = EmptyFluidHandler.INSTANCE;
+                    }
+                }
+                IFluidHandler myHandler = attached[side];
 
                 FluidStack drain = myHandler.drain(fast ? 1000 : 100, false);
                 //Check if we have any fluid to transfer.
                 if (drain != null && drain.amount != 0) {
-                    //All the caps! :D
-                    for (int i = 0; i < 6; i++) {
-                        if (i == side) {
-                            attached[i] = myHandler;
-                            continue;
-                        }
-                        EnumFacing f = EnumFacing.VALUES[i];
-                        TileEntity tile = world().getTileEntity(pos().offset(f));
-                        attached[i] = FluidUtils.getFluidHandlerOrEmpty(tile, f.getOpposite());
-                    }
-
                     List<FluidTransfer> transfers = new ArrayList<>();
                     FluidStack move = drain.copy();
                     spreadOutput(move, getOutputs(), attached, transfers);

@@ -193,7 +193,7 @@ public class RenderTranslocator {
         RenderUtils.preFluidRender();
         TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
 
-        ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX);
+        ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
         Vector3[] next = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };

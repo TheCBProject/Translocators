@@ -31,6 +31,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.EmptyHandler;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -94,8 +95,16 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         } else {
             if (a_eject) {
                 IItemHandler[] handlers = new IItemHandler[6];
-                IItemHandler myHandler = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[side]), side ^ 1);
-                //Find the largest stack in the inventory.
+                for (int i = 0; i < 6; i++) {
+                    //Fill with empty if the translocator doesnt exist or is the incorrect type.
+                    if (canInsert(i) || i == side) {
+                        handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                    } else {
+                        handlers[i] = EmptyHandler.INSTANCE;
+                    }
+                }
+                IItemHandler myHandler = handlers[side];
+                //Find the largest insertable stack in the inventory.
                 int largestSize = 0;
                 int largestSlot = 0;
                 for (int slot = 0; slot < myHandler.getSlots(); slot++) {
@@ -112,19 +121,16 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                         continue;
                     }
 
+                    size = Math.min(size, getInsertableAmount(stack, this, handlers));
+                    if (size <= largestSize) {
+                        continue;
+                    }
+
                     largestSlot = slot;
                     largestSize = size;
                 }
                 //Is it worth continuing?
                 if (largestSize > 0) {
-                    //Grab all the adjacent handlers.
-                    for (int i = 0; i < 6; i++) {
-                        if (i == side) {
-                            handlers[i] = myHandler;
-                            continue;
-                        }
-                        handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
-                    }
                     ItemStack move = myHandler.extractItem(largestSlot, largestSize, true);
                     move = move.copy();
                     int initialCount = move.getCount();
@@ -144,14 +150,12 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                     boolean allSatisfied = true;
                     for (int i = 0; i < 6; i++) {
                         TMultiPart other = tile().partMap(i);
-                        if (other instanceof ItemTranslocatorPart) {
                             ItemTranslocatorPart otherPart = (ItemTranslocatorPart) other;
                             if (!otherPart.a_eject) {
                                 if (!otherPart.isSatisfied(handlers[i])) {
                                     allSatisfied = false;
                                 }
                             }
-                        }
                     }
                     setPowering(allSatisfied);
                 } else {
@@ -289,12 +293,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         int insertableAmount = 0;
 
         for (int i = 0; i < 6; i++) {
-            TMultiPart p = me.tile().partMap(i);
-            if (p instanceof ItemTranslocatorPart) {
-                ItemTranslocatorPart part = (ItemTranslocatorPart) p;
-                if (!part.canEject()) {
-                    insertableAmount += getInsertableAmount(stack, part, handler[i]);
-                }
+            if (me.canInsert(i)) {
+                insertableAmount += getInsertableAmount(stack, me.getOther(i), handler[i]);
             }
         }
 

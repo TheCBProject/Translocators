@@ -374,6 +374,15 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
         return other instanceof TranslocatorPart && getTType() == ((TranslocatorPart) other).getTType();
     }
 
+    public boolean canInsert(int side) {
+        return canConnect(side) && !((TranslocatorPart)tile().partMap(side)).canEject();
+    }
+
+    @SuppressWarnings ("unchecked")
+    public <T> T getOther(int side) {
+        return (T)tile().partMap(side);
+    }
+
     protected void dropItem(ItemStack stack) {
         TileMultipart.dropItem(stack, world(), Vector3.fromTileCenter(tile()));
     }
