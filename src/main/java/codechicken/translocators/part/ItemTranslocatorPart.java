@@ -109,7 +109,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 int largestSlot = 0;
                 for (int slot = 0; slot < myHandler.getSlots(); slot++) {
                     ItemStack stack = myHandler.getStackInSlot(slot);
-                    if (stack.isEmpty()) {
+                    if (stack.isEmpty() || !InventoryUtils.canExtractStack(myHandler, slot)) {
                         continue;
                     }
                     int size = fast ? stack.getCount() : 1;
