@@ -17,6 +17,10 @@ repositories {
 		name = "CB Repo"
 		url = "http://chickenbones.net/maven"
 	}
+    maven {
+        name = "JEI Maven."
+        url = "http://dvs1.progwml6.com/files/maven"
+    }
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
