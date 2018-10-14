@@ -150,12 +150,14 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                     boolean allSatisfied = true;
                     for (int i = 0; i < 6; i++) {
                         TMultiPart other = tile().partMap(i);
+                        if (other instanceof ItemTranslocatorPart) {
                             ItemTranslocatorPart otherPart = (ItemTranslocatorPart) other;
                             if (!otherPart.a_eject) {
                                 if (!otherPart.isSatisfied(handlers[i])) {
                                     allSatisfied = false;
                                 }
                             }
+                        }
                     }
                     setPowering(allSatisfied);
                 } else {
