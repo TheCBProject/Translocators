@@ -138,7 +138,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
             System.arraycopy(att, 0, ret, 0, a);
         }
         if (r_a > 0) {
-            System.arraycopy(r_att, 0, ret, a > 0 ? a + 1 : 0, r_a);
+            System.arraycopy(r_att, 0, ret, a, r_a);
         }
         return ret;
     }
