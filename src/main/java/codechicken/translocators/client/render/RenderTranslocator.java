@@ -20,13 +20,13 @@ import codechicken.multipart.TileMultipart;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import codechicken.translocators.part.ItemTranslocatorPart;
 import codechicken.translocators.part.TranslocatorPart;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
@@ -62,10 +62,10 @@ public class RenderTranslocator {
     };
     //@formatter:on
 
-    private static CCModel[] plates = new CCModel[6];
-    private static CCModel insert;
+    private static final CCModel[] plates = new CCModel[6];
+    private static final CCModel insert;
 
-    private static CustomGradient gradient = new CustomGradient(new ResourceLocation("translocators", "textures/fx/grad.png"));
+    private static final CustomGradient gradient = new CustomGradient(new ResourceLocation("translocators", "textures/fx/grad.png"));
 
     static {
         Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocators", "models/model_new.obj"), 0x07, new SwapYZ());
@@ -97,7 +97,7 @@ public class RenderTranslocator {
     public static void renderItem(ItemStack stack) {
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.startDrawing(0x07, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-        IconTransformation i_trans = new IconTransformation(TEXTURES[stack.getMetadata()][0]);
+        IconTransformation i_trans = new IconTransformation(TEXTURES[0/*stack.getMetadata()*/][0]);//TODO
         Vector3 v_trans = Vector3.center.copy().add(0, 0, 0.5);
         Transformation trans = v_trans.translation();
         Matrix4 i_matrix = new Matrix4().translate(v_trans).apply(sideRotations[2]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, 1D * 2 / 3 + 1 / 3D, 1));
@@ -150,16 +150,15 @@ public class RenderTranslocator {
     }
 
     public static void renderItem(ItemTranslocatorPart p, Vector3 pos, float delta) {
-        RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
+        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         for (ItemTranslocatorPart.MovingItem m : p.movingItems) {
             GlStateManager.pushMatrix();
             double d = MathHelper.interpolate(m.b_progress, m.a_progress, delta);
             Vector3 path = getPath(p.side, m.dst, d).add(itemFloat(p.side, m.dst, d)).add(pos);
-            GlStateManager.translate(path.x, path.y, path.z);
-            GlStateManager.scale(0.5, 0.5, 0.5);
-            GlStateManager.scale(0.35, 0.35, 0.35);
-            renderItem.renderItem(m.stack, TransformType.FIXED);
-            //RenderUtils.renderItemUniform(m.stack);
+            GlStateManager.translated(path.x, path.y, path.z);
+            GlStateManager.scaled(0.5, 0.5, 0.5);
+            GlStateManager.scaled(0.35, 0.35, 0.35);
+            itemRenderer.renderItem(m.stack, ItemCameraTransforms.TransformType.FIXED);
             GlStateManager.popMatrix();
         }
     }
@@ -252,6 +251,7 @@ public class RenderTranslocator {
     }
 
     public static void renderParticle(CCRenderState ccrs, Vector3 pos, Colour colour, double s, double u1, double v1, double u2, double v2) {
+        ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
         double x = pos.x;
         double y = pos.y;
         double z = pos.z;
@@ -259,17 +259,17 @@ public class RenderTranslocator {
         y -= Particle.interpPosY;
         z -= Particle.interpPosZ;
 
-        float par3 = ActiveRenderInfo.getRotationX();
-        float par4 = ActiveRenderInfo.getRotationXZ();
-        float par5 = ActiveRenderInfo.getRotationZ();
-        float par6 = ActiveRenderInfo.getRotationYZ();
-        float par7 = ActiveRenderInfo.getRotationXY();
+        double rotationX = MathHelper.cos(info.getYaw() * MathHelper.torad);
+        double rotationZ = MathHelper.sin(info.getYaw() * MathHelper.torad);
+        double rotationYZ = -rotationZ * MathHelper.sin(info.getPitch() * MathHelper.torad);
+        double rotationXY = rotationX * MathHelper.sin(info.getPitch() * MathHelper.torad);
+        double rotationXZ = MathHelper.cos(info.getPitch() * MathHelper.torad);
 
         BufferBuilder b = ccrs.getBuffer();
-        b.pos(x - par3 * s - par6 * s, y - par4 * s, z - par5 * s - par7 * s).tex(u2, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x - par3 * s + par6 * s, y + par4 * s, z - par5 * s + par7 * s).tex(u2, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x + par3 * s + par6 * s, y + par4 * s, z + par5 * s + par7 * s).tex(u1, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x + par3 * s - par6 * s, y - par4 * s, z + par5 * s - par7 * s).tex(u1, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
+        b.pos(x - rotationX * s - rotationYZ * s, y - rotationXZ * s, z - rotationZ * s - rotationXY * s).tex(u2, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
+        b.pos(x - rotationX * s + rotationYZ * s, y + rotationXZ * s, z - rotationZ * s + rotationXY * s).tex(u2, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
+        b.pos(x + rotationX * s + rotationYZ * s, y + rotationXZ * s, z + rotationZ * s + rotationXY * s).tex(u1, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
+        b.pos(x + rotationX * s - rotationYZ * s, y - rotationXZ * s, z + rotationZ * s - rotationXY * s).tex(u1, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
     }
 
     public static Vector3 getPath(int src, int dst, double d) {

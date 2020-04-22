@@ -1,29 +1,22 @@
 package codechicken.translocators.network;
 
-import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.packet.ICustomPacketHandler.IClientPacketHandler;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.util.ClientUtils;
-import codechicken.translocators.Translocator;
-import codechicken.translocators.client.gui.GuiTranslocator;
-import codechicken.translocators.container.ContainerItemTranslocator;
+import codechicken.translocators.Translocators;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.play.INetHandlerPlayClient;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+
+import static codechicken.translocators.network.TranslocatorNetwork.*;
 
 public class TranslocatorCPH implements IClientPacketHandler {
 
-    public static Object channel = Translocator.instance;
-
     @Override
-    public void handlePacket(PacketCustom packet, Minecraft mc, INetHandlerPlayClient handler) {
+    public void handlePacket(PacketCustom packet, Minecraft mc, IClientPlayNetHandler handler) {
         switch (packet.getType()) {
-            case 4:
-                int windowId = packet.readUByte();
-                GuiTranslocator gui = new GuiTranslocator(new ContainerItemTranslocator(new InventorySimple(9, packet.readUShort(), packet.readString()), mc.player.inventory));
-                ClientUtils.openSMPGui(windowId, gui);
-                break;
-            case 5:
+            case C_FILTER_GUI_SET_SLOT:
                 mc.player.openContainer.putStackInSlot(packet.readUByte(), packet.readItemStack());
+                break;
+            case C_CRAFTING_GRID_UPDATE:
                 break;
         }
     }

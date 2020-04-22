@@ -2,20 +2,19 @@ package codechicken.translocators.part;
 
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
-import codechicken.lib.fluid.FluidUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.vec.Vector3;
-import codechicken.multipart.TMultiPart;
+import codechicken.multipart.api.MultiPartType;
+import codechicken.multipart.api.part.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
-import codechicken.translocators.init.ModItems;
+import codechicken.translocators.init.ModContent;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
 
 import java.util.*;
@@ -25,12 +24,15 @@ import java.util.*;
  */
 public class FluidTranslocatorPart extends TranslocatorPart {
 
+    @CapabilityInject (IFluidHandler.class)
+    public static Capability<IFluidHandler> FLUID_CAP = null;
+
     public List<MovingLiquid> movingLiquids = new LinkedList<>();
     public List<MovingLiquid> exitingLiquids = new LinkedList<>();
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(ModItems.translocatorPart, 1, 1);
+        return new ItemStack(ModContent.fluidTranslocatorItem, 1);
     }
 
     @Override
@@ -39,20 +41,18 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     @Override
-    public ResourceLocation getType() {
-        return new ResourceLocation("translocators", "fluid_translocator");
+    public MultiPartType<?> getType() {
+        return ModContent.fluidTranslocatorPartType;
     }
 
     @Override
     public boolean canStay() {
-        BlockPos pos = pos().offset(EnumFacing.VALUES[side]);
-        TileEntity tile = world().getTileEntity(pos);
-        return tile != null && tile.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, EnumFacing.VALUES[side ^ 1]);
+        return capCache().getCapability(FLUID_CAP, Direction.BY_INDEX[side]).isPresent();
     }
 
     @Override
-    public void update() {
-        super.update();
+    public void tick() {
+        super.tick();
 
         if (world().isRemote) {
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
@@ -71,20 +71,20 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = FluidUtils.getFluidHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_INDEX[side], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
                 }
                 IFluidHandler myHandler = attached[side];
 
-                FluidStack drain = myHandler.drain(fast ? 1000 : 100, false);
+                FluidStack drain = myHandler.drain(fast ? 1000 : 100, FluidAction.SIMULATE);
                 //Check if we have any fluid to transfer.
-                if (drain != null && drain.amount != 0) {
+                if (drain != null && drain.getAmount() != 0) {
                     List<FluidTransfer> transfers = new ArrayList<>();
                     FluidStack move = drain.copy();
                     spreadOutput(move, getOutputs(), attached, transfers);
-                    myHandler.drain(drain.amount - move.amount, true);
+                    myHandler.drain(drain.getAmount() - move.getAmount(), FluidAction.EXECUTE);
                     sendTransferPacket(transfers);
                 }
             }
@@ -92,21 +92,21 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     private void spreadOutput(FluidStack move, int[] outputs, IFluidHandler[] attached, List<FluidTransfer> transfers) {
-        for (int k = 0; k < outputs.length && move.amount > 0; k++) {
+        for (int k = 0; k < outputs.length && move.getAmount() > 0; k++) {
             int dst = outputs[k];
             IFluidHandler outaccess = attached[dst];
 
-            int fit = outaccess.fill(move, false);
+            int fit = outaccess.fill(move, FluidAction.SIMULATE);
             int spread = outputs.length - k;
-            fit = Math.min(fit, move.amount / spread + world().rand.nextInt(move.amount % spread + 1));
+            fit = Math.min(fit, move.getAmount() / spread + world().rand.nextInt(move.getAmount() % spread + 1));
 
             if (fit == 0) {
                 continue;
             }
 
-            FluidStack add = FluidUtils.copy(move, fit);
-            outaccess.fill(add, true);
-            move.amount -= fit;
+            FluidStack add = new FluidStack(move, fit);
+            outaccess.fill(add, FluidAction.EXECUTE);
+            move.shrink(fit);
 
             transfers.add(new FluidTransfer(dst, add));
         }
@@ -178,7 +178,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
                 if (m.liquid.isFluidEqual(t.fluid) && m.dst == t.dst) {
-                    m.addLiquid(t.fluid.amount);
+                    m.addLiquid(t.fluid.getAmount());
                     found = true;
                     continue;
                 }
@@ -233,7 +233,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         }
 
         private void capLiquid() {
-            liquid.amount = Math.min(liquid.amount, fast ? 1000 : 100);
+            liquid.setAmount(Math.min(liquid.getAmount(), fast ? 1000 : 100));
         }
 
         public boolean update() {
@@ -246,9 +246,9 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
             b_end = a_end;
 
-            if (liquid.amount > 0) {
-                liquid.amount = Math.max(liquid.amount - (fast ? 200 : 20), 0);
-                return liquid.amount == 0;
+            if (liquid.getAmount() > 0) {
+                liquid.setAmount(Math.max(liquid.getAmount() - (fast ? 200 : 20), 0));
+                return liquid.getAmount() == 0;
             }
             a_end = MathHelper.approachLinear(a_end, 1, 0.2);
 
@@ -256,17 +256,17 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         }
 
         public void addLiquid(int moving) {
-            if (liquid.amount == 0) {
+            if (liquid.getAmount() == 0) {
                 throw new IllegalArgumentException("Something went wrong!");
             }
 
-            liquid.amount += moving;
+            liquid.grow(moving);
             fast = FluidTranslocatorPart.this.fast;
             capLiquid();
         }
 
         public void finish() {
-            liquid.amount = 0;
+            liquid.setAmount(0);
         }
     }
 }

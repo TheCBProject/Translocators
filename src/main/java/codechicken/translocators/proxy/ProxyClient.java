@@ -1,35 +1,26 @@
 package codechicken.translocators.proxy;
 
-import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.texture.TextureUtils;
-import codechicken.translocators.client.render.TileCraftingGridRenderer;
+import codechicken.lib.texture.SpriteRegistryHelper;
 import codechicken.translocators.handler.CraftingGridKeyHandler;
-import codechicken.translocators.init.ModBlocks;
-import codechicken.translocators.init.ModItems;
 import codechicken.translocators.init.TranslocatorTextures;
-import codechicken.translocators.network.TranslocatorCPH;
-import codechicken.translocators.tile.TileCraftingGrid;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 public class ProxyClient extends Proxy {
 
+    public static SpriteRegistryHelper spriteHelper = new SpriteRegistryHelper();
+
     @Override
-    public void preInit() {
-        super.preInit();
-        ModItems.initModels();
-        ModBlocks.initModels();
-        TextureUtils.addIconRegister(new TranslocatorTextures());
-    }
-
-    public void init() {
-        super.init();
-
-        ClientRegistry.bindTileEntitySpecialRenderer(TileCraftingGrid.class, new TileCraftingGridRenderer());
-
-        PacketCustom.assignHandler(TranslocatorCPH.channel, new TranslocatorCPH());
-
+    public void commonSetup(FMLCommonSetupEvent event) {
         MinecraftForge.EVENT_BUS.register(CraftingGridKeyHandler.instance);
         ClientRegistry.registerKeyBinding(CraftingGridKeyHandler.instance);
+    }
+
+    @Override
+    public void clientSetup(FMLClientSetupEvent event) {
+        spriteHelper.addIIconRegister(new TranslocatorTextures());
+        //ClientRegistry.bindTileEntitySpecialRenderer(TileCraftingGrid.class, new TileCraftingGridRenderer());
     }
 }

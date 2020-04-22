@@ -1,20 +1,21 @@
 package codechicken.translocators.proxy;
 
-import codechicken.lib.packet.PacketCustom;
-import codechicken.translocators.init.ModBlocks;
-import codechicken.translocators.init.ModItems;
-import codechicken.translocators.network.TranslocatorSPH;
-import codechicken.translocators.part.PartFactory;
+import codechicken.translocators.network.TranslocatorNetwork;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 public class Proxy {
 
-    public void preInit() {
-        ModBlocks.init();
-        ModItems.init();
-        PartFactory.init();
+    public void commonSetup(FMLCommonSetupEvent event) {
+        TranslocatorNetwork.init();
+
     }
 
-    public void init() {
-        PacketCustom.assignHandler(TranslocatorSPH.channel, new TranslocatorSPH());
+    public void clientSetup(FMLClientSetupEvent event) {
+    }
+
+    public void preInit() {
+        //        ModBlocks.init();
+        //        ModItems.init();
     }
 }

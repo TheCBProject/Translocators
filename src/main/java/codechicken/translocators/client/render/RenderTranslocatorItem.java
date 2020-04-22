@@ -2,17 +2,17 @@ package codechicken.translocators.client.render;
 
 import codechicken.lib.render.item.IItemRenderer;
 import codechicken.lib.util.TransformUtils;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.model.IModelState;
 
 /**
  * Created by covers1624 on 18/11/2017.
  */
-public class RenderTranslocatorPartItem implements IItemRenderer {
+public class RenderTranslocatorItem implements IItemRenderer {
 
     @Override
-    public void renderItem(ItemStack stack, TransformType transformType) {
+    public void renderItem(ItemStack stack, ItemCameraTransforms.TransformType transformType) {
         RenderTranslocator.renderItem(stack);
     }
 

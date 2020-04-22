@@ -1,28 +1,37 @@
 package codechicken.translocators.part;
 
+import codechicken.lib.capability.CapabilityCache;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
+import codechicken.lib.raytracer.SubHitVoxelShape;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
-import codechicken.multipart.*;
+import codechicken.multipart.PartRayTraceResult;
+import codechicken.multipart.TileMultipart;
+import codechicken.multipart.api.part.*;
 import codechicken.translocators.client.render.RenderTranslocator;
 import com.google.common.collect.Lists;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
+import net.minecraft.block.SoundType;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ITickable;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.Hand;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,11 +41,18 @@ import java.util.stream.Collectors;
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart, TFacePart, TNormalOcclusionPart, ITickable, TDynamicRenderPart, TFastRenderPart {
+public abstract class TranslocatorPart extends TMultiPart implements TFacePart, TNormalOcclusionPart, ITickableTileEntity, TDynamicRenderPart, TFastRenderPart {
+
+    public static final SoundType PLACEMENT_SOUND = new SoundType(1.0F, 1.0F, null, null, SoundEvents.BLOCK_STONE_STEP, null, null);
 
     public static Cuboid6 base = new Cuboid6(3 / 16D, 0, 3 / 16D, 13 / 16D, 2 / 16D, 13 / 16D);
     public static Cuboid6[] boxes = new Cuboid6[6];
     public static Cuboid6[][] base_parts = new Cuboid6[6][4];
+
+    public static VoxelShape baseShape = base.shape();
+    public static VoxelShape[] boxShapes = new VoxelShape[6];
+    public static VoxelShape[][] basePartShapes = new VoxelShape[6][4];
+    public static VoxelShape[] basePartsJoined = new VoxelShape[6];
 
     public static int HIT_BASE = 0;
     public static int HIT_INSERT = 1;
@@ -61,6 +77,9 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
                     new Cuboid6(x1 + d1, y1, z1, x2 - d1, y2, z1 + d1).apply(rt),//
                     new Cuboid6(x1 + d1, y1, z2 - d1, x2 - d1, y2, z2).apply(rt)//
             };
+            boxShapes[i] = boxes[i].shape();
+            basePartShapes[i] = Arrays.stream(base_parts[i]).map(Cuboid6::shape).toArray(VoxelShape[]::new);
+            basePartsJoined[i] = Arrays.stream(basePartShapes[i]).reduce(VoxelShapes.empty(), VoxelShapes::or);
         }
     }
 
@@ -84,15 +103,15 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     //region Data
     //region NBT
     @Override
-    public void save(NBTTagCompound tag) {
-        tag.setByte("side", side);
-        tag.setBoolean("invert_redstone", invert_redstone);
-        tag.setBoolean("redstone", redstone);
-        tag.setBoolean("fast", fast);
+    public void save(CompoundNBT tag) {
+        tag.putByte("side", side);
+        tag.putBoolean("invert_redstone", invert_redstone);
+        tag.putBoolean("redstone", redstone);
+        tag.putBoolean("fast", fast);
     }
 
     @Override
-    public void load(NBTTagCompound tag) {
+    public void load(CompoundNBT tag) {
         side = tag.getByte("side");
         invert_redstone = tag.getBoolean("invert_redstone");
         redstone = tag.getBoolean("redstone");
@@ -160,7 +179,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     @Override
     public void onPartChanged(TMultiPart part) {
         if (!world().isRemote) {
-            onNeighborChanged();
+            onNeighborBlockChanged(pos());
         }
         super.onPartChanged(part);
     }
@@ -168,6 +187,11 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     @Override
     public boolean solid(int side) {
         return false;
+    }
+
+    @Override
+    public SoundType getPlacementSound(ItemStack stack) {
+        return PLACEMENT_SOUND;
     }
 
     @Override
@@ -180,45 +204,46 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
         return 1 << side;
     }
 
-    @Override
-    public Cuboid6 getBounds() {
-        return boxes[side];
-    }
-
     public Cuboid6 getInsertBounds() {
         return new Cuboid6(6 / 16D, 0, 6 / 16D, 10 / 16D, a_insertpos * 2 / 16D + 1 / 16D, 10 / 16D).apply(Rotation.sideRotations[side].at(Vector3.center));
     }
 
     @Override
-    public Iterable<Cuboid6> getOcclusionBoxes() {
-        return Arrays.asList(boxes[side], getInsertBounds());
+    public VoxelShape getOutlineShape() {
+        return boxShapes[side];
     }
 
     @Override
-    public Iterable<Cuboid6> getCollisionBoxes() {
-        List<Cuboid6> cuboids = Lists.newArrayList(boxes[side]);
-        cuboids.add(getInsertBounds().copy());
-        return cuboids;
+    public Iterable<VoxelShape> getOcclusionShapes() {
+        return Arrays.asList(boxShapes[side], getInsertBounds().shape());
     }
 
     @Override
-    public Iterable<IndexedCuboid6> getSubParts() {
+    public VoxelShape getCollisionShape() {
+        //TODO add merging to VoxelShapeCache.
+        return VoxelShapes.or(boxShapes[side], getInsertBounds().shape());
+    }
+
+    @Override
+    public VoxelShape getRayTraceShape() {
+        Cuboid6 insert = getInsertBounds();
+        VoxelShape insertShape = insert.shape();
         List<IndexedCuboid6> parts = Lists.newArrayList(base_parts[side]).stream()//
                 .map(b -> new IndexedCuboid6(HIT_BASE, b))//
                 .collect(Collectors.toList());
         parts.add(new IndexedCuboid6(HIT_INSERT, getInsertBounds()));
-        return parts;
+        return new SubHitVoxelShape(VoxelShapes.or(basePartsJoined[side], insertShape), parts);
     }
 
     @Override
-    public void onNeighborChanged() {
+    public void onNeighborBlockChanged(BlockPos from) {
         if (!dropIfCantStay()) {
             sendDescUpdate();
         }
     }
 
     @Override
-    public void update() {
+    public void tick() {
         b_insertpos = a_insertpos;
         a_insertpos = MathHelper.approachExp(a_insertpos, a_eject ? 1 : 0, 0.5, 0.1);
         if (!world().isRemote) {
@@ -231,7 +256,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    public boolean activate(EntityPlayer player, CuboidRayTraceResult hit, ItemStack held, EnumHand hand) {
+    public boolean activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
         if (world().isRemote) {
             return true;
         }
@@ -246,7 +271,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
             }
         } else if (held.getItem() == Items.REDSTONE && !redstone) {
             redstone = true;
-            if (!player.capabilities.isCreativeMode) {
+            if (!player.abilities.isCreativeMode) {
                 held.shrink(1);
             }
             if (world().isBlockPowered(pos()) == invert_redstone == a_eject) {
@@ -255,7 +280,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
             markUpdate();
         } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
             fast = true;
-            if (!player.capabilities.isCreativeMode) {
+            if (!player.abilities.isCreativeMode) {
                 held.shrink(1);
             }
             markUpdate();
@@ -270,7 +295,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
      *
      * @param player The player.
      */
-    public void openGui(EntityPlayer player) {
+    public void openGui(PlayerEntity player) {
 
     }
 
@@ -330,7 +355,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    public ItemStack pickItem(CuboidRayTraceResult hit) {
+    public ItemStack pickItem(PartRayTraceResult hit) {
         return getItem();
     }
 
@@ -340,7 +365,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
 
     public abstract boolean canStay();
 
-    public TranslocatorPart setupPlacement(EntityPlayer player, int side) {
+    public TranslocatorPart setupPlacement(PlayerEntity player, int side) {
         this.side = (byte) (side ^ 1);
         return this;
     }
@@ -375,12 +400,12 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     public boolean canInsert(int side) {
-        return canConnect(side) && !((TranslocatorPart)tile().partMap(side)).canEject();
+        return canConnect(side) && !((TranslocatorPart) tile().partMap(side)).canEject();
     }
 
     @SuppressWarnings ("unchecked")
     public <T> T getOther(int side) {
-        return (T)tile().partMap(side);
+        return (T) tile().partMap(side);
     }
 
     protected void dropItem(ItemStack stack) {
@@ -399,7 +424,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    @SideOnly (Side.CLIENT)
+    @OnlyIn (Dist.CLIENT)
     public boolean renderStatic(Vector3 pos, BlockRenderLayer layer, CCRenderState ccrs) {
         if (layer == BlockRenderLayer.SOLID) {
             RenderTranslocator.renderStatic(ccrs, this, pos);
@@ -409,9 +434,9 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
     }
 
     @Override
-    public boolean drawHighlight(EntityPlayer player, CuboidRayTraceResult hit, float frame) {
+    public boolean drawHighlight(ActiveRenderInfo info, PartRayTraceResult hit, float frame) {
         if (hit.subHit == HIT_BASE) {
-            RenderUtils.renderHitBox(player, boxes[side].copy().add(hit.getBlockPos()), frame);
+            RenderUtils.renderHitBox(info, boxes[side].copy().add(hit.getPos()));
             return true;
         }
         return false;
@@ -419,7 +444,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TCuboidPart
 
     @Override
     public Cuboid6 getRenderBounds() {
-        return getBounds();
+        return boxes[side];
     }
 
     @Override

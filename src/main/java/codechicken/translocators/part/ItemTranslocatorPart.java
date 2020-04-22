@@ -5,31 +5,31 @@ import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
 import codechicken.lib.vec.Vector3;
-import codechicken.multipart.IRedstonePart;
-import codechicken.multipart.TMultiPart;
+import codechicken.multipart.PartRayTraceResult;
+import codechicken.multipart.api.MultiPartType;
+import codechicken.multipart.api.part.IRedstonePart;
+import codechicken.multipart.api.part.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.handler.ConfigHandler;
-import codechicken.translocators.init.ModItems;
-import codechicken.translocators.network.TranslocatorSPH;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
+import codechicken.translocators.init.ModContent;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.EmptyHandler;
 
@@ -41,6 +41,9 @@ import java.util.List;
  * Created by covers1624 on 10/11/2017.
  */
 public class ItemTranslocatorPart extends TranslocatorPart implements IRedstonePart {
+
+    @CapabilityInject (IItemHandler.class)
+    public static Capability<IItemHandler> ITEM_CAP = null;
 
     public boolean regulate;
     public boolean signal;
@@ -54,8 +57,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public ResourceLocation getType() {
-        return new ResourceLocation("translocators", "item_translocator");
+    public MultiPartType<?> getType() {
+        return ModContent.itemTranslocatorPartType;
     }
 
     @Override
@@ -65,7 +68,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(ModItems.translocatorPart, 1, 0);
+        return new ItemStack(ModContent.itemTranslocatorItem, 1);
     }
 
     @Override
@@ -82,14 +85,12 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public boolean canStay() {
-        BlockPos pos = pos().offset(EnumFacing.VALUES[side]);
-        TileEntity tile = world().getTileEntity(pos);
-        return tile != null && tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[side ^ 1]);
+        return capCache().getCapability(ITEM_CAP, Direction.BY_INDEX[side]).isPresent();
     }
 
     @Override
-    public void update() {
-        super.update();
+    public void tick() {
+        super.tick();
         if (world().isRemote) {
             movingItems.removeIf(MovingItem::update);
         } else {
@@ -98,7 +99,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[side], EmptyHandler.INSTANCE);
                     } else {
                         handlers[i] = EmptyHandler.INSTANCE;
                     }
@@ -144,7 +145,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             if (signal) {
                 IItemHandler[] handlers = new IItemHandler[6];
                 for (int i = 0; i < 6; i++) {
-                    handlers[i] = InventoryUtils.getItemHandlerOrEmpty(world(), pos().offset(EnumFacing.VALUES[i]), i ^ 1);
+                    handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[side], EmptyHandler.INSTANCE);
                 }
                 if (a_eject) {
                     boolean allSatisfied = true;
@@ -353,21 +354,21 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public boolean activate(EntityPlayer player, CuboidRayTraceResult hit, ItemStack held, EnumHand hand) {
+    public boolean activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
         if (world().isRemote) {
             return true;
         }
         ItemStack stack = player.getHeldItem(hand);
         if (ItemUtils.areStacksSameType(stack, ConfigHandler.nugget) && !regulate) {
             regulate = true;
-            if (!player.capabilities.isCreativeMode) {
+            if (!player.abilities.isCreativeMode) {
                 stack.shrink(1);
             }
             markUpdate();
             return true;
         } else if (stack.getItem() == Items.IRON_INGOT && !signal) {
             signal = true;
-            if (!player.capabilities.isCreativeMode) {
+            if (!player.abilities.isCreativeMode) {
                 stack.shrink(1);
             }
             markUpdate();
@@ -391,24 +392,28 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public void openGui(EntityPlayer player) {
+    public void openGui(PlayerEntity player) {
         openItemGui(player, filters, regulate ? "translocators.regulate" : "translocators.filter");
     }
 
-    private void openItemGui(EntityPlayer player, ItemStack[] filters, String string) {
+    private void openItemGui(PlayerEntity player, ItemStack[] filters, String name) {
+        class Inv extends InventorySimple {
 
-        ServerUtils.openSMPContainer((EntityPlayerMP) player, new ContainerItemTranslocator(new InventorySimple(filters, filterStackLimit()) {
+            public Inv(ItemStack[] items, int limit) {
+                super(items, limit);
+            }
+
             @Override
             public void markDirty() {
                 markUpdate();
             }
-        }, player.inventory), (player1, windowId) -> {
-            PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 4);
-            packet.writeByte(windowId);
-            packet.writeShort(filterStackLimit());
-            packet.writeString(string);
-
-            packet.sendToPlayer(player1);
+        }
+        INamedContainerProvider provider = new SimpleNamedContainerProvider(//
+                (id, inv, p) -> new ContainerItemTranslocator(id, inv, new Inv(filters, filterStackLimit())),//
+                new StringTextComponent(name)//
+        );
+        ServerUtils.openContainer((ServerPlayerEntity) player, provider, p -> {
+            p.writeShort(filterStackLimit());
         });
     }
 
@@ -427,8 +432,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
         if ((signal || !b) && b != a_powering) {
             a_powering = b;
-            world().notifyNeighborsOfStateChange(pos(), Blocks.REDSTONE_WIRE, true);
-            world().notifyNeighborsOfStateChange(pos().offset(EnumFacing.VALUES[side]), Blocks.REDSTONE_WIRE, true);
+            world().notifyNeighborsOfStateChange(pos(), Blocks.REDSTONE_WIRE);
+            world().notifyNeighborsOfStateChange(pos().offset(Direction.BY_INDEX[side]), Blocks.REDSTONE_WIRE);
             markUpdate();
         }
     }
@@ -444,21 +449,21 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public void save(NBTTagCompound tag) {
+    public void save(CompoundNBT tag) {
         super.save(tag);
-        tag.setBoolean("regulate", regulate);
-        tag.setBoolean("signal", signal);
-        tag.setBoolean("powering", a_powering);
-        tag.setTag("filters", InventoryUtils.writeItemStacksToTag(filters, 65536));
+        tag.putBoolean("regulate", regulate);
+        tag.putBoolean("signal", signal);
+        tag.putBoolean("powering", a_powering);
+        tag.put("filters", InventoryUtils.writeItemStacksToTag(filters, 65536));
     }
 
     @Override
-    public void load(NBTTagCompound tag) {
+    public void load(CompoundNBT tag) {
         super.load(tag);
         regulate = tag.getBoolean("regulate");
         signal = tag.getBoolean("signal");
         a_powering = tag.getBoolean("powering");
-        InventoryUtils.readItemStacksFromTag(filters, tag.getTagList("filters", 10));
+        InventoryUtils.readItemStacksFromTag(filters, tag.getList("filters", 10));
     }
 
     @Override

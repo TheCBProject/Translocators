@@ -1,0 +1,40 @@
+modLoader="javafml"
+loaderVersion="[28,)"
+issueTrackerURL="https://github.com/TheCBProject/Translocators"
+
+[[mods]]
+	modId="translocators"
+	displayName="Translocators"
+	version="${file.jarVersion}"
+
+	updateJSONURL="http://chickenbones.net/Files/notification/version.php?query=forge&file=Translocators&version=1.14"#TODO, Gradle replace?
+	displayURL="http://chickenbones.net/Pages/links.html"
+	authors="ChickenBones, covers1624"
+	description='''
+Translocates stuff!
+    Credits: MouseCop - Textures
+	'''
+[[dependencies.translocators]]
+	modId="forge"
+	mandatory=true
+	versionRange="[28,)"
+	ordering="NONE"
+	side="BOTH"
+[[dependencies.translocators]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.14.4]"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.translocators]]
+    modId="codechickenlib"
+    mandatory=true
+    versionRange="[${ccl_version},)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.translocators]]
+    modId="fmp_cbe"
+    mandatory=true
+    versionRange="[$fmp_cbe_version},)"
+    ordering="AFTER"
+    side="BOTH"

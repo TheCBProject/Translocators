@@ -3,9 +3,7 @@ package codechicken.translocators.tile;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.packet.ICustomPacketTile;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.lib.raytracer.ICuboidProvider;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
@@ -13,29 +11,29 @@ import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
-import codechicken.translocators.network.TranslocatorSPH;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.InventoryCrafting;
+import codechicken.translocators.network.TranslocatorNetwork;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.inventory.container.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.item.crafting.ICraftingRecipe;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ITickable;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.util.Hand;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import static codechicken.lib.vec.Vector3.center;
 
-public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, ITickable, ICuboidProvider {
+public class TileCraftingGrid extends TileEntity implements ITickableTileEntity {
 
     public ItemStack[] items;
     public ItemStack result;
@@ -44,34 +42,33 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     public int timeout = 400;//20 seconds
 
     public TileCraftingGrid() {
-
-        items = new ItemStack[9];
-        ArrayUtils.fillArray(items, ItemStack.EMPTY);
+        super(null);
+        items = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
         result = ItemStack.EMPTY;
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
-        super.writeToNBT(tag);
-        tag.setTag("items", InventoryUtils.writeItemStacksToTag(items));
-        tag.setInteger("timeout", timeout);
+    public CompoundNBT write(CompoundNBT tag) {
+        super.write(tag);
+        tag.put("items", InventoryUtils.writeItemStacksToTag(items));
+        tag.putInt("timeout", timeout);
         return tag;
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound tag) {
-        super.readFromNBT(tag);
-        InventoryUtils.readItemStacksFromTag(items, tag.getTagList("items", 10));
-        timeout = tag.getInteger("timeout");
+    public void read(CompoundNBT tag) {
+        super.read(tag);
+        InventoryUtils.readItemStacksFromTag(items, tag.getList("items", 10));
+        timeout = tag.getInt("timeout");
     }
 
     @Override
-    public void update() {
+    public void tick() {
         if (!world.isRemote) {
             timeout--;
             if (timeout == 0) {
                 dropItems();
-                world.setBlockToAir(getPos());
+                world.removeBlock(getPos(), false);
             }
         }
     }
@@ -86,30 +83,41 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
     }
 
     @Override
-    public SPacketUpdateTileEntity getUpdatePacket() {
-        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
+    public CompoundNBT getUpdateTag() {
+        CompoundNBT tag = super.getUpdateTag();
+        tag.putByte("rotation", (byte) rotation);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundNBT tag) {
+        rotation = tag.getByte("rotation");
+    }
+
+    @Override
+    public SUpdateTileEntityPacket getUpdatePacket() {
+        PacketCustom packet = new PacketCustom(TranslocatorNetwork.NET_CHANNEL, 3);
         writeToPacket(packet);
         return packet.toTilePacket(getPos());
     }
 
-    @Override
-    public NBTTagCompound getUpdateTag() {
-        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
-        writeToPacket(packet);
-        return packet.toNBTTag(super.getUpdateTag());
-    }
+    //    @Override
+    //    public NBTTagCompound getUpdateTag() {
+    //        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
+    //        writeToPacket(packet);
+    //        return packet.toNBTTag(super.getUpdateTag());
+    //    }
 
     @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
         readFromPacket(PacketCustom.fromTilePacket(pkt));
     }
 
-    @Override
-    public void handleUpdateTag(NBTTagCompound tag) {
-        readFromPacket(PacketCustom.fromNBTTag(tag));
-    }
+    //    @Override
+    //    public void handleUpdateTag(NBTTagCompound tag) {
+    //        readFromPacket(PacketCustom.fromNBTTag(tag));
+    //    }
 
-    @Override
     public void writeToPacket(MCDataOutput packet) {
         packet.writeByte(rotation);
         for (ItemStack item : items) {
@@ -117,7 +125,6 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         }
     }
 
-    @Override
     public void readFromPacket(MCDataInput packet) {
         rotation = packet.readUByte();
 
@@ -128,7 +135,7 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         updateResult();
     }
 
-    public void activate(int subHit, EntityPlayer player) {
+    public void activate(int subHit, PlayerEntity player) {
         ItemStack held = player.inventory.getCurrentItem();
         if (held.isEmpty()) {
             if (!items[subHit].isEmpty()) {
@@ -148,18 +155,19 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         }
 
         timeout = 2400;
-        IBlockState state = world.getBlockState(getPos());
+        BlockState state = world.getBlockState(getPos());
         world.notifyBlockUpdate(getPos(), state, state, 3);
         markDirty();
     }
 
     private void updateResult() {
-        InventoryCrafting craftMatrix = getCraftMatrix();
+        CraftingInventory craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            IRecipe mresult = CraftingManager.findMatchingRecipe(craftMatrix, world);
-            if (mresult != null) {
-                result = mresult.getCraftingResult(craftMatrix);
+            Optional<ICraftingRecipe> mresult = world.getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftMatrix, world);
+            if (mresult.isPresent()) {
+                //TODO, IRecipeHolder.canUseRecipe.
+                result = mresult.get().getCraftingResult(craftMatrix);
                 return;
             }
 
@@ -169,35 +177,35 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         result = ItemStack.EMPTY;
     }
 
-    private void giveOrDropItem(ItemStack stack, EntityPlayer player) {
+    private void giveOrDropItem(ItemStack stack, PlayerEntity player) {
         if (player.inventory.addItemStackToInventory(stack)) {
-            player.inventoryContainer.detectAndSendChanges();
+            player.container.detectAndSendChanges();
         } else {
             ItemUtils.dropItem(stack, world, Vector3.fromTileCenter(this));
         }
     }
 
-    public void craft(EntityPlayer player) {
-        InventoryCrafting craftMatrix = getCraftMatrix();
+    public void craft(PlayerEntity player) {
+        CraftingInventory craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            IRecipe mresult = CraftingManager.findMatchingRecipe(craftMatrix, world);
-            if (mresult != null) {
-                doCraft(mresult.getCraftingResult(craftMatrix), craftMatrix, player);
+            Optional<ICraftingRecipe> mresult = world.getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftMatrix, world);
+            if (mresult.isPresent()) {
+                doCraft(mresult.get().getCraftingResult(craftMatrix), craftMatrix, player);
                 break;
             }
 
             rotateItems(craftMatrix);
         }
-        player.swingArm(EnumHand.MAIN_HAND);
+        player.swingArm(Hand.MAIN_HAND);
         dropItems();
-        world.setBlockToAir(getPos());
+        world.removeBlock(getPos(), false);
     }
 
-    private InventoryCrafting getCraftMatrix() {
-        InventoryCrafting craftMatrix = new InventoryCrafting(new Container() {
+    private CraftingInventory getCraftMatrix() {
+        CraftingInventory craftMatrix = new CraftingInventory(new Container(null, 0) {
             @Override
-            public boolean canInteractWith(EntityPlayer entityplayer) {
+            public boolean canInteractWith(PlayerEntity player) {
                 return true;
             }
         }, 3, 3);
@@ -209,10 +217,10 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         return craftMatrix;
     }
 
-    private void doCraft(ItemStack mresult, InventoryCrafting craftMatrix, EntityPlayer player) {
+    private void doCraft(ItemStack mresult, CraftingInventory craftMatrix, PlayerEntity player) {
         giveOrDropItem(mresult, player);
 
-        FMLCommonHandler.instance().firePlayerCraftingEvent(player, mresult, craftMatrix);
+        //FMLCommonHandler.instance().firePlayerCraftingEvent(player, mresult, craftMatrix);
         mresult.onCrafting(world, player, mresult.getCount());
 
         for (int slot = 0; slot < 9; ++slot) {
@@ -226,7 +234,7 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
                 ItemStack container = stack.getItem().getContainerItem(stack);
 
                 if (!container.isEmpty()) {
-                    if (container.isItemStackDamageable() && container.getItemDamage() > container.getMaxDamage()) {
+                    if (container.isDamageable() && container.getDamage() > container.getMaxDamage()) {
                         container = ItemStack.EMPTY;
                     }
 
@@ -240,7 +248,7 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         }
     }
 
-    private void rotateItems(InventoryCrafting inv) {
+    private void rotateItems(CraftingInventory inv) {
         int[] slots = new int[] { 0, 1, 2, 5, 8, 7, 6, 3 };
         ItemStack[] arrangement = new ItemStack[9];
         arrangement[4] = inv.getStackInSlot(4);
@@ -254,11 +262,10 @@ public class TileCraftingGrid extends TileEntity implements ICustomPacketTile, I
         }
     }
 
-    public void onPlaced(EntityLivingBase entity) {
+    public void onPlaced(LivingEntity entity) {
         rotation = (int) (entity.rotationYaw * 4 / 360 + 0.5D) & 3;
     }
 
-    @Override
     public List<IndexedCuboid6> getIndexedCuboids() {
         LinkedList<IndexedCuboid6> parts = new LinkedList<>();
 

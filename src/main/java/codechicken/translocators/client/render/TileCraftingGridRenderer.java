@@ -8,19 +8,18 @@ import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.tile.TileCraftingGrid;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 
-public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraftingGrid> {
+public class TileCraftingGridRenderer extends TileEntityRenderer<TileCraftingGrid> {
 
     @Override
-    public void render(TileCraftingGrid tcraft, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-
+    public void render(TileCraftingGrid tcraft, double x, double y, double z, float partialTicks, int destroyStage) {
         TextureUtils.bindBlockTexture();
         TextureUtils.dissableBlockMipmap();
         TextureAtlasSprite icon = TextureUtils.getBlockTexture("translocators:crafting_grid");
@@ -38,7 +37,7 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
         GlStateManager.enableRescaleNormal();
         GlStateManager.pushMatrix();
-        GlStateManager.translate(x + 0.5, y, z + 0.5);
+        GlStateManager.translated(x + 0.5, y, z + 0.5);
         Transformation orient = Rotation.quarterRotations[tcraft.rotation];
 
         for (int i = 0; i < 9; i++) {
@@ -52,8 +51,8 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
             Vector3 pos = new Vector3((col - 1) * 5 / 16D, 0.1 + 0.01 * Math.sin(i * 1.7 + ClientUtils.getRenderTime() / 5), (row - 1) * 5 / 16D).apply(orient);
             GlStateManager.pushMatrix();
-            GlStateManager.translate(pos.x, pos.y, pos.z);
-            GlStateManager.scale(0.5, 0.5, 0.5);
+            GlStateManager.translated(pos.x, pos.y, pos.z);
+            GlStateManager.scaled(0.5, 0.5, 0.5);
 
             RenderUtils.renderItemUniform(item);
 
@@ -62,8 +61,8 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
         if (!tcraft.result.isEmpty()) {
             GlStateManager.pushMatrix();
-            GlStateManager.translate(0, 0.6 + 0.02 * Math.sin(ClientUtils.getRenderTime() / 10), 0);
-            GlStateManager.scale(0.8, 0.8, 0.8);
+            GlStateManager.translated(0, 0.6 + 0.02 * Math.sin(ClientUtils.getRenderTime() / 10), 0);
+            GlStateManager.scaled(0.8, 0.8, 0.8);
 
             RenderUtils.renderItemUniform(tcraft.result, ClientUtils.getRenderTime());
 
@@ -72,6 +71,5 @@ public class TileCraftingGridRenderer extends TileEntitySpecialRenderer<TileCraf
 
         GlStateManager.popMatrix();
         GlStateManager.disableRescaleNormal();
-
     }
 }
