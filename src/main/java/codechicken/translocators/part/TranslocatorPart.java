@@ -1,6 +1,5 @@
 package codechicken.translocators.part;
 
-import codechicken.lib.capability.CapabilityCache;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.math.MathHelper;
@@ -8,40 +7,41 @@ import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.SubHitVoxelShape;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
-import codechicken.lib.vec.Cuboid6;
-import codechicken.lib.vec.Rotation;
-import codechicken.lib.vec.Transformation;
-import codechicken.lib.vec.Vector3;
-import codechicken.multipart.PartRayTraceResult;
+import codechicken.lib.vec.*;
 import codechicken.multipart.TileMultipart;
-import codechicken.multipart.api.part.*;
+import codechicken.multipart.api.part.ITickablePart;
+import codechicken.multipart.api.part.TFacePart;
+import codechicken.multipart.api.part.TMultiPart;
+import codechicken.multipart.api.part.TNormalOcclusionPart;
+import codechicken.multipart.util.PartRayTraceResult;
 import codechicken.translocators.client.render.RenderTranslocator;
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.SoundType;
 import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public abstract class TranslocatorPart extends TMultiPart implements TFacePart, TNormalOcclusionPart, ITickableTileEntity, TDynamicRenderPart, TFastRenderPart {
+public abstract class TranslocatorPart extends TMultiPart implements TFacePart, TNormalOcclusionPart, ITickablePart {
 
     public static final SoundType PLACEMENT_SOUND = new SoundType(1.0F, 1.0F, null, null, SoundEvents.BLOCK_STONE_STEP, null, null);
 
@@ -68,7 +68,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
             double y2 = base.max.y;
             double z2 = base.max.z;
 
-            Transformation rt = Rotation.sideRotations[i].at(Vector3.center);
+            Transformation rt = Rotation.sideRotations[i].at(Vector3.CENTER);
 
             boxes[i] = base.copy().apply(rt);
             base_parts[i] = new Cuboid6[] {//
@@ -123,47 +123,63 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     @Override
     public void writeDesc(MCDataOutput packet) {
         packet.writeByte(side);
-        packet.writeBoolean(a_eject);
-        packet.writeBoolean(redstone);
-        packet.writeBoolean(fast);
+        packet.writeByte(writeFlags());
     }
 
     @Override
     public void readDesc(MCDataInput packet) {
         side = packet.readByte();
-        a_eject = packet.readBoolean();
-        redstone = packet.readBoolean();
-        fast = packet.readBoolean();
+        readFlags(packet.readByte());
+    }
+
+    //Writes flags, IFFF FFFF
+    //7 - Incremental
+    //0 - Eject
+    //1 - Restone
+    //2 - Fast
+    //ItemTranslocator
+    //3 - Regulate
+    //4 - Signal
+    //5 - Powering
+    protected int writeFlags() {
+        int flags = 0;
+        flags |= (a_eject ? 1 : 0)/* << 0*/;
+        flags |= (redstone ? 1 : 0) << 1;
+        flags |= (fast ? 1 : 0) << 2;
+        return flags;
+    }
+
+    protected void readFlags(int flags) {
+        a_eject = (flags & (1 /*<< 0*/)) != 0;
+        redstone = (flags & (1 << 1)) != 0;
+        fast = (flags & (1 << 2)) != 0;
     }
     //endregion
 
     //region Inc Updating
-    //Overriden so we can append a boolean to the write stream.
     @Override
-    public void sendDescUpdate() {
-        writeDesc(getWriteStream().writeBoolean(true));
-    }
-
-    //Overriden so we can split off inc updates and description packets.
-    @Override
-    public void read(MCDataInput packet) {
-        boolean desc = packet.readBoolean();
-        if (desc) {
-            super.read(packet);
-            onPartChanged(this);
-        } else {
+    public final void readUpdate(MCDataInput packet) {
+        int flags = packet.readByte();
+        readFlags(flags);
+        if ((flags & (1 << 7)) != 0) {
             readIncUpdate(packet);
+        } else {
+            onPartChanged(this);
+            tile().markRender();
         }
     }
 
-    /**
-     * Gets the stream to write incremental updates for this part.
-     * Batched at the end of the tick, bitbanged to a large blob update packet.
-     *
-     * @return The stream to write data to.
-     */
-    public MCDataOutput getIncStream() {
-        return getWriteStream().writeBoolean(false);
+    //Sends just this Translocators flags
+    public void sendFlagsUpdate() {
+        sendUpdate(packet -> packet.writeByte(writeFlags()));
+    }
+
+    //Sends the flags, and extra data.
+    public void sendIncUpdate(Consumer<MCDataOutput> func) {
+        sendUpdate(packet -> {
+            packet.writeByte(writeFlags() | (1 << 7));
+            func.accept(packet);
+        });
     }
 
     /**
@@ -190,7 +206,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public SoundType getPlacementSound(ItemStack stack) {
+    public SoundType getPlacementSound(ItemStack stack, PlayerEntity player) {
         return PLACEMENT_SOUND;
     }
 
@@ -205,7 +221,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     public Cuboid6 getInsertBounds() {
-        return new Cuboid6(6 / 16D, 0, 6 / 16D, 10 / 16D, a_insertpos * 2 / 16D + 1 / 16D, 10 / 16D).apply(Rotation.sideRotations[side].at(Vector3.center));
+        return new Cuboid6(6 / 16D, 0, 6 / 16D, 10 / 16D, a_insertpos * 2 / 16D + 1 / 16D, 10 / 16D).apply(Rotation.sideRotations[side].at(Vector3.CENTER));
     }
 
     @Override
@@ -214,8 +230,8 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public Iterable<VoxelShape> getOcclusionShapes() {
-        return Arrays.asList(boxShapes[side], getInsertBounds().shape());
+    public VoxelShape getOcclusionShape() {
+        return boxShapes[side];
     }
 
     @Override
@@ -238,7 +254,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     @Override
     public void onNeighborBlockChanged(BlockPos from) {
         if (!dropIfCantStay()) {
-            sendDescUpdate();
+            sendFlagsUpdate();
         }
     }
 
@@ -256,11 +272,11 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public boolean activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
+    public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
         if (world().isRemote) {
-            return true;
+            return ActionResultType.SUCCESS;
         }
-        if (held.isEmpty() && player.isSneaking()) {
+        if (held.isEmpty() && player.isCrouching()) {
             stripModifiers();
             markUpdate();
         } else if (held.isEmpty()) {
@@ -287,7 +303,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
         } else {
             openGui(player);
         }
-        return true;
+        return ActionResultType.SUCCESS;
     }
 
     /**
@@ -373,7 +389,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     public void markUpdate() {
         tile().markDirty();
         tile().notifyPartChange(this);
-        sendDescUpdate();
+        sendFlagsUpdate();
     }
 
     /**
@@ -424,19 +440,26 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    @OnlyIn (Dist.CLIENT)
-    public boolean renderStatic(Vector3 pos, BlockRenderLayer layer, CCRenderState ccrs) {
-        if (layer == BlockRenderLayer.SOLID) {
-            RenderTranslocator.renderStatic(ccrs, this, pos);
-            return true;
+    public boolean renderStatic(Vector3 pos, RenderType layer, CCRenderState ccrs) {
+        if (layer == RenderType.getSolid()) {
+            ccrs.reset();
+            RenderTranslocator.renderStatic(ccrs, this);
         }
         return false;
     }
 
     @Override
-    public boolean drawHighlight(ActiveRenderInfo info, PartRayTraceResult hit, float frame) {
-        if (hit.subHit == HIT_BASE) {
-            RenderUtils.renderHitBox(info, boxes[side].copy().add(hit.getPos()));
+    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+        CCRenderState ccrs = CCRenderState.instance();
+        ccrs.reset();
+        RenderTranslocator.renderInsert(this, ccrs, mStack, buffers, packedLight, packedOverlay, partialTicks);
+        RenderTranslocator.renderLinks(this, ccrs, mStack, buffers);
+    }
+
+    @Override
+    public boolean drawHighlight(PartRayTraceResult hit, ActiveRenderInfo info, MatrixStack mStack, IRenderTypeBuffer getter, float partialTicks) {
+        if (hit.subHit == HIT_INSERT) {
+            RenderUtils.bufferHitbox(new Matrix4(mStack).translate(hit.getPos()), getter, info, getInsertBounds());
             return true;
         }
         return false;
@@ -445,25 +468,5 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     @Override
     public Cuboid6 getRenderBounds() {
         return boxes[side];
-    }
-
-    @Override
-    public void renderDynamic(Vector3 pos, int pass, float frame) {
-        RenderTranslocator.renderDynamic(this, pos, frame);
-    }
-
-    @Override
-    public boolean canRenderDynamic(int pass) {
-        return pass == 0 && a_eject;
-    }
-
-    @Override
-    public void renderFast(CCRenderState ccrs, Vector3 pos, int pass, float frameDelta) {
-        RenderTranslocator.renderFast(ccrs, this, pos, frameDelta);
-    }
-
-    @Override
-    public boolean canRenderFast(int pass) {
-        return pass == 0;
     }
 }

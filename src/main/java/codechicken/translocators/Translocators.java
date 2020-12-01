@@ -24,7 +24,7 @@ public class Translocators {
     public static Proxy proxy;
 
     public Translocators() {
-        proxy = DistExecutor.runForDist(() -> ProxyClient::new, () -> Proxy::new);
+        proxy = DistExecutor.safeRunForDist(() -> ProxyClient::new, () -> Proxy::new);
         FMLJavaModLoadingContext.get().getModEventBus().register(this);
         ConfigHandler.init(new File("./config/translocators.cfg"));
         ConfigHandler.loadConfig();

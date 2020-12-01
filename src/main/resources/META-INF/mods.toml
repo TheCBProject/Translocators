@@ -23,7 +23,7 @@ Translocates stuff!
 [[dependencies.translocators]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.14.4]"
+    versionRange="[1.15.2]"
     ordering="NONE"
     side="BOTH"
 [[dependencies.translocators]]
@@ -33,8 +33,8 @@ Translocates stuff!
     ordering="AFTER"
     side="BOTH"
 [[dependencies.translocators]]
-    modId="fmp_cbe"
+    modId="cb_multipart"
     mandatory=true
-    versionRange="[$fmp_cbe_version},)"
+    versionRange="[$cb_multipart_version},)"
     ordering="AFTER"
     side="BOTH"

@@ -1,23 +1,23 @@
 package codechicken.translocators.part;
 
 import codechicken.lib.data.MCDataInput;
-import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
-import codechicken.lib.vec.Vector3;
-import codechicken.multipart.PartRayTraceResult;
 import codechicken.multipart.api.MultiPartType;
-import codechicken.multipart.api.part.IRedstonePart;
 import codechicken.multipart.api.part.TMultiPart;
+import codechicken.multipart.api.part.redstone.IRedstonePart;
+import codechicken.multipart.util.PartRayTraceResult;
 import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.ModContent;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
@@ -25,6 +25,7 @@ import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.StringTextComponent;
@@ -99,7 +100,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[side], EmptyHandler.INSTANCE);
+                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[i], EmptyHandler.INSTANCE);
                     } else {
                         handlers[i] = EmptyHandler.INSTANCE;
                     }
@@ -169,12 +170,13 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     private void sendTransferPacket(List<MovingItem> transfers) {
-        MCDataOutput packet = getIncStream();
-        packet.writeVarInt(transfers.size());
-        for (MovingItem transfer : transfers) {
-            packet.writeByte(transfer.dst);
-            packet.writeItemStack(transfer.stack);
-        }
+        sendIncUpdate(packet -> {
+            packet.writeVarInt(transfers.size());
+            for (MovingItem transfer : transfers) {
+                packet.writeByte(transfer.dst);
+                packet.writeItemStack(transfer.stack);
+            }
+        });
     }
 
     private boolean canTransferFilter(IItemHandler access, IItemHandler[] attached) {
@@ -354,25 +356,25 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public boolean activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
+    public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
         if (world().isRemote) {
-            return true;
+            return ActionResultType.SUCCESS;
         }
         ItemStack stack = player.getHeldItem(hand);
-        if (ItemUtils.areStacksSameType(stack, ConfigHandler.nugget) && !regulate) {
+        if (ItemUtils.areStacksSameType(stack, new ItemStack(Blocks.DIRT)/*ConfigHandler.nugget*/) && !regulate) {
             regulate = true;
             if (!player.abilities.isCreativeMode) {
                 stack.shrink(1);
             }
             markUpdate();
-            return true;
+            return ActionResultType.SUCCESS;
         } else if (stack.getItem() == Items.IRON_INGOT && !signal) {
             signal = true;
             if (!player.abilities.isCreativeMode) {
                 stack.shrink(1);
             }
             markUpdate();
-            return true;
+            return ActionResultType.SUCCESS;
         }
         return super.activate(player, hit, stack, hand);
     }
@@ -467,30 +469,26 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public void writeDesc(MCDataOutput packet) {
-        super.writeDesc(packet);
-        packet.writeBoolean(regulate);
-        packet.writeBoolean(signal);
-        packet.writeBoolean(a_powering);
+    protected int writeFlags() {
+        int flags = super.writeFlags();
+        flags |= (regulate ? 1 : 0) << 3;
+        flags |= (signal ? 1 : 0) << 4;
+        flags |= (a_powering ? 1 : 0) << 5;
+        return flags;
     }
 
     @Override
-    public void readDesc(MCDataInput packet) {
-        super.readDesc(packet);
-        regulate = packet.readBoolean();
-        signal = packet.readBoolean();
-        a_powering = packet.readBoolean();
+    protected void readFlags(int flags) {
+        super.readFlags(flags);
+        regulate = (flags & (1 << 3)) != 0;
+        signal = (flags & (1 << 4)) != 0;
+        a_powering = (flags & (1 << 5)) != 0;
     }
 
     @Override
-    public void renderDynamic(Vector3 pos, int pass, float frame) {
-        RenderTranslocator.renderItem(this, pos, frame);
-        super.renderDynamic(pos, pass, frame);
-    }
-
-    @Override
-    public boolean canRenderDynamic(int pass) {
-        return super.canRenderDynamic(pass) || (pass == 0 && !movingItems.isEmpty());
+    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
+        RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
     }
 
     @Override

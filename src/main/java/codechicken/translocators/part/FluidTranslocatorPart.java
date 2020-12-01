@@ -1,13 +1,13 @@
 package codechicken.translocators.part;
 
 import codechicken.lib.data.MCDataInput;
-import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.vec.Vector3;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.part.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.init.ModContent;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
@@ -71,7 +71,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_INDEX[side], EmptyFluidHandler.INSTANCE);
+                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_INDEX[i], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
@@ -144,12 +144,13 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     private void sendTransferPacket(List<FluidTransfer> transfers) {
-        MCDataOutput stream = getIncStream();
-        stream.writeByte(transfers.size());
-        for (FluidTransfer t : transfers) {
-            stream.writeByte(t.dst);
-            stream.writeFluidStack(t.fluid);
-        }
+        sendIncUpdate(packet -> {
+            packet.writeByte(transfers.size());
+            for (FluidTransfer t : transfers) {
+                packet.writeByte(t.dst);
+                packet.writeFluidStack(t.fluid);
+            }
+        });
     }
 
     public List<MovingLiquid> getMovingLiquids() {
@@ -195,10 +196,16 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     @Override
-    public void renderDynamic(Vector3 pos, int pass, float delta) {
-        RenderTranslocator.renderFluid(this, pos, delta);
-        super.renderDynamic(pos, pass, delta);
+    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+        RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
+        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
     }
+
+    //    @Override
+//    public void renderDynamic(Vector3 pos, int pass, float delta) {
+//        RenderTranslocator.renderFluid(this, pos, delta);
+//        super.renderDynamic(pos, pass, delta);
+//    }
 
     //Network object for client sync.
     private class FluidTransfer {

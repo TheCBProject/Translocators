@@ -11,6 +11,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -91,9 +92,9 @@ public class BlockCraftingGrid extends Block {
     //    }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         if (world.isRemote) {
-            return true;
+            return ActionResultType.PASS;
         }
 
         TileCraftingGrid tcraft = (TileCraftingGrid) world.getTileEntity(pos);
@@ -102,9 +103,9 @@ public class BlockCraftingGrid extends Block {
             if (hit.subHit > 0) {
                 tcraft.activate(hit.subHit - 1, player);
             }
-            return true;
+            return ActionResultType.SUCCESS;
         }
-        return false;
+        return ActionResultType.FAIL;
     }
 
     public boolean placeBlock(World world, PlayerEntity player, BlockPos pos, Direction side) {

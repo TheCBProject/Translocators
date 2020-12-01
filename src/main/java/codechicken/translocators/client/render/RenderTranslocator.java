@@ -2,41 +2,40 @@ package codechicken.translocators.client.render;
 
 import codechicken.lib.colour.Colour;
 import codechicken.lib.colour.CustomGradient;
-import codechicken.lib.lighting.LightModel;
-import codechicken.lib.lighting.PlanarLightModel;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.CCModel;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.OBJParser;
 import codechicken.lib.render.RenderUtils;
-import codechicken.lib.texture.TextureUtils;
+import codechicken.lib.render.lighting.LightModel;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.SwapYZ;
-import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
 import codechicken.lib.vec.uv.IconTransformation;
 import codechicken.multipart.TileMultipart;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import codechicken.translocators.part.ItemTranslocatorPart;
 import codechicken.translocators.part.TranslocatorPart;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.Particle;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Map;
 
+import static codechicken.lib.util.SneakyUtils.none;
 import static codechicken.lib.vec.Rotation.sideRotations;
 import static codechicken.translocators.init.TranslocatorTextures.TEXTURES;
+import static net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 
 /**
  * Created by covers1624 on 14/11/2017.
@@ -66,6 +65,13 @@ public class RenderTranslocator {
     private static final CCModel insert;
 
     private static final CustomGradient gradient = new CustomGradient(new ResourceLocation("translocators", "textures/fx/grad.png"));
+    private static final RenderType particleType = RenderType.makeType("translocator_link", DefaultVertexFormats.POSITION_TEX_COLOR, GL11.GL_QUADS, 255, RenderType.State.getBuilder()//
+            .texture(new RenderState.TextureState(new ResourceLocation("translocators:textures/fx/particle.png"), false, false))//
+            .transparency(RenderType.TRANSLUCENT_TRANSPARENCY)//
+            .writeMask(RenderType.COLOR_WRITE)//
+            .texturing(new RenderState.TexturingState("lighting", RenderSystem::disableLighting, none()))//
+            .build(false)//
+    );
 
     static {
         Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocators", "models/model_new.obj"), 0x07, new SwapYZ());
@@ -77,47 +83,58 @@ public class RenderTranslocator {
         }
     }
 
-    public static void renderStatic(CCRenderState ccrs, TranslocatorPart p, Vector3 pos) {
-        Vector3 trans = pos.copy().add(Vector3.center);
+    public static void renderStatic(CCRenderState ccrs, TranslocatorPart p) {
+        Vector3 trans = Vector3.CENTER;
         IconTransformation i_trans = new IconTransformation(TEXTURES[p.getTType()][p.getIconIndex()]);
         ccrs.reset();
         ccrs.setBrightness(p.world(), p.pos());
         plates[p.side].render(ccrs, trans.translation(), i_trans);
     }
 
-    public static void renderFast(CCRenderState ccrs, TranslocatorPart p, Vector3 pos, float delta) {
+    public static void renderInsert(TranslocatorPart p, CCRenderState ccrs, MatrixStack mStack, IRenderTypeBuffer getter, int packedLight, int packedOverlay, float delta) {
+        Matrix4 mat = new Matrix4(mStack);
         double insertpos = MathHelper.interpolate(p.b_insertpos, p.a_insertpos, delta);
         IconTransformation i_trans = new IconTransformation(TEXTURES[p.getTType()][p.getIconIndex()]);
-        Matrix4 matrix = new Matrix4().translate(pos.copy().add(Vector3.center)).apply(sideRotations[p.side]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, insertpos * 2 / 3 + 1 / 3D, 1));
+        mat.translate(Vector3.CENTER);
+        mat.apply(sideRotations[p.side]);
+        mat.translate(new Vector3(0, -0.5, 0));
+        mat.scale(1, insertpos * 2 / 3 + 1 / 3D, 1);
         ccrs.reset();
-        ccrs.setBrightness(p.world(), p.pos());
-        insert.render(ccrs, PlanarLightModel.standardLightModel, matrix, i_trans);
+        ccrs.bind(RenderType.getSolid(), getter);
+        ccrs.brightness = packedLight;
+        ccrs.overlay = packedOverlay;
+        insert.render(ccrs, mat, i_trans);
+
     }
 
-    public static void renderItem(ItemStack stack) {
+    public static void renderItem(int type, MatrixStack mStack, TransformType transformType, IRenderTypeBuffer buffers, int packedLight, int packedOverlay) {
         CCRenderState ccrs = CCRenderState.instance();
-        ccrs.startDrawing(0x07, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
-        IconTransformation i_trans = new IconTransformation(TEXTURES[0/*stack.getMetadata()*/][0]);//TODO
-        Vector3 v_trans = Vector3.center.copy().add(0, 0, 0.5);
-        Transformation trans = v_trans.translation();
-        Matrix4 i_matrix = new Matrix4().translate(v_trans).apply(sideRotations[2]).translate(new Vector3(0, -0.5, 0)).scale(new Vector3(1, 1D * 2 / 3 + 1 / 3D, 1));
-        plates[2].render(ccrs, trans, i_trans);
+        ccrs.bind(RenderType.getSolid(), buffers);
+        ccrs.brightness = packedLight;
+        ccrs.overlay = packedOverlay;
+        IconTransformation i_trans = new IconTransformation(TEXTURES[type][0]);
+        Vector3 v_trans = Vector3.CENTER.copy().add(0, 0, 0.5);
+        if (transformType == TransformType.GROUND) {
+            v_trans.subtract(0, 0.5, 0);
+        }
+        Matrix4 mat = new Matrix4(mStack);
+        Matrix4 i_matrix = mat.copy()
+                .translate(v_trans)
+                .apply(sideRotations[2])
+                .translate(new Vector3(0, -0.5, 0))
+                .scale(new Vector3(1, 1D * 2 / 3 + 1 / 3D, 1));
+        mat.translate(v_trans);
+        plates[2].render(ccrs, mat, i_trans);
         insert.render(ccrs, i_matrix, i_trans);
-        ccrs.draw();
     }
 
-    public static void renderDynamic(TranslocatorPart p, Vector3 pos, float delta) {
-        CCRenderState ccrs = CCRenderState.instance();
+    public static void renderLinks(TranslocatorPart p, CCRenderState ccrs, MatrixStack mStack, IRenderTypeBuffer getter) {
         double time = ClientUtils.getRenderTime();
-
         //Render the particles.
         TileMultipart tile = p.tile();
         if (p.a_eject) {
-            GlStateManager.disableLighting();
-            GlStateManager.enableBlend();
-            GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            TextureUtils.changeTexture("translocators:textures/fx/particle.png");
-            ccrs.startDrawing(0x07, DefaultVertexFormats.POSITION_TEX_COLOR);
+            Matrix4 mat = new Matrix4(mStack);
+            ccrs.bind(particleType, getter);
             for (int dst = 0; dst < 6; dst++) {
                 if (dst == p.side) {
                     continue;
@@ -125,45 +142,45 @@ public class RenderTranslocator {
                 if (p.canConnect(dst)) {
                     TranslocatorPart p_dst = (TranslocatorPart) tile.partMap(dst);
                     if (!p_dst.canEject()) {
-                        renderLink(ccrs, p.side, dst, time, Vector3.fromBlockPos(p.pos()));
+                        renderLink(ccrs, mat, p.side, dst, time);
                     }
                 }
             }
-            ccrs.draw();
-            GlStateManager.disableBlend();
-            GlStateManager.enableLighting();
         }
     }
 
-    public static void renderFluid(FluidTranslocatorPart p, Vector3 pos, float delta) {
+    public static void renderFluid(FluidTranslocatorPart p, MatrixStack mStack, IRenderTypeBuffer getter, float delta) {
         CCRenderState ccrs = CCRenderState.instance();
+        ccrs.reset();
+        ccrs.bind(RenderUtils.getFluidRenderType(), getter);
         double time = ClientUtils.getRenderTime();
+        Matrix4 mat = new Matrix4(mStack);
         for (FluidTranslocatorPart.MovingLiquid m : p.getMovingLiquids()) {
             double start = MathHelper.interpolate(m.b_start, m.a_start, delta);
             double end = MathHelper.interpolate(m.b_end, m.a_end, delta);
 
-            drawLiquidSpiral(ccrs, p.side, m.dst, m.liquid, start, end, time, 0, pos.x, pos.y, pos.z);
+            drawLiquidSpiral(ccrs, mat, p.side, m.dst, m.liquid, start, end, time, 0);
             if (p.fast) {
-                drawLiquidSpiral(ccrs, p.side, m.dst, m.liquid, start, end, time, 0.5, pos.x, pos.y, pos.z);
+                drawLiquidSpiral(ccrs, mat, p.side, m.dst, m.liquid, start, end, time, 0.5);
             }
         }
     }
 
-    public static void renderItem(ItemTranslocatorPart p, Vector3 pos, float delta) {
+    public static void renderItem(ItemTranslocatorPart p, MatrixStack mStack, IRenderTypeBuffer getter, int packedLight, int packedOverlay, float delta) {
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         for (ItemTranslocatorPart.MovingItem m : p.movingItems) {
-            GlStateManager.pushMatrix();
+            mStack.push();
             double d = MathHelper.interpolate(m.b_progress, m.a_progress, delta);
-            Vector3 path = getPath(p.side, m.dst, d).add(itemFloat(p.side, m.dst, d)).add(pos);
-            GlStateManager.translated(path.x, path.y, path.z);
-            GlStateManager.scaled(0.5, 0.5, 0.5);
-            GlStateManager.scaled(0.35, 0.35, 0.35);
-            itemRenderer.renderItem(m.stack, ItemCameraTransforms.TransformType.FIXED);
-            GlStateManager.popMatrix();
+            Vector3 path = getPath(p.side, m.dst, d).add(itemFloat(p.side, m.dst, d));
+            mStack.translate(path.x, path.y, path.z);
+            mStack.scale(0.5f, 0.5f, 0.5f);
+            mStack.scale(0.35f, 0.35f, 0.35f);
+            itemRenderer.renderItem(m.stack, TransformType.FIXED, packedLight, packedOverlay, mStack, getter);
+            mStack.pop();
         }
     }
 
-    private static void renderLink(CCRenderState ccrs, int src, int dst, double time, Vector3 tPos) {
+    private static void renderLink(CCRenderState ccrs, Matrix4 mat, int src, int dst, double time) {
 
         double d = ((time + src + dst * 2) % 10) / 6;
         //0 is head
@@ -174,7 +191,7 @@ public class RenderTranslocator {
                 continue;
             }
 
-            Vector3 pos = getPath(src, dst, dn).add(tPos);
+            Vector3 pos = getPath(src, dst, dn);
             double b = 1;//d*0.6+0.4;
             double s = 1;//d*0.6+0.4;
 
@@ -183,16 +200,19 @@ public class RenderTranslocator {
             double v1 = 0;
             double v2 = 1;
 
-            renderParticle(ccrs, pos, gradient.getColour((dn - 0.5) * 1.2 + 0.5).multiplyC(b), s * 0.12, u1, v1, u2, v2);
+            renderParticle(ccrs, mat.copy().translate(pos), gradient.getColour((dn - 0.5) * 1.2 + 0.5).multiplyC(b), s * 0.12, u1, v1, u2, v2);
         }
     }
 
-    private static void drawLiquidSpiral(CCRenderState ccrs, int src, int dst, FluidStack stack, double start, double end, double time, double theta0, double x, double y, double z) {
+    private static void drawLiquidSpiral(CCRenderState ccrs, Matrix4 mat, int src, int dst, FluidStack stack, double start, double end, double time, double theta0) {
+        if (stack.isEmpty()) {
+            return;
+        }
 
-        RenderUtils.preFluidRender();
-        TextureAtlasSprite tex = RenderUtils.prepareFluidRender(stack, 255);
-
-        ccrs.startDrawing(7, DefaultVertexFormats.POSITION_TEX_COLOR);
+        FluidAttributes attribs = stack.getFluid().getAttributes();
+        Material material = ForgeHooksClient.getBlockMaterial(attribs.getStillTexture(stack));
+        TextureAtlasSprite tex = material.getSprite();
+        ccrs.colour = attribs.getColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
         Vector3[] next = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -229,13 +249,13 @@ public class RenderTranslocator {
                     double v1 = tex.getInterpolatedV(Math.abs(next[i].scalarProject(axis)) * 16);
                     double v2 = tex.getInterpolatedV(Math.abs(next[j].scalarProject(axis)) * 16);
 
-                    ccrs.vert.set(next[i], u1, v1).vec.add(x, y, z);
+                    ccrs.vert.set(next[i], u1, v1).apply(mat);
                     ccrs.writeVert();
-                    ccrs.vert.set(next[j], u1, v2).vec.add(x, y, z);
+                    ccrs.vert.set(next[j], u1, v2).apply(mat);
                     ccrs.writeVert();
-                    ccrs.vert.set(last[j], u2, v2).vec.add(x, y, z);
+                    ccrs.vert.set(last[j], u2, v2).apply(mat);
                     ccrs.writeVert();
-                    ccrs.vert.set(last[i], u2, v1).vec.add(x, y, z);
+                    ccrs.vert.set(last[i], u2, v1).apply(mat);
                     ccrs.writeVert();
                 }
             }
@@ -244,20 +264,10 @@ public class RenderTranslocator {
             last = next;
             next = tmp;
         }
-
-        ccrs.draw();
-
-        RenderUtils.postFluidRender();
     }
 
-    public static void renderParticle(CCRenderState ccrs, Vector3 pos, Colour colour, double s, double u1, double v1, double u2, double v2) {
+    public static void renderParticle(CCRenderState ccrs, Matrix4 mat, Colour colour, double s, double u1, double v1, double u2, double v2) {
         ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
-        double x = pos.x;
-        double y = pos.y;
-        double z = pos.z;
-        x -= Particle.interpPosX;
-        y -= Particle.interpPosY;
-        z -= Particle.interpPosZ;
 
         double rotationX = MathHelper.cos(info.getYaw() * MathHelper.torad);
         double rotationZ = MathHelper.sin(info.getYaw() * MathHelper.torad);
@@ -265,11 +275,15 @@ public class RenderTranslocator {
         double rotationXY = rotationX * MathHelper.sin(info.getPitch() * MathHelper.torad);
         double rotationXZ = MathHelper.cos(info.getPitch() * MathHelper.torad);
 
-        BufferBuilder b = ccrs.getBuffer();
-        b.pos(x - rotationX * s - rotationYZ * s, y - rotationXZ * s, z - rotationZ * s - rotationXY * s).tex(u2, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x - rotationX * s + rotationYZ * s, y + rotationXZ * s, z - rotationZ * s + rotationXY * s).tex(u2, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x + rotationX * s + rotationYZ * s, y + rotationXZ * s, z + rotationZ * s + rotationXY * s).tex(u1, v1).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
-        b.pos(x + rotationX * s - rotationYZ * s, y - rotationXZ * s, z + rotationZ * s - rotationXY * s).tex(u1, v2).color(colour.r & 0xFF, colour.g & 0xFF, colour.b & 0xFF, colour.a & 0xFF).endVertex();
+        ccrs.colour = colour.rgba();
+        ccrs.vert.set(-rotationX * s - rotationYZ * s, -rotationXZ * s, -rotationZ * s - rotationXY * s, u2, v2).apply(mat);
+        ccrs.writeVert();
+        ccrs.vert.set(-rotationX * s + rotationYZ * s, rotationXZ * s, -rotationZ * s + rotationXY * s, u2, v1).apply(mat);
+        ccrs.writeVert();
+        ccrs.vert.set(rotationX * s + rotationYZ * s, rotationXZ * s, rotationZ * s + rotationXY * s, u1, v1).apply(mat);
+        ccrs.writeVert();
+        ccrs.vert.set(rotationX * s - rotationYZ * s, -rotationXZ * s, rotationZ * s - rotationXY * s, u1, v2).apply(mat);
+        ccrs.writeVert();
     }
 
     public static Vector3 getPath(int src, int dst, double d) {

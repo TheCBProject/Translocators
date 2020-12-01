@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import static codechicken.lib.vec.Vector3.center;
+import static codechicken.lib.vec.Vector3.CENTER;
 
 public class TileCraftingGrid extends TileEntity implements ITickableTileEntity {
 
@@ -272,7 +272,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         parts.add(new IndexedCuboid6(0, new Cuboid6(0, 0, 0, 1, 0.005, 1)));
 
         for (int i = 0; i < 9; i++) {
-            Cuboid6 box = new Cuboid6(1 / 16D, 0, 1 / 16D, 5 / 16D, 0.01, 5 / 16D).apply(new Translation((i % 3) * 5 / 16D, 0, (i / 3) * 5 / 16D).with(Rotation.quarterRotations[rotation].at(center)));
+            Cuboid6 box = new Cuboid6(1 / 16D, 0, 1 / 16D, 5 / 16D, 0.01, 5 / 16D).apply(new Translation((i % 3) * 5 / 16D, 0, (i / 3) * 5 / 16D).with(Rotation.quarterRotations[rotation].at(CENTER)));
 
             parts.add(new IndexedCuboid6(i + 1, box));
         }
