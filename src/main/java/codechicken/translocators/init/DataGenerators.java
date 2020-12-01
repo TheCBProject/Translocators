@@ -2,6 +2,7 @@ package codechicken.translocators.init;
 
 import codechicken.lib.datagen.ItemModelProvider;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.data.ItemTagsProvider;
 import net.minecraftforge.client.model.generators.ExistingFileHelper;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,6 +20,7 @@ public class DataGenerators {
         if (event.includeClient()) {
             gen.addProvider(new ItemModels(gen, files));
         }
+        gen.addProvider(new ItemTags(gen));
     }
 
     private static class ItemModels extends ItemModelProvider {
@@ -37,6 +39,23 @@ public class DataGenerators {
         @Override
         public String getName() {
             return "Translocators Item models";
+        }
+    }
+
+    private static class ItemTags extends ItemTagsProvider {
+
+        public ItemTags(DataGenerator gen) {
+            super(gen);
+        }
+
+        @Override
+        protected void registerTags() {
+            getBuilder(ModContent.diamondNuggetTag).add(ModContent.diamondNuggetItem);
+        }
+
+        @Override
+        public String getName() {
+            return "Translocators Item tags";
         }
     }
 }
