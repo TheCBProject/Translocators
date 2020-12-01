@@ -31,6 +31,9 @@ public class ModContent {
     @ObjectHolder ("fluid_translocator")
     public static FluidTranslocatorItem fluidTranslocatorItem;
 
+    @ObjectHolder("diamond_nugget")
+    public static Item diamondNuggetItem;
+
     @ObjectHolder ("item_translocator")
     public static MultiPartType<ItemTranslocatorPart> itemTranslocatorPartType;
     @ObjectHolder ("fluid_translocator")
@@ -46,6 +49,8 @@ public class ModContent {
                 .group(ItemGroup.REDSTONE);
         r.register(new ItemTranslocatorItem(translocatorProperties).setRegistryName("item_translocator"));
         r.register(new FluidTranslocatorItem(translocatorProperties).setRegistryName("fluid_translocator"));
+
+        r.register(new Item(new Item.Properties().group(ItemGroup.MATERIALS)).setRegistryName("diamond_nugget"));
     }
 
     @SubscribeEvent
