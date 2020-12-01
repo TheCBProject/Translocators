@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/TheCBProject/Translocators"
 [[mods]]
 	modId="translocators"
 	displayName="Translocators"
-	version="${file.jarVersion}"
+	version="${version}"
 
 	updateJSONURL="http://chickenbones.net/Files/notification/version.php?query=forge&file=Translocators&version=1.14"#TODO, Gradle replace?
 	displayURL="http://chickenbones.net/Pages/links.html"
@@ -35,6 +35,6 @@ Translocates stuff!
 [[dependencies.translocators]]
     modId="cb_multipart"
     mandatory=true
-    versionRange="[$cb_multipart_version},)"
+    versionRange="[${cbmp_version},)"
     ordering="AFTER"
     side="BOTH"
