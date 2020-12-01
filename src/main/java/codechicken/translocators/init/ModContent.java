@@ -11,9 +11,6 @@ import codechicken.translocators.part.ItemTranslocatorPart;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -44,8 +41,6 @@ public class ModContent {
 
     @ObjectHolder ("item_translocator")
     public static ContainerType<ContainerItemTranslocator> containerItemTranslocator;
-
-    public static Tag<Item> diamondNuggetTag = new ItemTags.Wrapper(new ResourceLocation("forge:nuggets/diamond"));
 
     @SubscribeEvent
     public static void onRegisterItems(RegistryEvent.Register<Item> event) {

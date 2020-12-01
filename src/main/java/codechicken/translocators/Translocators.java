@@ -3,6 +3,10 @@ package codechicken.translocators;
 import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.proxy.Proxy;
 import codechicken.translocators.proxy.ProxyClient;
+import net.minecraft.item.Item;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.Tag;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +26,8 @@ public class Translocators {
     public static final String MOD_ID = "translocators";
 
     public static Proxy proxy;
+
+    public static Tag<Item> diamondNuggetTag = new ItemTags.Wrapper(new ResourceLocation("forge:nuggets/diamond"));
 
     public Translocators() {
         proxy = DistExecutor.safeRunForDist(() -> ProxyClient::new, () -> Proxy::new);
