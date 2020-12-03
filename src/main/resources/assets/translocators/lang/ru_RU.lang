@@ -1,9 +1,0 @@
-item.translocators.part_item.name=Предметный транслокатор
-item.translocators.part_fluid.name=Жидкостный транслокатор
-tile.craftingGrid.name=Сетка создания
-item.translocators:diamond_nugget.name=Алмазный самородок
-
-translocators.regulate=Регулирование
-translocators.filter=Фильтр
-
-key.craftingGrid=Сетка создания

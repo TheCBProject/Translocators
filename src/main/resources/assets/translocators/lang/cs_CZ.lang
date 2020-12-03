@@ -1,9 +1,0 @@
-item.translocators.part_item.name=Přemisťovač předmětů
-item.translocators.part_fluid.name=Přemisťovač tekutin
-tile.craftingGrid.name=Výrobní rámeček
-item.translocators:diamond_nugget.name=Diamantová hrudka
-
-translocators.regulate=Relugovat
-translocators.filter=Filtr
-
-key.craftingGrid=Výrobní rámeček

@@ -1,9 +1,0 @@
-item.translocators.part_item.name=Item Taşıyıcı
-item.translocators.part_fluid.name=Sıvı Taşıyıcı
-tile.craftingGrid.name=Üretim Izgarası
-item.translocators:diamond_nugget.name=Elmas Parçası
-
-translocators.regulate=Düzenleme
-translocators.filter=Filtre
-
-key.craftingGrid=Üretim Izgarası

@@ -1,0 +1,9 @@
+{
+  "item.translocators.item_translocator": "Translocador de Itens",
+  "item.translocators.fluid_translocator": "Translocador de Líquidos",
+  "tile.craftingGrid.name": "Grade de Trabalho",
+  "item.translocators.diamond_nugget": "Pepita de Diamante",
+  "translocators.regulate": "Regular",
+  "translocators.filter": "Filtrar",
+  "key.craftingGrid": "Grade de Trabalho"
+}
