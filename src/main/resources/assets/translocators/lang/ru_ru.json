@@ -1,0 +1,9 @@
+{
+  "item.translocators.item_translocator": "Предметный транслокатор",
+  "item.translocators.fluid_translocator": "Жидкостный транслокатор",
+  "tile.craftingGrid.name": "Сетка создания",
+  "item.translocators.diamond_nugget": "Алмазный самородок",
+  "translocators.regulate": "Регулирование",
+  "translocators.filter": "Фильтр",
+  "key.craftingGrid": "Сетка создания"
+}
