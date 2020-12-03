@@ -4,7 +4,6 @@ import codechicken.lib.datagen.ItemModelProvider;
 import codechicken.translocators.Translocators;
 import net.minecraft.data.*;
 import net.minecraft.item.Items;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.ExistingFileHelper;
 import net.minecraftforge.common.Tags;
@@ -58,7 +57,7 @@ public class DataGenerators {
         @Override
         protected void registerTags() {
             getBuilder(Translocators.diamondNuggetTag).add(ModContent.diamondNuggetItem);
-            getBuilder(new net.minecraft.tags.ItemTags.Wrapper(new ResourceLocation("forge:nuggets"))).add(ModContent.diamondNuggetItem);
+            getBuilder(Tags.Items.NUGGETS).add(ModContent.diamondNuggetItem);
         }
 
         @Override
