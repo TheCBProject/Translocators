@@ -3,7 +3,7 @@
 38a16666a53df0f6397e83d576b3fc03902a4f68 assets/translocators/models/item/item_translocator.json
 b229496abaa755aebcec1713fd9fafa2515bb03d data/forge/tags/items/nuggets.json
 b229496abaa755aebcec1713fd9fafa2515bb03d data/forge/tags/items/nuggets/diamond.json
-bda374774358e716848ce25cb0b923f395d26575 data/minecraft/advancements/recipes/misc/diamond.json
-3d849e904a74fa318d421ddbafc291886e51864a data/minecraft/recipes/diamond.json
+af58b553f70b44c184ed4abb0ae40d6494c40c39 data/translocators/advancements/recipes/misc/diamond.json
 c1df2e809865be31eb17038325b175ffb5a9b5bf data/translocators/advancements/recipes/misc/diamond_nugget.json
+3d849e904a74fa318d421ddbafc291886e51864a data/translocators/recipes/diamond.json
 8d274a9862442b9da7e39c85c8760e740424fc2b data/translocators/recipes/diamond_nugget.json

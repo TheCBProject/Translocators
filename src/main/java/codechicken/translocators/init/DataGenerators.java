@@ -74,7 +74,7 @@ public class DataGenerators {
             ShapelessRecipeBuilder.shapelessRecipe(Items.DIAMOND)
                     .addIngredient(ModContent.diamondNuggetItem, 9)
                     .addCriterion("has_diamond_nugget", hasItem(ModContent.diamondNuggetItem))
-                    .build(consumer);
+                    .build(consumer, new ResourceLocation(Translocators.MOD_ID, "diamond"));
 
             ShapelessRecipeBuilder.shapelessRecipe(ModContent.diamondNuggetItem, 9)
                     .addIngredient(Items.DIAMOND)
