@@ -2,14 +2,16 @@ package codechicken.translocators.init;
 
 import codechicken.lib.datagen.ItemModelProvider;
 import codechicken.translocators.Translocators;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.ItemTagsProvider;
+import net.minecraft.data.*;
+import net.minecraft.item.Items;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.ExistingFileHelper;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
+
+import java.util.function.Consumer;
 
 import static codechicken.translocators.Translocators.MOD_ID;
 
@@ -24,6 +26,7 @@ public class DataGenerators {
             gen.addProvider(new ItemModels(gen, files));
         }
         gen.addProvider(new ItemTags(gen));
+        gen.addProvider(new Recipes(gen));
     }
 
     private static class ItemModels extends ItemModelProvider {
@@ -60,6 +63,23 @@ public class DataGenerators {
         @Override
         public String getName() {
             return "Translocators Item tags";
+        }
+    }
+
+    private static class Recipes extends RecipeProvider {
+        public Recipes(DataGenerator gen) { super(gen); }
+
+        @Override
+        protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
+            ShapelessRecipeBuilder.shapelessRecipe(Items.DIAMOND)
+                    .addIngredient(ModContent.diamondNuggetItem, 9)
+                    .addCriterion("has_diamond_nugget", hasItem(ModContent.diamondNuggetItem))
+                    .build(consumer);
+
+            ShapelessRecipeBuilder.shapelessRecipe(ModContent.diamondNuggetItem, 9)
+                    .addIngredient(Items.DIAMOND)
+                    .addCriterion("has_diamond", hasItem(Items.DIAMOND))
+                    .build(consumer);
         }
     }
 }
