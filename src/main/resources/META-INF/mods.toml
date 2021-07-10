@@ -1,14 +1,15 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[${forge_version},)"
 issueTrackerURL="https://github.com/TheCBProject/Translocators"
+license="The MIT License (MIT)"
 
 [[mods]]
 	modId="translocators"
 	displayName="Translocators"
 	version="${version}"
 
-	updateJSONURL="http://chickenbones.net/Files/notification/version.php?query=forge&file=Translocators&version=1.14"#TODO, Gradle replace?
-	displayURL="http://chickenbones.net/Pages/links.html"
+	updateJSONURL="https://version-check.covers1624.net/check/?mod=Translocators&mc=${mc_version}"
+	displayURL="https://www.curseforge.com/minecraft/mc-mods/translocators-1-8"
 	authors="ChickenBones, covers1624"
 	description='''
 Translocates stuff!
@@ -17,24 +18,24 @@ Translocates stuff!
 [[dependencies.translocators]]
 	modId="forge"
 	mandatory=true
-	versionRange="[28,)"
+	versionRange="[${forge_version},)"
 	ordering="NONE"
 	side="BOTH"
 [[dependencies.translocators]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.15.2]"
+    versionRange="[1.16.5]"
     ordering="NONE"
     side="BOTH"
 [[dependencies.translocators]]
     modId="codechickenlib"
     mandatory=true
-    versionRange="[${ccl_version},)"
+    versionRange="${ccl_version_range}"
     ordering="AFTER"
     side="BOTH"
 [[dependencies.translocators]]
     modId="cb_multipart"
     mandatory=true
-    versionRange="[${cbmp_version},)"
+    versionRange="${cbmp_version_range}"
     ordering="AFTER"
     side="BOTH"

@@ -35,10 +35,10 @@ public class ProxyClient extends Proxy {
         MinecraftForge.EVENT_BUS.register(CraftingGridKeyHandler.instance);
         ClientRegistry.registerKeyBinding(CraftingGridKeyHandler.instance);
 
-        ScreenManager.registerFactory(TranslocatorsModContent.containerItemTranslocator, GuiTranslocator::new);
+        ScreenManager.register(TranslocatorsModContent.containerItemTranslocator.get(), GuiTranslocator::new);
 
-        ModelResourceLocation itemTranslocatorInv = new ModelResourceLocation(itemTranslocatorItem.getRegistryName(), "inventory");
-        ModelResourceLocation fluidTranslocatorInv = new ModelResourceLocation(fluidTranslocatorItem.getRegistryName(), "inventory");
+        ModelResourceLocation itemTranslocatorInv = new ModelResourceLocation(itemTranslocatorItem.get().getRegistryName(), "inventory");
+        ModelResourceLocation fluidTranslocatorInv = new ModelResourceLocation(fluidTranslocatorItem.get().getRegistryName(), "inventory");
 
         modelHelper.register(itemTranslocatorInv, new RenderTranslocatorItem(0));
         modelHelper.register(fluidTranslocatorInv, new RenderTranslocatorItem(1));

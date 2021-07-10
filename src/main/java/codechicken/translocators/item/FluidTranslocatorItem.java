@@ -17,7 +17,7 @@ public class FluidTranslocatorItem extends TranslocatorItem<FluidTranslocatorPar
 
     @Override
     public MultiPartType<FluidTranslocatorPart> getType() {
-        return TranslocatorsModContent.fluidTranslocatorPartType;
+        return TranslocatorsModContent.fluidTranslocatorPartType.get();
     }
 
     @Override

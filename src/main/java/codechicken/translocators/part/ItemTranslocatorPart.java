@@ -64,7 +64,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public MultiPartType<?> getType() {
-        return TranslocatorsModContent.itemTranslocatorPartType;
+        return TranslocatorsModContent.itemTranslocatorPartType.get();
     }
 
     @Override
@@ -74,7 +74,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(TranslocatorsModContent.itemTranslocatorItem, 1);
+        return new ItemStack(TranslocatorsModContent.itemTranslocatorItem.get(), 1);
     }
 
     @Override
@@ -91,13 +91,13 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(ITEM_CAP, Direction.BY_INDEX[side]).isPresent();
+        return capCache().getCapability(ITEM_CAP, Direction.BY_3D_DATA[side]).isPresent();
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (world().isRemote) {
+        if (world().isClientSide()) {
             movingItems.removeIf(MovingItem::update);
         } else {
             if (a_eject) {
@@ -105,7 +105,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[i], EmptyHandler.INSTANCE);
+                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_3D_DATA[i], EmptyHandler.INSTANCE);
                     } else {
                         handlers[i] = EmptyHandler.INSTANCE;
                     }
@@ -151,7 +151,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             if (signal) {
                 IItemHandler[] handlers = new IItemHandler[6];
                 for (int i = 0; i < 6; i++) {
-                    handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_INDEX[side], EmptyHandler.INSTANCE);
+                    handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_3D_DATA[side], EmptyHandler.INSTANCE);
                 }
                 if (a_eject) {
                     boolean allSatisfied = true;
@@ -255,7 +255,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 continue;
             }
 
-            qty = Math.min(qty, move.getCount() / outputCount + world().rand.nextInt(move.getCount() % outputCount + 1));
+            qty = Math.min(qty, move.getCount() / outputCount + world().random.nextInt(move.getCount() % outputCount + 1));
             outputCount--;
 
             if (qty == 0) {
@@ -358,20 +358,20 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
-        if (world().isRemote) {
+        if (world().isClientSide()) {
             return ActionResultType.SUCCESS;
         }
-        ItemStack stack = player.getHeldItem(hand);
+        ItemStack stack = player.getItemInHand(hand);
         if (ItemUtils.areStacksSameType(stack, ConfigHandler.getNugget()) && !regulate) {
             regulate = true;
-            if (!player.abilities.isCreativeMode) {
+            if (!player.abilities.instabuild) {
                 stack.shrink(1);
             }
             markUpdate();
             return ActionResultType.SUCCESS;
         } else if (stack.getItem() == Items.IRON_INGOT && !signal) {
             signal = true;
-            if (!player.abilities.isCreativeMode) {
+            if (!player.abilities.instabuild) {
                 stack.shrink(1);
             }
             markUpdate();
@@ -407,7 +407,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             }
 
             @Override
-            public void markDirty() {
+            public void setChanged() {
                 markUpdate();
             }
         }
@@ -433,8 +433,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     public void setPowering(boolean b) {
         if ((signal || !b) && b != a_powering) {
             a_powering = b;
-            world().notifyNeighborsOfStateChange(pos(), Blocks.REDSTONE_WIRE);
-            world().notifyNeighborsOfStateChange(pos().offset(Direction.BY_INDEX[side]), Blocks.REDSTONE_WIRE);
+            world().updateNeighborsAt(pos(), Blocks.REDSTONE_WIRE);
+            world().updateNeighborsAt(pos().relative(Direction.BY_3D_DATA[side]), Blocks.REDSTONE_WIRE);
             markUpdate();
         }
     }

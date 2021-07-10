@@ -46,33 +46,33 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     public int timeout = 400;//20 seconds
 
     public TileCraftingGrid() {
-        super(TranslocatorsModContent.tileCraftingGridType);
+        super(TranslocatorsModContent.tileCraftingGridType.get());
         items = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
         result = ItemStack.EMPTY;
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT tag) {
-        super.write(tag);
+    public CompoundNBT save(CompoundNBT tag) {
+        super.save(tag);
         tag.put("items", InventoryUtils.writeItemStacksToTag(items));
         tag.putInt("timeout", timeout);
         return tag;
     }
 
     @Override
-    public void read(CompoundNBT tag) {
-        super.read(tag);
+    public void load(BlockState state, CompoundNBT tag) {
+        super.load(state, tag);
         InventoryUtils.readItemStacksFromTag(items, tag.getList("items", 10));
         timeout = tag.getInt("timeout");
     }
 
     @Override
     public void tick() {
-        if (!world.isRemote) {
+        if (!level.isClientSide()) {
             timeout--;
             if (timeout == 0) {
                 dropItems();
-                world.removeBlock(getPos(), false);
+                level.removeBlock(getBlockPos(), false);
             }
         }
     }
@@ -81,7 +81,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         Vector3 drop = Vector3.fromTileCenter(this);
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
-                ItemUtils.dropItem(item, world, drop);
+                ItemUtils.dropItem(item, level, drop);
             }
         }
     }
@@ -90,7 +90,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     public SUpdateTileEntityPacket getUpdatePacket() {
         MCDataByteBuf packet = new MCDataByteBuf();
         writeToPacket(packet);
-        return packet.toTilePacket(getPos());
+        return packet.toTilePacket(getBlockPos());
     }
 
     @Override
@@ -106,7 +106,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     @Override
-    public void handleUpdateTag(CompoundNBT tag) {
+    public void handleUpdateTag(BlockState state, CompoundNBT tag) {
         readFromPacket(MCDataByteBuf.readFromNBT(tag, "data"));
     }
 
@@ -128,7 +128,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     public void activate(int subHit, PlayerEntity player) {
-        ItemStack held = player.inventory.getCurrentItem();
+        ItemStack held = player.inventory.getSelected();
         if (held.isEmpty()) {
             if (!items[subHit].isEmpty()) {
                 giveOrDropItem(items[subHit], player);
@@ -138,7 +138,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
             if (!InventoryUtils.areStacksIdentical(held, items[subHit])) {
                 ItemStack old = items[subHit];
                 items[subHit] = ItemUtils.copyStack(held, 1);
-                player.inventory.decrStackSize(player.inventory.currentItem, 1);
+                player.inventory.removeItem(player.inventory.selected, 1);
 
                 if (!old.isEmpty()) {
                     giveOrDropItem(old, player);
@@ -147,19 +147,19 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         }
 
         timeout = 2400;
-        BlockState state = world.getBlockState(getPos());
-        world.notifyBlockUpdate(getPos(), state, state, 3);
-        markDirty();
+        BlockState state = level.getBlockState(getBlockPos());
+        level.sendBlockUpdated(getBlockPos(), state, state, 3);
+        setChanged();
     }
 
     private void updateResult() {
         CraftingInventory craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<ICraftingRecipe> mresult = world.getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftMatrix, world);
+            Optional<ICraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
                 //TODO, IRecipeHolder.canUseRecipe.
-                result = mresult.get().getCraftingResult(craftMatrix);
+                result = mresult.get().assemble(craftMatrix);
                 return;
             }
 
@@ -170,10 +170,10 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     private void giveOrDropItem(ItemStack stack, PlayerEntity player) {
-        if (player.inventory.addItemStackToInventory(stack)) {
-            player.container.detectAndSendChanges();
+        if (player.inventory.add(stack)) {
+            player.inventoryMenu.broadcastChanges();
         } else {
-            ItemUtils.dropItem(stack, world, Vector3.fromTileCenter(this));
+            ItemUtils.dropItem(stack, level, Vector3.fromTileCenter(this));
         }
     }
 
@@ -181,32 +181,32 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         CraftingInventory craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<ICraftingRecipe> mresult = world.getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftMatrix, world);
+            Optional<ICraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
                 ICraftingRecipe recipe = mresult.get();
-                if (recipe.isDynamic() || !world.getGameRules().getBoolean(GameRules.DO_LIMITED_CRAFTING) || player.getRecipeBook().isUnlocked(recipe)) {
-                    doCraft(recipe.getCraftingResult(craftMatrix), craftMatrix, player);
+                if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(recipe)) {
+                    doCraft(recipe.assemble(craftMatrix), craftMatrix, player);
                     break;
                 }
             }
 
             rotateItems(craftMatrix);
         }
-        player.swingArm(Hand.MAIN_HAND);
+        player.swing(Hand.MAIN_HAND);
         dropItems();
-        world.removeBlock(getPos(), false);
+        level.removeBlock(getBlockPos(), false);
     }
 
     private CraftingInventory getCraftMatrix() {
         CraftingInventory craftMatrix = new CraftingInventory(new Container(null, 0) {
             @Override
-            public boolean canInteractWith(PlayerEntity player) {
+            public boolean stillValid(PlayerEntity player) {
                 return true;
             }
         }, 3, 3);
 
         for (int i = 0; i < 9; i++) {
-            craftMatrix.setInventorySlotContents(i, items[i]);
+            craftMatrix.setItem(i, items[i]);
         }
 
         return craftMatrix;
@@ -216,49 +216,49 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         giveOrDropItem(mresult, player);
 
         //FMLCommonHandler.instance().firePlayerCraftingEvent(player, mresult, craftMatrix);
-        mresult.onCrafting(world, player, mresult.getCount());
+        mresult.onCraftedBy(level, player, mresult.getCount());
 
         for (int slot = 0; slot < 9; ++slot) {
-            ItemStack stack = craftMatrix.getStackInSlot(slot);
+            ItemStack stack = craftMatrix.getItem(slot);
             if (stack.isEmpty()) {
                 continue;
             }
 
-            craftMatrix.decrStackSize(slot, 1);
+            craftMatrix.removeItem(slot, 1);
             if (stack.getItem().hasContainerItem(stack)) {
                 ItemStack container = stack.getItem().getContainerItem(stack);
 
                 if (!container.isEmpty()) {
-                    if (container.isDamageable() && container.getDamage() > container.getMaxDamage()) {
+                    if (container.isDamageableItem() && container.getDamageValue() > container.getMaxDamage()) {
                         container = ItemStack.EMPTY;
                     }
 
-                    craftMatrix.setInventorySlotContents(slot, container);
+                    craftMatrix.setItem(slot, container);
                 }
             }
         }
 
         for (int i = 0; i < 9; i++) {
-            items[i] = craftMatrix.getStackInSlot(i);
+            items[i] = craftMatrix.getItem(i);
         }
     }
 
     private void rotateItems(CraftingInventory inv) {
         int[] slots = new int[] { 0, 1, 2, 5, 8, 7, 6, 3 };
         ItemStack[] arrangement = new ItemStack[9];
-        arrangement[4] = inv.getStackInSlot(4);
+        arrangement[4] = inv.getItem(4);
 
         for (int i = 0; i < 8; i++) {
-            arrangement[slots[(i + 2) % 8]] = inv.getStackInSlot(slots[i]);
+            arrangement[slots[(i + 2) % 8]] = inv.getItem(slots[i]);
         }
 
         for (int i = 0; i < 9; i++) {
-            inv.setInventorySlotContents(i, arrangement[i]);
+            inv.setItem(i, arrangement[i]);
         }
     }
 
     public void onPlaced(LivingEntity entity) {
-        rotation = (int) (entity.rotationYaw * 4 / 360 + 0.5D) & 3;
+        rotation = (int) (entity.yRot * 4 / 360 + 0.5D) & 3;
     }
 
     public List<IndexedCuboid6> getIndexedCuboids() {

@@ -5,8 +5,8 @@ import codechicken.translocators.Translocators;
 import net.minecraft.data.*;
 import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.generators.ExistingFileHelper;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
@@ -25,7 +25,7 @@ public class DataGenerators {
         if (event.includeClient()) {
             gen.addProvider(new ItemModels(gen, files));
         }
-        gen.addProvider(new ItemTags(gen));
+        gen.addProvider(new ItemTags(gen, new BlockTagsProvider(gen, MOD_ID, files), files));
         gen.addProvider(new Recipes(gen));
     }
 
@@ -50,14 +50,14 @@ public class DataGenerators {
 
     private static class ItemTags extends ItemTagsProvider {
 
-        public ItemTags(DataGenerator gen) {
-            super(gen);
+        public ItemTags(DataGenerator gen, BlockTagsProvider blockTagProvider, ExistingFileHelper files) {
+            super(gen, blockTagProvider, MOD_ID, files);
         }
 
         @Override
-        protected void registerTags() {
-            getBuilder(Translocators.diamondNuggetTag).add(TranslocatorsModContent.diamondNuggetItem);
-            getBuilder(Tags.Items.NUGGETS).add(TranslocatorsModContent.diamondNuggetItem);
+        protected void addTags() {
+            tag(TranslocatorsModContent.diamondNuggetTag).add(TranslocatorsModContent.diamondNuggetItem.get());
+            tag(Tags.Items.NUGGETS).add(TranslocatorsModContent.diamondNuggetItem.get());
         }
 
         @Override
@@ -67,51 +67,52 @@ public class DataGenerators {
     }
 
     private static class Recipes extends RecipeProvider {
+
         public Recipes(DataGenerator gen) { super(gen); }
 
         @Override
-        protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
-            ShapelessRecipeBuilder.shapelessRecipe(Items.DIAMOND)
-                    .addIngredient(TranslocatorsModContent.diamondNuggetItem, 9)
-                    .addCriterion("has_diamond_nugget", hasItem(TranslocatorsModContent.diamondNuggetItem))
-                    .build(consumer, new ResourceLocation(Translocators.MOD_ID, "diamond"));
+        protected void buildShapelessRecipes(Consumer<IFinishedRecipe> consumer) {
+            ShapelessRecipeBuilder.shapeless(Items.DIAMOND)
+                    .requires(TranslocatorsModContent.diamondNuggetItem.get(), 9)
+                    .unlockedBy("has_diamond_nugget", has(TranslocatorsModContent.diamondNuggetItem.get()))
+                    .save(consumer, new ResourceLocation(Translocators.MOD_ID, "diamond"));
 
-            ShapelessRecipeBuilder.shapelessRecipe(TranslocatorsModContent.diamondNuggetItem, 9)
-                    .addIngredient(Items.DIAMOND)
-                    .addCriterion("has_diamond", hasItem(Items.DIAMOND))
-                    .build(consumer);
+            ShapelessRecipeBuilder.shapeless(TranslocatorsModContent.diamondNuggetItem.get(), 9)
+                    .requires(Items.DIAMOND)
+                    .unlockedBy("has_diamond", has(Items.DIAMOND))
+                    .save(consumer);
 
-            ShapedRecipeBuilder.shapedRecipe(TranslocatorsModContent.itemTranslocatorItem, 2)
-                    .patternLine("RER")
-                    .patternLine("IPI")
-                    .patternLine("RGR")
-                    .key('R', Tags.Items.DUSTS_REDSTONE)
-                    .key('E', Tags.Items.ENDER_PEARLS)
-                    .key('I', Tags.Items.INGOTS_IRON)
-                    .key('P', Items.PISTON)
-                    .key('G', Tags.Items.INGOTS_GOLD)
-                    .addCriterion("has_redstone", hasItem(Tags.Items.DUSTS_REDSTONE))
-                    .addCriterion("has_ender_pearl", hasItem(Tags.Items.ENDER_PEARLS))
-                    .addCriterion("has_iron_ingot", hasItem(Tags.Items.INGOTS_IRON))
-                    .addCriterion("has_piston", hasItem(Items.PISTON))
-                    .addCriterion("has_gold_ingot", hasItem(Tags.Items.INGOTS_GOLD))
-                    .build(consumer);
+            ShapedRecipeBuilder.shaped(TranslocatorsModContent.itemTranslocatorItem.get(), 2)
+                    .pattern("RER")
+                    .pattern("IPI")
+                    .pattern("RGR")
+                    .define('R', Tags.Items.DUSTS_REDSTONE)
+                    .define('E', Tags.Items.ENDER_PEARLS)
+                    .define('I', Tags.Items.INGOTS_IRON)
+                    .define('P', Items.PISTON)
+                    .define('G', Tags.Items.INGOTS_GOLD)
+                    .unlockedBy("has_redstone", has(Tags.Items.DUSTS_REDSTONE))
+                    .unlockedBy("has_ender_pearl", has(Tags.Items.ENDER_PEARLS))
+                    .unlockedBy("has_iron_ingot", has(Tags.Items.INGOTS_IRON))
+                    .unlockedBy("has_piston", has(Items.PISTON))
+                    .unlockedBy("has_gold_ingot", has(Tags.Items.INGOTS_GOLD))
+                    .save(consumer);
 
-            ShapedRecipeBuilder.shapedRecipe(TranslocatorsModContent.fluidTranslocatorItem, 2)
-                    .patternLine("RER")
-                    .patternLine("IPI")
-                    .patternLine("RLR")
-                    .key('R', Tags.Items.DUSTS_REDSTONE)
-                    .key('E', Tags.Items.ENDER_PEARLS)
-                    .key('I', Tags.Items.INGOTS_IRON)
-                    .key('P', Items.PISTON)
-                    .key('L', Tags.Items.GEMS_LAPIS)
-                    .addCriterion("has_redstone", hasItem(Tags.Items.DUSTS_REDSTONE))
-                    .addCriterion("has_ender_pearl", hasItem(Tags.Items.ENDER_PEARLS))
-                    .addCriterion("has_iron_ingot", hasItem(Tags.Items.INGOTS_IRON))
-                    .addCriterion("has_piston", hasItem(Items.PISTON))
-                    .addCriterion("has_lapis", hasItem(Tags.Items.GEMS_LAPIS))
-                    .build(consumer);
+            ShapedRecipeBuilder.shaped(TranslocatorsModContent.fluidTranslocatorItem.get(), 2)
+                    .pattern("RER")
+                    .pattern("IPI")
+                    .pattern("RLR")
+                    .define('R', Tags.Items.DUSTS_REDSTONE)
+                    .define('E', Tags.Items.ENDER_PEARLS)
+                    .define('I', Tags.Items.INGOTS_IRON)
+                    .define('P', Items.PISTON)
+                    .define('L', Tags.Items.GEMS_LAPIS)
+                    .unlockedBy("has_redstone", has(Tags.Items.DUSTS_REDSTONE))
+                    .unlockedBy("has_ender_pearl", has(Tags.Items.ENDER_PEARLS))
+                    .unlockedBy("has_iron_ingot", has(Tags.Items.INGOTS_IRON))
+                    .unlockedBy("has_piston", has(Items.PISTON))
+                    .unlockedBy("has_lapis", has(Tags.Items.GEMS_LAPIS))
+                    .save(consumer);
         }
     }
 }

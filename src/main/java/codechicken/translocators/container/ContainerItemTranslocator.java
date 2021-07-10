@@ -26,7 +26,7 @@ public class ContainerItemTranslocator extends ContainerExtended {
     }
 
     public ContainerItemTranslocator(int windowId, PlayerInventory playerInv, InventorySimple inv) {
-        super(TranslocatorsModContent.containerItemTranslocator, windowId);
+        super(TranslocatorsModContent.containerItemTranslocator.get(), windowId);
         this.inv = inv;
 
         for (int x = 0; x < 3; x++) {
@@ -39,7 +39,7 @@ public class ContainerItemTranslocator extends ContainerExtended {
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack, Slot slot) {
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
         return !(slot instanceof SlotDummy);
     }
 

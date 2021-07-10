@@ -21,7 +21,8 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.model.Material;
+import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 import static codechicken.lib.util.SneakyUtils.none;
 import static codechicken.lib.vec.Rotation.sideRotations;
+import static codechicken.translocators.Translocators.MOD_ID;
 import static codechicken.translocators.init.TranslocatorTextures.TEXTURES;
 import static net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 
@@ -64,17 +66,18 @@ public class RenderTranslocator {
     private static final CCModel[] plates = new CCModel[6];
     private static final CCModel insert;
 
-    private static final CustomGradient gradient = new CustomGradient(new ResourceLocation("translocators", "textures/fx/grad.png"));
-    private static final RenderType particleType = RenderType.makeType("translocator_link", DefaultVertexFormats.POSITION_TEX_COLOR, GL11.GL_QUADS, 255, RenderType.State.getBuilder()//
-            .texture(new RenderState.TextureState(new ResourceLocation("translocators:textures/fx/particle.png"), false, false))//
-            .transparency(RenderType.TRANSLUCENT_TRANSPARENCY)//
-            .writeMask(RenderType.COLOR_WRITE)//
-            .texturing(new RenderState.TexturingState("lighting", RenderSystem::disableLighting, none()))//
-            .build(false)//
+    private static final CustomGradient gradient = new CustomGradient(new ResourceLocation(MOD_ID, "textures/fx/grad.png"));
+    private static final RenderType ITEM_RENDER_TYPE = RenderType.entitySolid(AtlasTexture.LOCATION_BLOCKS);
+    private static final RenderType particleType = RenderType.create("translocator_link", DefaultVertexFormats.POSITION_TEX_COLOR, GL11.GL_QUADS, 255, RenderType.State.builder()
+            .setTextureState(new RenderState.TextureState(new ResourceLocation(MOD_ID, "textures/fx/particle.png"), false, false))
+            .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
+            .setWriteMaskState(RenderType.COLOR_WRITE)
+            .setTexturingState(new RenderState.TexturingState("lighting", RenderSystem::disableLighting, none()))
+            .createCompositeState(false)
     );
 
     static {
-        Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation("translocators", "models/model_new.obj"), 0x07, new SwapYZ());
+        Map<String, CCModel> models = OBJParser.parseModels(new ResourceLocation(MOD_ID, "models/model_new.obj"), GL11.GL_QUADS, new SwapYZ());
         plates[0] = models.get("Plate");
         insert = models.get("Insert");
         CCModel.generateSidedModels(plates, 0, new Vector3());
@@ -100,17 +103,16 @@ public class RenderTranslocator {
         mat.translate(new Vector3(0, -0.5, 0));
         mat.scale(1, insertpos * 2 / 3 + 1 / 3D, 1);
         ccrs.reset();
-        ccrs.bind(RenderType.getSolid(), getter);
+        ccrs.bind(RenderType.solid(), getter);
         ccrs.brightness = packedLight;
         ccrs.overlay = packedOverlay;
         insert.render(ccrs, mat, i_trans);
-
     }
 
     public static void renderItem(int type, MatrixStack mStack, TransformType transformType, IRenderTypeBuffer buffers, int packedLight, int packedOverlay) {
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
-        ccrs.bind(RenderType.getSolid(), buffers);
+        ccrs.bind(ITEM_RENDER_TYPE, buffers);
         ccrs.brightness = packedLight;
         ccrs.overlay = packedOverlay;
         IconTransformation i_trans = new IconTransformation(TEXTURES[type][0]);
@@ -127,6 +129,7 @@ public class RenderTranslocator {
         mat.translate(v_trans);
         plates[2].render(ccrs, mat, i_trans);
         insert.render(ccrs, i_matrix, i_trans);
+        ccrs.reset();
     }
 
     public static void renderLinks(TranslocatorPart p, CCRenderState ccrs, MatrixStack mStack, IRenderTypeBuffer getter) {
@@ -170,14 +173,14 @@ public class RenderTranslocator {
     public static void renderItem(ItemTranslocatorPart p, MatrixStack mStack, IRenderTypeBuffer getter, int packedLight, int packedOverlay, float delta) {
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         for (ItemTranslocatorPart.MovingItem m : p.movingItems) {
-            mStack.push();
+            mStack.pushPose();
             double d = MathHelper.interpolate(m.b_progress, m.a_progress, delta);
             Vector3 path = getPath(p.side, m.dst, d).add(itemFloat(p.side, m.dst, d));
             mStack.translate(path.x, path.y, path.z);
             mStack.scale(0.5f, 0.5f, 0.5f);
             mStack.scale(0.35f, 0.35f, 0.35f);
-            itemRenderer.renderItem(m.stack, TransformType.FIXED, packedLight, packedOverlay, mStack, getter);
-            mStack.pop();
+            itemRenderer.renderStatic(m.stack, TransformType.FIXED, packedLight, packedOverlay, mStack, getter);
+            mStack.popPose();
         }
     }
 
@@ -211,8 +214,8 @@ public class RenderTranslocator {
         }
 
         FluidAttributes attribs = stack.getFluid().getAttributes();
-        Material material = ForgeHooksClient.getBlockMaterial(attribs.getStillTexture(stack));
-        TextureAtlasSprite tex = material.getSprite();
+        RenderMaterial material = ForgeHooksClient.getBlockMaterial(attribs.getStillTexture(stack));
+        TextureAtlasSprite tex = material.sprite();
         ccrs.colour = attribs.getColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -242,13 +245,13 @@ public class RenderTranslocator {
             next[3].set(p).add(a.x * s1 + b.x * s2, a.y * s1 + b.y * s2, a.z * s1 + b.z * s2);
 
             if (di > end) {
-                double u1 = tex.getInterpolatedU(Math.abs(di) * 16);
-                double u2 = tex.getInterpolatedU(Math.abs(di - tess) * 16);
+                double u1 = tex.getU(Math.abs(di) * 16);
+                double u2 = tex.getU(Math.abs(di - tess) * 16);
                 for (int i = 0; i < 4; i++) {
                     int j = (i + 1) % 4;
                     Vector3 axis = next[j].copy().subtract(next[i]);
-                    double v1 = tex.getInterpolatedV(Math.abs(next[i].scalarProject(axis)) * 16);
-                    double v2 = tex.getInterpolatedV(Math.abs(next[j].scalarProject(axis)) * 16);
+                    double v1 = tex.getV(Math.abs(next[i].scalarProject(axis)) * 16);
+                    double v2 = tex.getV(Math.abs(next[j].scalarProject(axis)) * 16);
 
                     ccrs.vert.set(next[i], u1, v1).apply(mat);
                     ccrs.writeVert();
@@ -268,13 +271,13 @@ public class RenderTranslocator {
     }
 
     public static void renderParticle(CCRenderState ccrs, Matrix4 mat, Colour colour, double s, double u1, double v1, double u2, double v2) {
-        ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
+        ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getMainCamera();
 
-        double rotationX = Math.cos(info.getYaw() * MathHelper.torad);
-        double rotationZ = Math.sin(info.getYaw() * MathHelper.torad);
-        double rotationYZ = -rotationZ * Math.sin(info.getPitch() * MathHelper.torad);
-        double rotationXY = rotationX * Math.sin(info.getPitch() * MathHelper.torad);
-        double rotationXZ = Math.cos(info.getPitch() * MathHelper.torad);
+        double rotationX = Math.cos(info.getYRot() * MathHelper.torad);
+        double rotationZ = Math.sin(info.getYRot() * MathHelper.torad);
+        double rotationYZ = -rotationZ * Math.sin(info.getXRot() * MathHelper.torad);
+        double rotationXY = rotationX * Math.sin(info.getXRot() * MathHelper.torad);
+        double rotationXZ = Math.cos(info.getXRot() * MathHelper.torad);
 
         ccrs.colour = colour.rgba();
         ccrs.vert.set(-rotationX * s - rotationYZ * s, -rotationXZ * s, -rotationZ * s - rotationXY * s, u2, v2).apply(mat);

@@ -31,20 +31,20 @@ public abstract class TranslocatorItem<T extends TranslocatorPart> extends ItemM
 
     @Override
     public TMultiPart newPart(ItemUseContext context) {
-        World world = context.getWorld();
-        Direction side = context.getFace();
-        BlockPos onPos = context.getPos().offset(side.getOpposite());
-        TileEntity tile = world.getTileEntity(onPos);
+        World world = context.getLevel();
+        Direction side = context.getClickedFace();
+        BlockPos onPos = context.getClickedPos().relative(side.getOpposite());
+        TileEntity tile = world.getBlockEntity(onPos);
         if (tile != null && tile.getCapability(getTargetCapability(), side).isPresent()) {
-            TranslocatorPart part = world.isRemote ? getType().createPartClient(null) : getType().createPartServer(null);
+            TranslocatorPart part = world.isClientSide() ? getType().createPartClient(null) : getType().createPartServer(null);
             return part.setupPlacement(context.getPlayer(), side);
         }
         return null;
     }
 
     @Override
-    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
-        if (isInGroup(group)) {
+    public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
+        if (allowdedIn(group)) {
             items.add(new ItemStack(this, 1));
         }
     }

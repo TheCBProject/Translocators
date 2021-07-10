@@ -28,7 +28,7 @@ public class CraftingGridKeyHandler extends KeyBinding {
             return;
         }
 
-        boolean pressed = isKeyDown();
+        boolean pressed = isDown();
         if (pressed != wasPressed) {
             wasPressed = pressed;
             if (pressed) {
@@ -39,17 +39,17 @@ public class CraftingGridKeyHandler extends KeyBinding {
 
     private void onKeyPressed() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.currentScreen != null) {
+        if (mc.screen != null) {
             return;
         }
 
         //place the grid
-        RayTraceResult hit = mc.objectMouseOver;
+        RayTraceResult hit = mc.hitResult;
         if (hit == null || hit.getType() != Type.BLOCK) {
             return;
         }
         BlockRayTraceResult blockHit = (BlockRayTraceResult) hit;
-        BlockState state = mc.world.getBlockState(blockHit.getPos());
+        BlockState state = mc.level.getBlockState(blockHit.getBlockPos());
         //        if (state.getBlock() == ModBlocks.blockCraftingGrid) {
         //            PacketCustom packet = new PacketCustom(TranslocatorCPH.channel, 2);
         //            packet.writePos(hit.getBlockPos());

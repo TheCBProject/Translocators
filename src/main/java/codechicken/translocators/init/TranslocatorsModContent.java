@@ -1,6 +1,8 @@
 package codechicken.translocators.init;
 
 import codechicken.lib.inventory.container.ICCLContainerType;
+import codechicken.lib.util.CrashLock;
+import codechicken.lib.util.SneakyUtils;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.SimpleMultiPartType;
 import codechicken.translocators.block.BlockCraftingGrid;
@@ -14,77 +16,73 @@ import net.minecraft.block.Block;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tileentity.TileEntityType;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.ObjectHolder;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.Tags;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import static codechicken.translocators.Translocators.MOD_ID;
 
 /**
  * Created by covers1624 on 4/19/20.
  */
-@ObjectHolder (MOD_ID)
-@Mod.EventBusSubscriber (modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class TranslocatorsModContent {
 
-    @ObjectHolder ("item_translocator")
-    public static ItemTranslocatorItem itemTranslocatorItem;
-    @ObjectHolder ("fluid_translocator")
-    public static FluidTranslocatorItem fluidTranslocatorItem;
+    private static final CrashLock LOCK = new CrashLock("Already Initialized.");
 
-    @ObjectHolder ("diamond_nugget")
-    public static Item diamondNuggetItem;
+    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Item.class, MOD_ID);
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Block.class, MOD_ID);
+    private static final DeferredRegister<TileEntityType<?>> TILES = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, MOD_ID);
+    private static final DeferredRegister<MultiPartType<?>> PARTS = DeferredRegister.create(SneakyUtils.<Class<MultiPartType<?>>>unsafeCast(MultiPartType.class), MOD_ID);
+    private static final DeferredRegister<ContainerType<?>> CONTAINER_TYPES = DeferredRegister.create(SneakyUtils.<Class<ContainerType<?>>>unsafeCast(ContainerType.class), MOD_ID);
 
-    @ObjectHolder ("crafting_grid")
-    public static BlockCraftingGrid blockCraftingGrid;
+    public static Tags.IOptionalNamedTag<Item> diamondNuggetTag = ItemTags.createOptional(new ResourceLocation("forge:nuggets/diamond"));
 
-    @ObjectHolder ("crafting_grid")
-    public static TileEntityType<TileCraftingGrid> tileCraftingGridType;
+    //region Items.
+    public static RegistryObject<ItemTranslocatorItem> itemTranslocatorItem = ITEMS.register("item_translocator", () ->
+            new ItemTranslocatorItem(new Item.Properties().tab(ItemGroup.TAB_REDSTONE)));
 
-    @ObjectHolder ("item_translocator")
-    public static MultiPartType<ItemTranslocatorPart> itemTranslocatorPartType;
-    @ObjectHolder ("fluid_translocator")
-    public static MultiPartType<FluidTranslocatorPart> fluidTranslocatorPartType;
+    public static RegistryObject<FluidTranslocatorItem> fluidTranslocatorItem = ITEMS.register("fluid_translocator", () ->
+            new FluidTranslocatorItem(new Item.Properties().tab(ItemGroup.TAB_REDSTONE)));
 
-    @ObjectHolder ("item_translocator")
-    public static ContainerType<ContainerItemTranslocator> containerItemTranslocator;
+    public static RegistryObject<Item> diamondNuggetItem = ITEMS.register("diamond_nugget", () ->
+            new Item(new Item.Properties().tab(ItemGroup.TAB_MATERIALS)));
+    //endregion
 
-    @SubscribeEvent
-    public static void onRegisterItems(RegistryEvent.Register<Item> event) {
-        IForgeRegistry<Item> r = event.getRegistry();
-        Item.Properties translocatorProperties = new Item.Properties()//
-                .group(ItemGroup.REDSTONE);
-        r.register(new ItemTranslocatorItem(translocatorProperties).setRegistryName("item_translocator"));
-        r.register(new FluidTranslocatorItem(translocatorProperties).setRegistryName("fluid_translocator"));
+    //region Blocks.
+    public static RegistryObject<BlockCraftingGrid> blockCraftingGrid = BLOCKS.register("crafting_grid", BlockCraftingGrid::new);
+    //endregion
 
-        r.register(new Item(new Item.Properties().group(ItemGroup.MATERIALS)).setRegistryName("diamond_nugget"));
-    }
+    //region TileEntityTypes.
+    public static RegistryObject<TileEntityType<TileCraftingGrid>> tileCraftingGridType = TILES.register("crafting_grid", () ->
+            TileEntityType.Builder.of(TileCraftingGrid::new, blockCraftingGrid.get()).build(null));
+    //endregion
 
-    @SubscribeEvent
-    public static void onRegisterBlocks(RegistryEvent.Register<Block> event) {
-        IForgeRegistry<Block> r = event.getRegistry();
-        r.register(new BlockCraftingGrid().setRegistryName("crafting_grid"));
-    }
+    //region MultiPartTypes.
+    public static RegistryObject<MultiPartType<ItemTranslocatorPart>> itemTranslocatorPartType = PARTS.register("item_translocator", () ->
+            new SimpleMultiPartType<>(s -> new ItemTranslocatorPart()));
 
-    @SubscribeEvent
-    public static void onRegisterTiles(RegistryEvent.Register<TileEntityType<?>> event) {
-        IForgeRegistry<TileEntityType<?>> r = event.getRegistry();
-        r.register(TileEntityType.Builder.create(TileCraftingGrid::new, blockCraftingGrid).build(null).setRegistryName("crafting_grid"));
-    }
+    public static RegistryObject<MultiPartType<FluidTranslocatorPart>> fluidTranslocatorPartType = PARTS.register("fluid_translocator", () ->
+            new SimpleMultiPartType<>(s -> new FluidTranslocatorPart()));
+    //endregion
 
-    @SubscribeEvent
-    public static void onRegisterMultiParts(RegistryEvent.Register<MultiPartType<?>> event) {
-        IForgeRegistry<MultiPartType<?>> r = event.getRegistry();
-        r.register(new SimpleMultiPartType<>(s -> new ItemTranslocatorPart()).setRegistryName("item_translocator"));
-        r.register(new SimpleMultiPartType<>(s -> new FluidTranslocatorPart()).setRegistryName("fluid_translocator"));
-    }
+    //region ContainerTypes.
+    public static RegistryObject<ContainerType<ContainerItemTranslocator>> containerItemTranslocator = CONTAINER_TYPES.register("item_translocator", () ->
+            ICCLContainerType.create(ContainerItemTranslocator::new));
+    //endregion.
 
-    @SubscribeEvent
-    public static void onRegisterContainers(RegistryEvent.Register<ContainerType<?>> event) {
-        IForgeRegistry<ContainerType<?>> r = event.getRegistry();
-        r.register(ICCLContainerType.create(ContainerItemTranslocator::new).setRegistryName("item_translocator"));
+    public static void init() {
+        LOCK.lock();
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        ITEMS.register(bus);
+        BLOCKS.register(bus);
+        TILES.register(bus);
+        PARTS.register(bus);
+        CONTAINER_TYPES.register(bus);
     }
 }

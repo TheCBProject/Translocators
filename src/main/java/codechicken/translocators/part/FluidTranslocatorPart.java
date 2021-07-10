@@ -32,7 +32,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(TranslocatorsModContent.fluidTranslocatorItem, 1);
+        return new ItemStack(TranslocatorsModContent.fluidTranslocatorItem.get(), 1);
     }
 
     @Override
@@ -42,19 +42,19 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public MultiPartType<?> getType() {
-        return TranslocatorsModContent.fluidTranslocatorPartType;
+        return TranslocatorsModContent.fluidTranslocatorPartType.get();
     }
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(FLUID_CAP, Direction.BY_INDEX[side]).isPresent();
+        return capCache().getCapability(FLUID_CAP, Direction.BY_3D_DATA[side]).isPresent();
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        if (world().isRemote) {
+        if (world().isClientSide()) {
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
                 if (m.update()) {
@@ -71,7 +71,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_INDEX[i], EmptyFluidHandler.INSTANCE);
+                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
@@ -98,7 +98,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
             int fit = outaccess.fill(move, FluidAction.SIMULATE);
             int spread = outputs.length - k;
-            fit = Math.min(fit, move.getAmount() / spread + world().rand.nextInt(move.getAmount() % spread + 1));
+            fit = Math.min(fit, move.getAmount() / spread + world().random.nextInt(move.getAmount() % spread + 1));
 
             if (fit == 0) {
                 continue;
@@ -144,6 +144,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     private void sendTransferPacket(List<FluidTransfer> transfers) {
+        if (transfers.isEmpty()) return;
         sendIncUpdate(packet -> {
             packet.writeByte(transfers.size());
             for (FluidTransfer t : transfers) {

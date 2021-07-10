@@ -17,7 +17,7 @@ public class ItemTranslocatorItem extends TranslocatorItem<ItemTranslocatorPart>
 
     @Override
     public MultiPartType<ItemTranslocatorPart> getType() {
-        return TranslocatorsModContent.itemTranslocatorPartType;
+        return TranslocatorsModContent.itemTranslocatorPartType.get();
     }
 
     @Override

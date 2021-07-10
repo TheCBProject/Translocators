@@ -27,7 +27,7 @@ import net.minecraft.world.World;
 public class BlockCraftingGrid extends Block {
 
     public BlockCraftingGrid() {
-        super(Block.Properties.create(Material.WOOD));
+        super(Block.Properties.of(Material.WOOD));
     }
 
     @Override
@@ -46,13 +46,13 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockPos beneath = pos.down();
-        return Block.hasSolidSide(world.getBlockState(beneath), world, beneath, Direction.UP);
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockPos beneath = pos.below();
+        return world.getBlockState(beneath).isFaceSturdy(world, beneath, Direction.UP);
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    public BlockRenderType getRenderShape(BlockState state) {
         return BlockRenderType.INVISIBLE;
     }
 
@@ -90,12 +90,12 @@ public class BlockCraftingGrid extends Block {
     //    }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (world.isRemote) {
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        if (world.isClientSide()) {
             return ActionResultType.PASS;
         }
 
-        TileCraftingGrid tcraft = (TileCraftingGrid) world.getTileEntity(pos);
+        TileCraftingGrid tcraft = (TileCraftingGrid) world.getBlockEntity(pos);
 
         if (hit != null) {
             if (hit.subHit > 0) {
@@ -122,7 +122,7 @@ public class BlockCraftingGrid extends Block {
 //            pos = pos.offset(Direction.UP);
 //        }
 
-        if (!Block.hasSolidSide(world.getBlockState(pos.down()), world, pos.down(), Direction.UP)) {
+        if (!world.getBlockState(pos.below()).isFaceSturdy(world, pos.below(), Direction.UP)) {
             return false;
         }
 //
@@ -130,22 +130,22 @@ public class BlockCraftingGrid extends Block {
 //            return false;
 //        }
 
-        player.swingArm(Hand.MAIN_HAND);
-        if (!world.setBlockState(pos, getDefaultState())) {
+        player.swing(Hand.MAIN_HAND);
+        if (!world.setBlockAndUpdate(pos, defaultBlockState())) {
             return false;
         }
 
-        onBlockPlacedBy(world, pos, getDefaultState(), player, null);
+        setPlacedBy(world, pos, defaultBlockState(), player, null);
         return true;
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : stateIn;
+    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
+        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : stateIn;
     }
 
     @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        ((TileCraftingGrid) world.getTileEntity(pos)).onPlaced(placer);
+    public void setPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        ((TileCraftingGrid) world.getBlockEntity(pos)).onPlaced(placer);
     }
 }

@@ -49,7 +49,7 @@ public class ConfigHandler {
             } else {
                 logger.warn("Failed to load Nugget item '{}', does not exist. Using default.", itemName);
                 filterItem.resetToDefault().save();
-                nugget = new ItemStack(TranslocatorsModContent.diamondNuggetItem);
+                nugget = new ItemStack(TranslocatorsModContent.diamondNuggetItem.get());
             }
         };
         config.save();

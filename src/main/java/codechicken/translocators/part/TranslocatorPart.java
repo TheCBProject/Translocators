@@ -28,6 +28,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
  */
 public abstract class TranslocatorPart extends TMultiPart implements TFacePart, TNormalOcclusionPart, ITickablePart {
 
-    public static final SoundType PLACEMENT_SOUND = new SoundType(1.0F, 1.0F, null, null, SoundEvents.BLOCK_STONE_STEP, null, null);
+    public static final SoundType PLACEMENT_SOUND = new SoundType(1.0F, 1.0F, null, null, SoundEvents.STONE_STEP, null, null);
 
     public static Cuboid6 base = new Cuboid6(3 / 16D, 0, 3 / 16D, 13 / 16D, 2 / 16D, 13 / 16D);
     public static Cuboid6[] boxes = new Cuboid6[6];
@@ -194,7 +195,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
 
     @Override
     public void onPartChanged(TMultiPart part) {
-        if (!world().isRemote) {
+        if (!world().isClientSide()) {
             onNeighborBlockChanged(pos());
         }
         super.onPartChanged(part);
@@ -225,7 +226,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public VoxelShape getOutlineShape() {
+    public VoxelShape getShape(ISelectionContext ctx) {
         return boxShapes[side];
     }
 
@@ -235,13 +236,13 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public VoxelShape getCollisionShape() {
+    public VoxelShape getCollisionShape(ISelectionContext ctx) {
         //TODO add merging to VoxelShapeCache.
         return VoxelShapes.or(boxShapes[side], getInsertBounds().shape());
     }
 
     @Override
-    public VoxelShape getRayTraceShape() {
+    public VoxelShape getInteractionShape() {
         Cuboid6 insert = getInsertBounds();
         VoxelShape insertShape = insert.shape();
         List<IndexedCuboid6> parts = Lists.newArrayList(base_parts[side]).stream()//
@@ -262,9 +263,9 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     public void tick() {
         b_insertpos = a_insertpos;
         a_insertpos = MathHelper.approachExp(a_insertpos, a_eject ? 1 : 0, 0.5, 0.1);
-        if (!world().isRemote) {
+        if (!world().isClientSide()) {
             b_eject = a_eject;
-            a_eject = (redstone && world().isBlockPowered(pos())) != invert_redstone;
+            a_eject = (redstone && world().hasNeighborSignal(pos())) != invert_redstone;
             if (a_eject != b_eject) {
                 markUpdate();
             }
@@ -273,7 +274,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
 
     @Override
     public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
-        if (world().isRemote) {
+        if (world().isClientSide()) {
             return ActionResultType.SUCCESS;
         }
         if (held.isEmpty() && player.isCrouching()) {
@@ -287,16 +288,16 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
             }
         } else if (held.getItem() == Items.REDSTONE && !redstone) {
             redstone = true;
-            if (!player.abilities.isCreativeMode) {
+            if (!player.abilities.instabuild) {
                 held.shrink(1);
             }
-            if (world().isBlockPowered(pos()) == invert_redstone == a_eject) {
+            if (world().hasNeighborSignal(pos()) == invert_redstone == a_eject) {
                 invert_redstone = !invert_redstone;
             }
             markUpdate();
         } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
             fast = true;
-            if (!player.abilities.isCreativeMode) {
+            if (!player.abilities.instabuild) {
                 held.shrink(1);
             }
             markUpdate();
@@ -387,7 +388,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     public void markUpdate() {
-        tile().markDirty();
+        tile().setChanged();
         tile().notifyPartChange(this);
         sendFlagsUpdate();
     }
@@ -401,8 +402,8 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
      */
     @SuppressWarnings ("BooleanMethodIsAlwaysInverted")
     public boolean canEject() {
-        if (!world().isRemote) {
-            boolean b = (redstone && world().isBlockPowered(pos())) != invert_redstone;
+        if (!world().isClientSide()) {
+            boolean b = (redstone && world().hasNeighborSignal(pos())) != invert_redstone;
             if (b != a_eject) {
                 return b;
             }
@@ -431,7 +432,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     public int getIconIndex() {
         int i = 0;
         if (redstone) {
-            i |= world().isBlockPowered(pos()) ? 0x02 : 0x01;
+            i |= world().hasNeighborSignal(pos()) ? 0x02 : 0x01;
         }
         if (fast) {
             i |= 0x04;
@@ -441,7 +442,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
 
     @Override
     public boolean renderStatic(RenderType layer, CCRenderState ccrs) {
-        if (layer == RenderType.getSolid()) {
+        if (layer == RenderType.solid()) {
             ccrs.reset();
             RenderTranslocator.renderStatic(ccrs, this);
         }
@@ -459,7 +460,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     @Override
     public boolean drawHighlight(PartRayTraceResult hit, ActiveRenderInfo info, MatrixStack mStack, IRenderTypeBuffer getter, float partialTicks) {
         if (hit.subHit == HIT_INSERT) {
-            RenderUtils.bufferHitbox(new Matrix4(mStack).translate(hit.getPos()), getter, info, getInsertBounds());
+            RenderUtils.bufferHitbox(new Matrix4(mStack).translate(hit.getBlockPos()), getter, info, getInsertBounds());
             return true;
         }
         return false;
