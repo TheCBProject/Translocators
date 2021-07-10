@@ -3,7 +3,7 @@
   "item.translocators.fluid_translocator": "Flüssigkeiten-Translokator",
   "tile.craftingGrid.name": "Crafting-Feld",
   "item.translocators.diamond_nugget": "Diamantnugget",
-  "translocators.regulate": "Regulieren",
-  "translocators.filter": "Filter",
+  "gui.translocators.regulate": "Regulieren",
+  "gui.translocators.filter": "Filter",
   "key.craftingGrid": "Crafting-Feld"
 }

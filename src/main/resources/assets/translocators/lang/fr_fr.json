@@ -3,7 +3,7 @@
   "item.translocators.fluid_translocator": "Translocateur de Liquide",
   "tile.craftingGrid.name": "Grille de Craft",
   "item.translocators.diamond_nugget": "Pépite de Diamant",
-  "translocators.regulate": "Réguler",
-  "translocators.filter": "Filtrer",
+  "gui.translocators.regulate": "Réguler",
+  "gui.translocators.filter": "Filtrer",
   "key.craftingGrid": "Grille de Craft"
 }

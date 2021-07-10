@@ -37,9 +37,9 @@ public class DataGenerators {
 
         @Override
         protected void registerModels() {
-            noTexture(ModContent.itemTranslocatorItem);
-            noTexture(ModContent.fluidTranslocatorItem);
-            generated(ModContent.diamondNuggetItem);
+            generated(TranslocatorsModContent.itemTranslocatorItem).texture(null);
+            generated(TranslocatorsModContent.fluidTranslocatorItem).texture(null);
+            generated(TranslocatorsModContent.diamondNuggetItem);
         }
 
         @Override
@@ -56,8 +56,8 @@ public class DataGenerators {
 
         @Override
         protected void registerTags() {
-            getBuilder(Translocators.diamondNuggetTag).add(ModContent.diamondNuggetItem);
-            getBuilder(Tags.Items.NUGGETS).add(ModContent.diamondNuggetItem);
+            getBuilder(Translocators.diamondNuggetTag).add(TranslocatorsModContent.diamondNuggetItem);
+            getBuilder(Tags.Items.NUGGETS).add(TranslocatorsModContent.diamondNuggetItem);
         }
 
         @Override
@@ -72,16 +72,16 @@ public class DataGenerators {
         @Override
         protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
             ShapelessRecipeBuilder.shapelessRecipe(Items.DIAMOND)
-                    .addIngredient(ModContent.diamondNuggetItem, 9)
-                    .addCriterion("has_diamond_nugget", hasItem(ModContent.diamondNuggetItem))
+                    .addIngredient(TranslocatorsModContent.diamondNuggetItem, 9)
+                    .addCriterion("has_diamond_nugget", hasItem(TranslocatorsModContent.diamondNuggetItem))
                     .build(consumer, new ResourceLocation(Translocators.MOD_ID, "diamond"));
 
-            ShapelessRecipeBuilder.shapelessRecipe(ModContent.diamondNuggetItem, 9)
+            ShapelessRecipeBuilder.shapelessRecipe(TranslocatorsModContent.diamondNuggetItem, 9)
                     .addIngredient(Items.DIAMOND)
                     .addCriterion("has_diamond", hasItem(Items.DIAMOND))
                     .build(consumer);
 
-            ShapedRecipeBuilder.shapedRecipe(ModContent.itemTranslocatorItem, 2)
+            ShapedRecipeBuilder.shapedRecipe(TranslocatorsModContent.itemTranslocatorItem, 2)
                     .patternLine("RER")
                     .patternLine("IPI")
                     .patternLine("RGR")
@@ -97,7 +97,7 @@ public class DataGenerators {
                     .addCriterion("has_gold_ingot", hasItem(Tags.Items.INGOTS_GOLD))
                     .build(consumer);
 
-            ShapedRecipeBuilder.shapedRecipe(ModContent.fluidTranslocatorItem, 2)
+            ShapedRecipeBuilder.shapedRecipe(TranslocatorsModContent.fluidTranslocatorItem, 2)
                     .patternLine("RER")
                     .patternLine("IPI")
                     .patternLine("RLR")

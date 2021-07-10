@@ -5,9 +5,7 @@ import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.container.ContainerExtended;
 import codechicken.lib.inventory.container.SlotDummy;
 import codechicken.lib.packet.PacketCustom;
-import codechicken.translocators.init.ModContent;
-import codechicken.translocators.network.TranslocatorNetwork;
-import codechicken.translocators.network.TranslocatorSPH;
+import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
@@ -24,11 +22,11 @@ public class ContainerItemTranslocator extends ContainerExtended {
     private final IInventory inv;
 
     public ContainerItemTranslocator(int windowId, PlayerInventory playerInv, MCDataInput packet) {
-        this(windowId, playerInv, new InventorySimple(packet.readUShort()));
+        this(windowId, playerInv, new InventorySimple(9, packet.readUShort()));
     }
 
     public ContainerItemTranslocator(int windowId, PlayerInventory playerInv, InventorySimple inv) {
-        super(ModContent.containerItemTranslocator, windowId);
+        super(TranslocatorsModContent.containerItemTranslocator, windowId);
         this.inv = inv;
 
         for (int x = 0; x < 3; x++) {

@@ -7,6 +7,7 @@ import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
+import codechicken.multipart.api.ICapabilityProviderPart;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.part.TMultiPart;
 import codechicken.multipart.api.part.redstone.IRedstonePart;
@@ -14,7 +15,7 @@ import codechicken.multipart.util.PartRayTraceResult;
 import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.handler.ConfigHandler;
-import codechicken.translocators.init.ModContent;
+import codechicken.translocators.init.TranslocatorsModContent;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -29,11 +30,15 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.EmptyHandler;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +64,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public MultiPartType<?> getType() {
-        return ModContent.itemTranslocatorPartType;
+        return TranslocatorsModContent.itemTranslocatorPartType;
     }
 
     @Override
@@ -69,7 +74,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(ModContent.itemTranslocatorItem, 1);
+        return new ItemStack(TranslocatorsModContent.itemTranslocatorItem, 1);
     }
 
     @Override
@@ -151,7 +156,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 if (a_eject) {
                     boolean allSatisfied = true;
                     for (int i = 0; i < 6; i++) {
-                        TMultiPart other = tile().partMap(i);
+                        TMultiPart other = tile().getSlottedPart(i);
                         if (other instanceof ItemTranslocatorPart) {
                             ItemTranslocatorPart otherPart = (ItemTranslocatorPart) other;
                             if (!otherPart.a_eject) {
@@ -180,7 +185,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     private boolean canTransferFilter(IItemHandler access, IItemHandler[] attached) {
-
         boolean filterSet = false;
         for (ItemStack filter : filters) {
             if (!filter.isEmpty()) {
@@ -225,7 +229,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     private void spreadOutput(ItemStack move, boolean rspass, IItemHandler[] attached, List<MovingItem> transfers) {
-
         //If there is nothing don't do the do.
         if (move.getCount() == 0) {
             return;
@@ -234,7 +237,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         int outputCount = 0;
         int[] outputQuantities = new int[6];
         for (int i = 0; i < 6; i++) {
-            TMultiPart p = tile().partMap(i);
+            TMultiPart p = tile().getSlottedPart(i);
             if (p instanceof ItemTranslocatorPart) {
                 ItemTranslocatorPart part = (ItemTranslocatorPart) p;
                 if (!part.canEject() && part.redstone == rspass && i != side) {
@@ -277,7 +280,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
      * @return The requested amount, -1 if none, 0 means there is a filter but the item doesnt match.
      */
     private static int filterCount(ItemTranslocatorPart part, ItemStack stack) {
-
         boolean filterSet = false;
         int match = 0;
         for (ItemStack filter : part.filters) {
@@ -322,7 +324,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             fit = Math.min(fit, filter - InventoryUtils.countMatchingStacks(range, stack, true));
         }
 
-        return fit > 0 ? fit : 0;
+        return Math.max(fit, 0);
     }
 
     /**
@@ -333,7 +335,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
      * @return The total extractable amount for the specified ItemStack.
      */
     private static int getExtractableAmount(ItemStack stack, ItemTranslocatorPart me, IItemHandler handler) {
-
         //Grab the filter.
         int filter = filterCount(me, stack);
         //If we have a filter but this doesnt match.
@@ -352,7 +353,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         }
 
         //Clamp at 0.
-        return qty > 0 ? qty : 0;
+        return Math.max(qty, 0);
     }
 
     @Override
@@ -361,7 +362,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             return ActionResultType.SUCCESS;
         }
         ItemStack stack = player.getHeldItem(hand);
-        if (ItemUtils.areStacksSameType(stack, new ItemStack(Blocks.DIRT)/*ConfigHandler.nugget*/) && !regulate) {
+        if (ItemUtils.areStacksSameType(stack, ConfigHandler.getNugget()) && !regulate) {
             regulate = true;
             if (!player.abilities.isCreativeMode) {
                 stack.shrink(1);
@@ -384,7 +385,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         super.stripModifiers();
         if (regulate) {
             regulate = false;
-            dropItem(ItemUtils.copyStack(ConfigHandler.nugget, 1));
+            dropItem(ItemUtils.copyStack(ConfigHandler.getNugget(), 1));
         }
         if (signal) {
             setPowering(false);
@@ -395,7 +396,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public void openGui(PlayerEntity player) {
-        openItemGui(player, filters, regulate ? "translocators.regulate" : "translocators.filter");
+        openItemGui(player, filters, regulate ? "gui.translocators.regulate" : "gui.translocators.filter");
     }
 
     private void openItemGui(PlayerEntity player, ItemStack[] filters, String name) {
@@ -410,9 +411,9 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 markUpdate();
             }
         }
-        INamedContainerProvider provider = new SimpleNamedContainerProvider(//
-                (id, inv, p) -> new ContainerItemTranslocator(id, inv, new Inv(filters, filterStackLimit())),//
-                new StringTextComponent(name)//
+        INamedContainerProvider provider = new SimpleNamedContainerProvider(
+                (id, inv, p) -> new ContainerItemTranslocator(id, inv, new Inv(filters, filterStackLimit())),
+                new TranslationTextComponent(name)
         );
         ServerUtils.openContainer((ServerPlayerEntity) player, provider, p -> {
             p.writeShort(filterStackLimit());
@@ -420,7 +421,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     private int filterStackLimit() {
-
         if (regulate) {
             return 65535;
         }
@@ -431,7 +431,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     public void setPowering(boolean b) {
-
         if ((signal || !b) && b != a_powering) {
             a_powering = b;
             world().notifyNeighborsOfStateChange(pos(), Blocks.REDSTONE_WIRE);
@@ -506,7 +505,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         return redstone;
     }
 
-    public class MovingItem {
+    public static class MovingItem {
 
         public int dst;
         public ItemStack stack;

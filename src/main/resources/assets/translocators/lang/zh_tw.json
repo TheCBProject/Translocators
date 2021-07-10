@@ -3,6 +3,6 @@
   "item.translocators.fluid_translocator": "液體轉運器",
   "tile.craftingGrid.name": "過濾器",
   "item.translocators.diamond_nugget": "鑽石粒",
-  "translocators.regulate": "調節",
-  "translocators.filter": "過濾器"
+  "gui.translocators.regulate": "調節",
+  "gui.translocators.filter": "過濾器"
 }

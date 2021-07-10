@@ -2,11 +2,15 @@ package codechicken.translocators.handler;
 
 import codechicken.lib.config.ConfigTag;
 import codechicken.lib.config.StandardConfigFile;
+import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Created by covers1624 on 5/17/2016.
@@ -18,37 +22,43 @@ public class ConfigHandler {
     private static boolean initialized;
 
     public static ConfigTag config;
-    private static File cFile;
     public static boolean disableCraftingGrid;
-    public static ItemStack nugget;
+    private static ItemStack nugget;
+    private static Runnable nuggetFactory;
 
-    public static void init(File file) {
-        cFile = file;
+    public static void init(Path file) {
         if (!initialized) {
-            config = new StandardConfigFile(file.toPath()).load();
+            config = new StandardConfigFile(file).load();
             initialized = true;
         }
     }
 
     public static void loadConfig() {
-        ConfigTag grid = config.getTag("disable_crafting_grid").setComment("Setting this to true will disable the placement of the CraftingGrid.");
-        disableCraftingGrid = grid.setDefaultBoolean(false).getBoolean();
+        disableCraftingGrid = config.getTag("disable_crafting_grid")
+                .setComment("Setting this to true will disable the placement of the CraftingGrid.")
+                .setDefaultBoolean(false)
+                .getBoolean();
 
-        ConfigTag filterItem = config.getTag("filter_item").setComment("Allows controlling what item is used to attach filtering mode.");
-        {
-            //            ConfigTag itemTag = filterItem.getTag("registry_name").setDefaultString(ModItems.itemDiamondNugget.getRegistryName().toString());
-            //            ConfigTag metaTag = filterItem.getTag("meta").setComment("Use '32767' for wild card.");
-            //            ResourceLocation name = new ResourceLocation(itemTag.getString());
-            //            int meta = metaTag.setDefaultInt(0).getInt();
-            //            if (!ForgeRegistries.ITEMS.containsKey(name)) {
-            //                logger.error("Unable to locate item {}, Resetting to default.", name);
-            //                name = ModItems.itemDiamondNugget.getRegistryName();
-            //                meta = 0;
-            //                itemTag.setString(name.toString());
-            //                metaTag.setInt(meta);
-            //            }
-            //            nugget = new ItemStack(ForgeRegistries.ITEMS.getValue(name), 1, meta);
-        }
+        ConfigTag filterItem = config.getTag("filter_item")
+                .setDefaultString("translocators:diamond_nugget")
+                .setComment("Allows controlling what item is used to attach filtering mode. This should be the Registry name of the item.");
+        ResourceLocation itemName = new ResourceLocation(filterItem.getString());
+        nuggetFactory = () -> {
+            if (ForgeRegistries.ITEMS.containsKey(itemName)) {
+                nugget = new ItemStack(ForgeRegistries.ITEMS.getValue(itemName));
+            } else {
+                logger.warn("Failed to load Nugget item '{}', does not exist. Using default.", itemName);
+                filterItem.resetToDefault().save();
+                nugget = new ItemStack(TranslocatorsModContent.diamondNuggetItem);
+            }
+        };
         config.save();
+    }
+
+    public static ItemStack getNugget() {
+        if (nugget == null) {
+            nuggetFactory.run();
+        }
+        return nugget;
     }
 }

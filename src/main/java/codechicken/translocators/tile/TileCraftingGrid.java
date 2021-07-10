@@ -1,9 +1,9 @@
 package codechicken.translocators.tile;
 
+import codechicken.lib.data.MCDataByteBuf;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
@@ -11,10 +11,11 @@ import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
-import codechicken.translocators.network.TranslocatorNetwork;
+import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.item.ItemStack;
@@ -26,6 +27,7 @@ import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.world.GameRules;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +37,8 @@ import static codechicken.lib.vec.Vector3.CENTER;
 
 public class TileCraftingGrid extends TileEntity implements ITickableTileEntity {
 
+    private static final Cuboid6[][] BOXES = new Cuboid6[4][6];
+
     public ItemStack[] items;
     public ItemStack result;
     public int rotation = 0;
@@ -42,7 +46,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     public int timeout = 400;//20 seconds
 
     public TileCraftingGrid() {
-        super(null);
+        super(TranslocatorsModContent.tileCraftingGridType);
         items = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
         result = ItemStack.EMPTY;
     }
@@ -83,40 +87,28 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        CompoundNBT tag = super.getUpdateTag();
-        tag.putByte("rotation", (byte) rotation);
-        return tag;
-    }
-
-    @Override
-    public void handleUpdateTag(CompoundNBT tag) {
-        rotation = tag.getByte("rotation");
-    }
-
-    @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        PacketCustom packet = new PacketCustom(TranslocatorNetwork.NET_CHANNEL, 3);
+        MCDataByteBuf packet = new MCDataByteBuf();
         writeToPacket(packet);
         return packet.toTilePacket(getPos());
     }
 
-    //    @Override
-    //    public NBTTagCompound getUpdateTag() {
-    //        PacketCustom packet = new PacketCustom(TranslocatorSPH.channel, 3);
-    //        writeToPacket(packet);
-    //        return packet.toNBTTag(super.getUpdateTag());
-    //    }
+    @Override
+    public CompoundNBT getUpdateTag() {
+        MCDataByteBuf packet = new MCDataByteBuf();
+        writeToPacket(packet);
+        return packet.writeToNBT(super.getUpdateTag(), "data");
+    }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        readFromPacket(PacketCustom.fromTilePacket(pkt));
+        readFromPacket(MCDataByteBuf.fromTilePacket(pkt));
     }
 
-    //    @Override
-    //    public void handleUpdateTag(NBTTagCompound tag) {
-    //        readFromPacket(PacketCustom.fromNBTTag(tag));
-    //    }
+    @Override
+    public void handleUpdateTag(CompoundNBT tag) {
+        readFromPacket(MCDataByteBuf.readFromNBT(tag, "data"));
+    }
 
     public void writeToPacket(MCDataOutput packet) {
         packet.writeByte(rotation);
@@ -185,14 +177,17 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         }
     }
 
-    public void craft(PlayerEntity player) {
+    public void craft(ServerPlayerEntity player) {
         CraftingInventory craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
             Optional<ICraftingRecipe> mresult = world.getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftMatrix, world);
             if (mresult.isPresent()) {
-                doCraft(mresult.get().getCraftingResult(craftMatrix), craftMatrix, player);
-                break;
+                ICraftingRecipe recipe = mresult.get();
+                if (recipe.isDynamic() || !world.getGameRules().getBoolean(GameRules.DO_LIMITED_CRAFTING) || player.getRecipeBook().isUnlocked(recipe)) {
+                    doCraft(recipe.getCraftingResult(craftMatrix), craftMatrix, player);
+                    break;
+                }
             }
 
             rotateItems(craftMatrix);

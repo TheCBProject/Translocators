@@ -13,7 +13,7 @@ import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.SwapYZ;
 import codechicken.lib.vec.Vector3;
 import codechicken.lib.vec.uv.IconTransformation;
-import codechicken.multipart.TileMultipart;
+import codechicken.multipart.block.TileMultiPart;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import codechicken.translocators.part.ItemTranslocatorPart;
 import codechicken.translocators.part.TranslocatorPart;
@@ -109,6 +109,7 @@ public class RenderTranslocator {
 
     public static void renderItem(int type, MatrixStack mStack, TransformType transformType, IRenderTypeBuffer buffers, int packedLight, int packedOverlay) {
         CCRenderState ccrs = CCRenderState.instance();
+        ccrs.reset();
         ccrs.bind(RenderType.getSolid(), buffers);
         ccrs.brightness = packedLight;
         ccrs.overlay = packedOverlay;
@@ -131,7 +132,7 @@ public class RenderTranslocator {
     public static void renderLinks(TranslocatorPart p, CCRenderState ccrs, MatrixStack mStack, IRenderTypeBuffer getter) {
         double time = ClientUtils.getRenderTime();
         //Render the particles.
-        TileMultipart tile = p.tile();
+        TileMultiPart tile = p.tile();
         if (p.a_eject) {
             Matrix4 mat = new Matrix4(mStack);
             ccrs.bind(particleType, getter);
@@ -140,7 +141,7 @@ public class RenderTranslocator {
                     continue;
                 }
                 if (p.canConnect(dst)) {
-                    TranslocatorPart p_dst = (TranslocatorPart) tile.partMap(dst);
+                    TranslocatorPart p_dst = (TranslocatorPart) tile.getSlottedPart(dst);
                     if (!p_dst.canEject()) {
                         renderLink(ccrs, mat, p.side, dst, time);
                     }
@@ -231,7 +232,7 @@ public class RenderTranslocator {
 
             double r = (2 * di - time / 10 + theta0 + dst / 6) * 2 * Math.PI;
             double sz = 0.1;
-            Vector3 p = c.add(a.copy().multiply(MathHelper.sin(r) * sz)).add(b.copy().multiply(MathHelper.cos(r) * sz));
+            Vector3 p = c.add(a.copy().multiply(Math.sin(r) * sz)).add(b.copy().multiply(Math.cos(r) * sz));
 
             double s1 = 0.02;
             double s2 = -0.02;
@@ -269,11 +270,11 @@ public class RenderTranslocator {
     public static void renderParticle(CCRenderState ccrs, Matrix4 mat, Colour colour, double s, double u1, double v1, double u2, double v2) {
         ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
 
-        double rotationX = MathHelper.cos(info.getYaw() * MathHelper.torad);
-        double rotationZ = MathHelper.sin(info.getYaw() * MathHelper.torad);
-        double rotationYZ = -rotationZ * MathHelper.sin(info.getPitch() * MathHelper.torad);
-        double rotationXY = rotationX * MathHelper.sin(info.getPitch() * MathHelper.torad);
-        double rotationXZ = MathHelper.cos(info.getPitch() * MathHelper.torad);
+        double rotationX = Math.cos(info.getYaw() * MathHelper.torad);
+        double rotationZ = Math.sin(info.getYaw() * MathHelper.torad);
+        double rotationYZ = -rotationZ * Math.sin(info.getPitch() * MathHelper.torad);
+        double rotationXY = rotationX * Math.sin(info.getPitch() * MathHelper.torad);
+        double rotationXZ = Math.cos(info.getPitch() * MathHelper.torad);
 
         ccrs.colour = colour.rgba();
         ccrs.vert.set(-rotationX * s - rotationYZ * s, -rotationXZ * s, -rotationZ * s - rotationXY * s, u2, v2).apply(mat);
@@ -297,8 +298,8 @@ public class RenderTranslocator {
             Vector3 vdst = sideVec[dst ^ 1];
             Vector3 a = vsrc.copy().multiply(5 / 16D);
             Vector3 b = vdst.copy().multiply(6 / 16D);
-            double sind = MathHelper.sin(d * Math.PI / 2);
-            double cosd = MathHelper.cos(d * Math.PI / 2);
+            double sind = Math.sin(d * Math.PI / 2);
+            double cosd = Math.cos(d * Math.PI / 2);
             v = a.multiply(sind).add(b.multiply(cosd - 1)).add(vsrc.copy().multiply(3 / 16D));
         }
         return v.add(sidePos[src]);
@@ -310,8 +311,8 @@ public class RenderTranslocator {
             return sideVec[(srcSide + 4) % 6].copy();
         }
 
-        double sind = MathHelper.sin(d * Math.PI / 2);
-        double cosd = MathHelper.cos(d * Math.PI / 2);
+        double sind = Math.sin(d * Math.PI / 2);
+        double cosd = Math.cos(d * Math.PI / 2);
 
         Vector3 vsrc = sideVec[srcSide ^ 1].copy();
         Vector3 vdst = sideVec[dstSide ^ 1].copy();
@@ -321,7 +322,7 @@ public class RenderTranslocator {
 
     private static Vector3 itemFloat(int src, int dst, double d) {
 
-        return getPerp(src, dst).multiply(0.01 * MathHelper.sin(d * 4 * Math.PI));
+        return getPerp(src, dst).multiply(0.01 * Math.sin(d * 4 * Math.PI));
     }
 
     public static Vector3 getPerp(int src, int dst) {

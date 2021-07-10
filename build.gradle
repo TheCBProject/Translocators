@@ -25,7 +25,7 @@ archivesBaseName = "Translocators"
 targetCompatibility = "1.8"
 sourceCompatibility = "1.8"
 
-sourceSets.main.resources.srcDirs += "src/generated/resources"
+sourceSets.main.resources.srcDirs += "src/main/generated"
 
 file('build.properties').withReader {
     def prop = new Properties()
@@ -72,7 +72,7 @@ minecraft {
         data {
             workingDirectory file('run')
             jvmArgs.add("-XstartOnFirstThread")
-            args '--mod', 'translocators', '--all', '--output', file("src/generated/resources"), '--existing', file("src/main/resources")
+            args '--mod', 'translocators', '--all', '--output', file("src/main/generated"), '--existing', file("src/main/resources")
             mods { translocators { source sourceSets.main } }
         }
     }

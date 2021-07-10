@@ -8,11 +8,8 @@ import codechicken.lib.raytracer.SubHitVoxelShape;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
 import codechicken.lib.vec.*;
-import codechicken.multipart.TileMultipart;
-import codechicken.multipart.api.part.ITickablePart;
-import codechicken.multipart.api.part.TFacePart;
-import codechicken.multipart.api.part.TMultiPart;
-import codechicken.multipart.api.part.TNormalOcclusionPart;
+import codechicken.multipart.api.part.*;
+import codechicken.multipart.block.TileMultiPart;
 import codechicken.multipart.util.PartRayTraceResult;
 import codechicken.translocators.client.render.RenderTranslocator;
 import com.google.common.collect.Lists;
@@ -23,9 +20,11 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -34,6 +33,7 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -206,7 +206,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public SoundType getPlacementSound(ItemStack stack, PlayerEntity player) {
+    public SoundType getPlacementSound(ItemUseContext context) {
         return PLACEMENT_SOUND;
     }
 
@@ -334,7 +334,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public Iterable<ItemStack> getDrops() {
+    public Collection<ItemStack> getDrops() {
         List<ItemStack> stacks = new ArrayList<>();
         stacks.add(getItem());
         if (redstone) {
@@ -381,8 +381,8 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
 
     public abstract boolean canStay();
 
-    public TranslocatorPart setupPlacement(PlayerEntity player, int side) {
-        this.side = (byte) (side ^ 1);
+    public TranslocatorPart setupPlacement(PlayerEntity player, Direction side) {
+        this.side = (byte) (side.ordinal() ^ 1);
         return this;
     }
 
@@ -411,21 +411,21 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     public boolean canConnect(int side) {
-        TMultiPart other = tile().partMap(side);
+        TMultiPart other = tile().getSlottedPart(side);
         return other instanceof TranslocatorPart && getTType() == ((TranslocatorPart) other).getTType();
     }
 
     public boolean canInsert(int side) {
-        return canConnect(side) && !((TranslocatorPart) tile().partMap(side)).canEject();
+        return canConnect(side) && !((TranslocatorPart) tile().getSlottedPart(side)).canEject();
     }
 
     @SuppressWarnings ("unchecked")
     public <T> T getOther(int side) {
-        return (T) tile().partMap(side);
+        return (T) tile().getSlottedPart(side);
     }
 
     protected void dropItem(ItemStack stack) {
-        TileMultipart.dropItem(stack, world(), Vector3.fromTileCenter(tile()));
+        TileMultiPart.dropItem(stack, world(), Vector3.fromTileCenter(tile()));
     }
 
     public int getIconIndex() {
@@ -440,7 +440,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public boolean renderStatic(Vector3 pos, RenderType layer, CCRenderState ccrs) {
+    public boolean renderStatic(RenderType layer, CCRenderState ccrs) {
         if (layer == RenderType.getSolid()) {
             ccrs.reset();
             RenderTranslocator.renderStatic(ccrs, this);

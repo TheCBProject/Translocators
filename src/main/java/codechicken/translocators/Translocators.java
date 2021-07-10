@@ -17,6 +17,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static codechicken.translocators.Translocators.MOD_ID;
 
@@ -32,7 +33,7 @@ public class Translocators {
     public Translocators() {
         proxy = DistExecutor.safeRunForDist(() -> ProxyClient::new, () -> Proxy::new);
         FMLJavaModLoadingContext.get().getModEventBus().register(this);
-        ConfigHandler.init(new File("./config/translocators.cfg"));
+        ConfigHandler.init(Paths.get("./config/translocators.cfg"));
         ConfigHandler.loadConfig();
     }
 

@@ -5,7 +5,7 @@ import codechicken.lib.math.MathHelper;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.part.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
-import codechicken.translocators.init.ModContent;
+import codechicken.translocators.init.TranslocatorsModContent;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.item.ItemStack;
@@ -32,7 +32,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(ModContent.fluidTranslocatorItem, 1);
+        return new ItemStack(TranslocatorsModContent.fluidTranslocatorItem, 1);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public MultiPartType<?> getType() {
-        return ModContent.fluidTranslocatorPartType;
+        return TranslocatorsModContent.fluidTranslocatorPartType;
     }
 
     @Override
@@ -118,7 +118,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         int a = 0;
         int r_a = 0;
         for (int i = 0; i < 6; i++) {
-            TMultiPart p = tile().partMap(i);
+            TMultiPart p = tile().getSlottedPart(i);
             if (p instanceof FluidTranslocatorPart) {
                 FluidTranslocatorPart part = (FluidTranslocatorPart) p;
                 //If the part can accept stuffs.

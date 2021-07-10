@@ -5,10 +5,10 @@ import codechicken.translocators.tile.TileCraftingGrid;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
@@ -20,6 +20,7 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
@@ -44,30 +45,27 @@ public class BlockCraftingGrid extends Block {
         return VoxelShapes.empty();
     }
 
-    //    @Override
-    //    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-    //        ICuboidProvider provider = (ICuboidProvider) source.getTileEntity(pos);
-    //        if (provider != null && !provider.getIndexedCuboids().isEmpty()) {
-    //            return provider.getIndexedCuboids().get(0).aabb();
-    //        }
-    //        return super.getBoundingBox(state, source, pos);
-    //    }
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockPos beneath = pos.down();
+        return Block.hasSolidSide(world.getBlockState(beneath), world, beneath, Direction.UP);
+    }
 
     @Override
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.INVISIBLE;
     }
 
-    @Override
-    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, IFluidState fluid) {
-        return willHarvest || super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
-    }
-
-    @Override
-    public void harvestBlock(World world, PlayerEntity player, BlockPos pos, BlockState state, TileEntity te, ItemStack stack) {
-        super.harvestBlock(world, player, pos, state, te, stack);
-        world.removeBlock(pos, false);
-    }
+//    @Override
+//    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, IFluidState fluid) {
+//        return willHarvest || super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
+//    }
+//
+//    @Override
+//    public void harvestBlock(World world, PlayerEntity player, BlockPos pos, BlockState state, TileEntity te, ItemStack stack) {
+//        super.harvestBlock(world, player, pos, state, te, stack);
+//        world.removeBlock(pos, false);
+//    }
 
     //    @Override
     //    public ArrayList<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
@@ -115,21 +113,22 @@ public class BlockCraftingGrid extends Block {
 
         BlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
-        //        if (side != EnumFacing.UP && block != Blocks.SNOW_LAYER) {
-        //            return false;
-        //        }
-        //
-        //        if (block != Blocks.VINE && block != Blocks.TALLGRASS && block != Blocks.DEADBUSH && !block.isReplaceable(world, pos)) {
-        //            pos = pos.offset(EnumFacing.UP);
-        //        }
-        //
-        //        if (!world.isSideSolid(pos.offset(EnumFacing.DOWN), EnumFacing.UP)) {
-        //            return false;
-        //        }
-        //
-        //        if (!world.mayPlace(this, pos, false, EnumFacing.UP, null)) {
-        //            return false;
-        //        }
+        if (side != Direction.UP && block != Blocks.SNOW) {
+            return false;
+        }
+
+        //TODO, block.isReplaceable requires ItemStack
+//        if (block != Blocks.VINE && block != Blocks.TALL_GRASS && block != Blocks.DEAD_BUSH && !block.isReplaceable(world, pos)) {
+//            pos = pos.offset(Direction.UP);
+//        }
+
+        if (!Block.hasSolidSide(world.getBlockState(pos.down()), world, pos.down(), Direction.UP)) {
+            return false;
+        }
+//
+//        if (!world.mayPlace(this, pos, false, EnumFacing.UP, null)) {
+//            return false;
+//        }
 
         player.swingArm(Hand.MAIN_HAND);
         if (!world.setBlockState(pos, getDefaultState())) {
@@ -140,39 +139,13 @@ public class BlockCraftingGrid extends Block {
         return true;
     }
 
-    //    ThreadLocal<BlockPos> replaceCheck = new ThreadLocal<>();
-    //
-    //    @Override
-    //    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-    //        replaceCheck.set(useContext.getPos());
-    //        return true;
-    //    }
-
     @Override
-    public void onNeighborChange(BlockState state, IWorldReader world, BlockPos pos, BlockPos neighbor) {
-        BlockPos beneath = pos.down();
-        //        if (!world.isSideSolid(beneath, EnumFacing.UP, false)) {
-        //            dropBlockAsItem(world, pos, state, 0);
-        //            world.setBlockToAir(pos);
-        //        }
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
+        return !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : stateIn;
     }
 
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         ((TileCraftingGrid) world.getTileEntity(pos)).onPlaced(placer);
     }
-
-    //    @Override
-    //    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-    //        return null;
-    //    }
-
-    /*@Override//TODO Wot..
-    public void onBlockPreDestroy(World world, BlockPos pos, int meta) {
-        BlockPos c = replaceCheck.get();
-        if (!world.isRemote && c != null && c.equals(new BlockCoord(x, y, z))) {
-            dropBlockAsItem(world, x, y, z, meta, 0);
-        }
-        replaceCheck.set(null);
-    }*/
 }

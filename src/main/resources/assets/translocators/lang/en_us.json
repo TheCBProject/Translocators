@@ -3,7 +3,7 @@
   "item.translocators.fluid_translocator": "Liquid Translocator",
   "tile.craftingGrid.name": "Crafting Grid",
   "item.translocators.diamond_nugget": "Diamond Nugget",
-  "translocators.regulate": "Regulate",
-  "translocators.filter": "Filter",
+  "gui.translocators.regulate": "Regulate",
+  "gui.translocators.filter": "Filter",
   "key.craftingGrid": "Crafting Grid"
 }

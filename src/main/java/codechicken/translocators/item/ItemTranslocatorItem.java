@@ -1,9 +1,8 @@
 package codechicken.translocators.item;
 
 import codechicken.multipart.api.MultiPartType;
-import codechicken.translocators.init.ModContent;
+import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.part.ItemTranslocatorPart;
-import codechicken.translocators.part.TranslocatorPart;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
 
@@ -18,7 +17,7 @@ public class ItemTranslocatorItem extends TranslocatorItem<ItemTranslocatorPart>
 
     @Override
     public MultiPartType<ItemTranslocatorPart> getType() {
-        return ModContent.itemTranslocatorPartType;
+        return TranslocatorsModContent.itemTranslocatorPartType;
     }
 
     @Override

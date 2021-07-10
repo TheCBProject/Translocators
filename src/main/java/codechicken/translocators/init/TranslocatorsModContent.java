@@ -3,14 +3,18 @@ package codechicken.translocators.init;
 import codechicken.lib.inventory.container.ICCLContainerType;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.SimpleMultiPartType;
+import codechicken.translocators.block.BlockCraftingGrid;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.item.FluidTranslocatorItem;
 import codechicken.translocators.item.ItemTranslocatorItem;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import codechicken.translocators.part.ItemTranslocatorPart;
+import codechicken.translocators.tile.TileCraftingGrid;
+import net.minecraft.block.Block;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,15 +28,21 @@ import static codechicken.translocators.Translocators.MOD_ID;
  */
 @ObjectHolder (MOD_ID)
 @Mod.EventBusSubscriber (modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class ModContent {
+public class TranslocatorsModContent {
 
     @ObjectHolder ("item_translocator")
     public static ItemTranslocatorItem itemTranslocatorItem;
     @ObjectHolder ("fluid_translocator")
     public static FluidTranslocatorItem fluidTranslocatorItem;
 
-    @ObjectHolder("diamond_nugget")
+    @ObjectHolder ("diamond_nugget")
     public static Item diamondNuggetItem;
+
+    @ObjectHolder ("crafting_grid")
+    public static BlockCraftingGrid blockCraftingGrid;
+
+    @ObjectHolder ("crafting_grid")
+    public static TileEntityType<TileCraftingGrid> tileCraftingGridType;
 
     @ObjectHolder ("item_translocator")
     public static MultiPartType<ItemTranslocatorPart> itemTranslocatorPartType;
@@ -51,6 +61,18 @@ public class ModContent {
         r.register(new FluidTranslocatorItem(translocatorProperties).setRegistryName("fluid_translocator"));
 
         r.register(new Item(new Item.Properties().group(ItemGroup.MATERIALS)).setRegistryName("diamond_nugget"));
+    }
+
+    @SubscribeEvent
+    public static void onRegisterBlocks(RegistryEvent.Register<Block> event) {
+        IForgeRegistry<Block> r = event.getRegistry();
+        r.register(new BlockCraftingGrid().setRegistryName("crafting_grid"));
+    }
+
+    @SubscribeEvent
+    public static void onRegisterTiles(RegistryEvent.Register<TileEntityType<?>> event) {
+        IForgeRegistry<TileEntityType<?>> r = event.getRegistry();
+        r.register(TileEntityType.Builder.create(TileCraftingGrid::new, blockCraftingGrid).build(null).setRegistryName("crafting_grid"));
     }
 
     @SubscribeEvent
