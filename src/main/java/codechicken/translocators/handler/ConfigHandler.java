@@ -3,28 +3,23 @@ package codechicken.translocators.handler;
 import codechicken.lib.config.ConfigTag;
 import codechicken.lib.config.StandardConfigFile;
 import codechicken.translocators.init.TranslocatorsModContent;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.Item;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraftforge.common.Tags;
 
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 /**
  * Created by covers1624 on 5/17/2016.
  */
 public class ConfigHandler {
 
-    private static final Logger logger = LogManager.getLogger("Translocators");
-
     private static boolean initialized;
 
     public static ConfigTag config;
     public static boolean disableCraftingGrid;
-    private static ItemStack nugget;
-    private static Runnable nuggetFactory;
+    public static Tags.IOptionalNamedTag<Item> regulateTag;
 
     public static void init(Path file) {
         if (!initialized) {
@@ -40,25 +35,9 @@ public class ConfigHandler {
                 .getBoolean();
 
         ConfigTag filterItem = config.getTag("filter_item")
-                .setDefaultString("translocators:diamond_nugget")
-                .setComment("Allows controlling what item is used to attach filtering mode. This should be the Registry name of the item.");
-        ResourceLocation itemName = new ResourceLocation(filterItem.getString());
-        nuggetFactory = () -> {
-            if (ForgeRegistries.ITEMS.containsKey(itemName)) {
-                nugget = new ItemStack(ForgeRegistries.ITEMS.getValue(itemName));
-            } else {
-                logger.warn("Failed to load Nugget item '{}', does not exist. Using default.", itemName);
-                filterItem.resetToDefault().save();
-                nugget = new ItemStack(TranslocatorsModContent.diamondNuggetItem.get());
-            }
-        };
+                .setDefaultString(TranslocatorsModContent.regulateItemsTag.getName().toString())
+                .setComment("The Tag of Items able to set an ItemTranslocator into Regulate mode.");
+        regulateTag = ItemTags.createOptional(new ResourceLocation(filterItem.getString()));
         config.save();
-    }
-
-    public static ItemStack getNugget() {
-        if (nugget == null) {
-            nuggetFactory.run();
-        }
-        return nugget;
     }
 }

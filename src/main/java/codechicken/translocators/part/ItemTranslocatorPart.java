@@ -7,7 +7,6 @@ import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
-import codechicken.multipart.api.ICapabilityProviderPart;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.part.TMultiPart;
 import codechicken.multipart.api.part.redstone.IRedstonePart;
@@ -29,16 +28,12 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.EmptyHandler;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,12 +50,9 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     public boolean signal;
     public boolean a_powering;
 
-    public ItemStack[] filters;
+    public ItemStack regulateStack = ItemStack.EMPTY;
+    public ItemStack[] filters = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
     public List<MovingItem> movingItems = new LinkedList<>();
-
-    public ItemTranslocatorPart() {
-        filters = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
-    }
 
     @Override
     public MultiPartType<?> getType() {
@@ -362,7 +354,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             return ActionResultType.SUCCESS;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (ItemUtils.areStacksSameType(stack, ConfigHandler.getNugget()) && !regulate) {
+        if (stack.getItem().is(ConfigHandler.regulateTag) && !regulate) {
+            regulateStack = ItemUtils.copyStack(stack, 1);
             regulate = true;
             if (!player.abilities.instabuild) {
                 stack.shrink(1);
@@ -385,7 +378,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         super.stripModifiers();
         if (regulate) {
             regulate = false;
-            dropItem(ItemUtils.copyStack(ConfigHandler.getNugget(), 1));
+            dropItem(regulateStack);
+            regulateStack = ItemStack.EMPTY;
         }
         if (signal) {
             setPowering(false);
@@ -456,6 +450,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         tag.putBoolean("signal", signal);
         tag.putBoolean("powering", a_powering);
         tag.put("filters", InventoryUtils.writeItemStacksToTag(filters, 65536));
+        tag.put("regulateStack", regulateStack.save(new CompoundNBT()));
     }
 
     @Override
@@ -465,6 +460,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         signal = tag.getBoolean("signal");
         a_powering = tag.getBoolean("powering");
         InventoryUtils.readItemStacksFromTag(filters, tag.getList("filters", 10));
+        regulateStack = ItemStack.of(tag.getCompound("regulateStack"));
     }
 
     @Override

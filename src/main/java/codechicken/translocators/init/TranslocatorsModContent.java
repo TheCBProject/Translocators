@@ -42,6 +42,7 @@ public class TranslocatorsModContent {
     private static final DeferredRegister<ContainerType<?>> CONTAINER_TYPES = DeferredRegister.create(SneakyUtils.<Class<ContainerType<?>>>unsafeCast(ContainerType.class), MOD_ID);
 
     public static Tags.IOptionalNamedTag<Item> diamondNuggetTag = ItemTags.createOptional(new ResourceLocation("forge:nuggets/diamond"));
+    public static Tags.IOptionalNamedTag<Item> regulateItemsTag = ItemTags.createOptional(new ResourceLocation("translocators:regulate"));
 
     //region Items.
     public static RegistryObject<ItemTranslocatorItem> itemTranslocatorItem = ITEMS.register("item_translocator", () ->

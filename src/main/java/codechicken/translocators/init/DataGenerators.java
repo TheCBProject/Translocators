@@ -58,6 +58,7 @@ public class DataGenerators {
         protected void addTags() {
             tag(TranslocatorsModContent.diamondNuggetTag).add(TranslocatorsModContent.diamondNuggetItem.get());
             tag(Tags.Items.NUGGETS).add(TranslocatorsModContent.diamondNuggetItem.get());
+            tag(TranslocatorsModContent.regulateItemsTag).addTags(TranslocatorsModContent.diamondNuggetTag);
         }
 
         @Override
