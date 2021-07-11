@@ -41,8 +41,6 @@ import static codechicken.lib.vec.Vector3.CENTER;
 
 public class TileCraftingGrid extends TileEntity implements ITickableTileEntity {
 
-    private static final Cuboid6[][] BOXES = new Cuboid6[4][6];
-
     public ItemStack[] items = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
     public ItemStack result = ItemStack.EMPTY;
     public int rotation = 0;

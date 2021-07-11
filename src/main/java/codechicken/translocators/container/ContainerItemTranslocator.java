@@ -19,15 +19,12 @@ import static codechicken.translocators.network.TranslocatorNetwork.NET_CHANNEL;
 
 public class ContainerItemTranslocator extends ContainerExtended {
 
-    private final IInventory inv;
-
     public ContainerItemTranslocator(int windowId, PlayerInventory playerInv, MCDataInput packet) {
         this(windowId, playerInv, new InventorySimple(9, packet.readUShort()));
     }
 
     public ContainerItemTranslocator(int windowId, PlayerInventory playerInv, InventorySimple inv) {
         super(TranslocatorsModContent.containerItemTranslocator.get(), windowId);
-        this.inv = inv;
 
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
