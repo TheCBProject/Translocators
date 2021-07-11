@@ -18,7 +18,7 @@ public class TranslocatorSPH implements IServerPacketHandler {
     public void handlePacket(PacketCustom packet, ServerPlayerEntity sender, IServerPlayNetHandler handler) {
         switch (packet.getType()) {
             case S_CRAFTING_GRID_PLACE:
-                TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level, sender, packet.readPos(), Direction.from3DDataValue(packet.readUByte()));
+                TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level, sender, packet.readPos(), packet.readDirection());
                 break;
             case S_CRAFTING_GRID_EXECUTE:
                 TileEntity tile = sender.level.getBlockEntity(packet.readPos());

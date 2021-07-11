@@ -1,8 +1,13 @@
 package codechicken.translocators.handler;
 
+import codechicken.lib.packet.PacketCustom;
+import codechicken.translocators.init.TranslocatorsModContent;
+import codechicken.translocators.network.TranslocatorNetwork;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
@@ -49,18 +54,19 @@ public class CraftingGridKeyHandler extends KeyBinding {
             return;
         }
         BlockRayTraceResult blockHit = (BlockRayTraceResult) hit;
+        BlockPos aboveHit = blockHit.getBlockPos().above();
         BlockState state = mc.level.getBlockState(blockHit.getBlockPos());
-        //        if (state.getBlock() == ModBlocks.blockCraftingGrid) {
-        //            PacketCustom packet = new PacketCustom(TranslocatorCPH.channel, 2);
-        //            packet.writePos(hit.getBlockPos());
-        //            packet.sendToServer();
-        //
-        //            mc.player.swingArm(EnumHand.MAIN_HAND);
-        //        } else if (ModBlocks.blockCraftingGrid.placeBlock(mc.world, mc.player, blockHit.getPos(), blockHit.getFace())) {
-        //            PacketCustom packet = new PacketCustom(TranslocatorCPH.channel, 1);
-        //            packet.writePos(hit.getBlockPos());
-        //            packet.writeByte(hit.sideHit.ordinal());
-        //            packet.sendToServer();
-        //        }
+        if (state.getBlock() == TranslocatorsModContent.blockCraftingGrid.get()) {
+            PacketCustom packet = new PacketCustom(TranslocatorNetwork.NET_CHANNEL, TranslocatorNetwork.S_CRAFTING_GRID_EXECUTE);
+            packet.writePos(blockHit.getBlockPos());
+            packet.sendToServer();
+
+            mc.player.swing(Hand.MAIN_HAND);
+        } else if (TranslocatorsModContent.blockCraftingGrid.get().placeBlock(mc.level, mc.player, aboveHit, blockHit.getDirection())) {
+            PacketCustom packet = new PacketCustom(TranslocatorNetwork.NET_CHANNEL, TranslocatorNetwork.S_CRAFTING_GRID_PLACE);
+            packet.writePos(aboveHit);
+            packet.writeDirection(blockHit.getDirection());
+            packet.sendToServer();
+        }
     }
 }

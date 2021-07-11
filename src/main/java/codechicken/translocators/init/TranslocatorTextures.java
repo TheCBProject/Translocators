@@ -14,7 +14,7 @@ public class TranslocatorTextures implements IIconRegister {
     public static TextureAtlasSprite[] ITEM_ICONS = new TextureAtlasSprite[64];
     public static TextureAtlasSprite[] FLUID_ICONS = new TextureAtlasSprite[64];
     public static TextureAtlasSprite[][] TEXTURES;
-    public static TextureAtlasSprite missing;
+    public static TextureAtlasSprite CRAFTING_GRID;
 
     private static final String BLOCKS_ = "translocators:blocks/";
     private static final String TRANSLOCATOR_ = BLOCKS_ + "translocator/";
@@ -26,7 +26,7 @@ public class TranslocatorTextures implements IIconRegister {
     @Override
     public void registerIcons(AtlasRegistrar registrar) {
         TranslocatorTextures.registrar = registrar;
-        register(TRANSLOCATOR_ + "debug", e -> missing = e);
+        register(BLOCKS_ + "crafting_grid", e -> CRAFTING_GRID = e);
 
         //See https://github.com/covers1624/TextureSheetExporter/wiki
         //@formatter:off
@@ -105,7 +105,6 @@ public class TranslocatorTextures implements IIconRegister {
         //@formatter:on
 
         TEXTURES = new TextureAtlasSprite[][] { ITEM_ICONS, FLUID_ICONS };
-
     }
 
     private static void register(String sprite, Consumer<TextureAtlasSprite> onReady) {

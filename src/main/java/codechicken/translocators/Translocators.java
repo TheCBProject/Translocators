@@ -2,6 +2,7 @@ package codechicken.translocators;
 
 import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.TranslocatorsModContent;
+import codechicken.translocators.network.TranslocatorNetwork;
 import codechicken.translocators.proxy.Proxy;
 import codechicken.translocators.proxy.ProxyClient;
 import net.minecraft.item.Item;
@@ -36,6 +37,7 @@ public class Translocators {
         TranslocatorsModContent.init();
         ConfigHandler.init(Paths.get("./config/translocators.cfg"));
         ConfigHandler.loadConfig();
+        TranslocatorNetwork.init();
     }
 
     @SubscribeEvent

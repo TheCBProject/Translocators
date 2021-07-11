@@ -19,9 +19,9 @@ public class TranslocatorNetwork {
     public static final int S_CRAFTING_GRID_EXECUTE = 2;
 
     public static void init() {
-        netChannel = PacketCustomChannelBuilder.named(NET_CHANNEL)//
-                .assignClientHandler(() -> TranslocatorCPH::new)//
-                .assignServerHandler(() -> TranslocatorSPH::new)//
+        netChannel = PacketCustomChannelBuilder.named(NET_CHANNEL)
+                .assignClientHandler(() -> TranslocatorCPH::new)
+                .assignServerHandler(() -> TranslocatorSPH::new)
                 .build();
     }
 

@@ -4,6 +4,7 @@ import codechicken.lib.model.ModelRegistryHelper;
 import codechicken.lib.texture.SpriteRegistryHelper;
 import codechicken.translocators.client.gui.GuiTranslocator;
 import codechicken.translocators.client.render.RenderTranslocatorItem;
+import codechicken.translocators.client.render.TileCraftingGridRenderer;
 import codechicken.translocators.handler.CraftingGridKeyHandler;
 import codechicken.translocators.init.TranslocatorTextures;
 import codechicken.translocators.init.TranslocatorsModContent;
@@ -43,6 +44,6 @@ public class ProxyClient extends Proxy {
         modelHelper.register(itemTranslocatorInv, new RenderTranslocatorItem(0));
         modelHelper.register(fluidTranslocatorInv, new RenderTranslocatorItem(1));
 
-        //ClientRegistry.bindTileEntitySpecialRenderer(TileCraftingGrid.class, new TileCraftingGridRenderer());
+        ClientRegistry.bindTileEntityRenderer(TranslocatorsModContent.tileCraftingGridType.get(), TileCraftingGridRenderer::new);
     }
 }
