@@ -5,12 +5,15 @@ import codechicken.translocators.Translocators;
 import net.minecraft.data.*;
 import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.generators.BlockStateProvider;
+import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 
+import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 import static codechicken.translocators.Translocators.MOD_ID;
@@ -24,6 +27,7 @@ public class DataGenerators {
         ExistingFileHelper files = event.getExistingFileHelper();
         if (event.includeClient()) {
             gen.addProvider(new ItemModels(gen, files));
+            gen.addProvider(new BlockStates(gen, files));
         }
         gen.addProvider(new ItemTags(gen, new BlockTagsProvider(gen, MOD_ID, files), files));
         gen.addProvider(new Recipes(gen));
@@ -45,6 +49,21 @@ public class DataGenerators {
         @Override
         public String getName() {
             return "Translocators Item models";
+        }
+    }
+
+    private static class BlockStates extends BlockStateProvider {
+
+        public BlockStates(DataGenerator gen, ExistingFileHelper exFileHelper) {
+            super(gen, MOD_ID, exFileHelper);
+        }
+
+        @Override
+        protected void registerStatesAndModels() {
+            ModelFile model = models()
+                    .withExistingParent("dummy", "block")
+                    .texture("particle", "translocators:blocks/crafting_grid");
+            simpleBlock(TranslocatorsModContent.blockCraftingGrid.get(), model);
         }
     }
 
