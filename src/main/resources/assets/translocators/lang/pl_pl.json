@@ -1,0 +1,9 @@
+{
+  "item.translocators.item_translocator": "Translokator przedmiotów",
+  "item.translocators.fluid_translocator": "Translokator cieczy",
+  "tile.craftingGrid.name": "Siatka konstruowania",
+  "item.translocators.diamond_nugget": "Bryłka diamentu",
+  "gui.translocators.regulate": "Reguluj",
+  "gui.translocators.filter": "Filtr",
+  "key.craftingGrid": "Siatka konstruowania"
+}
