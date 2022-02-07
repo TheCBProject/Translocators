@@ -482,8 +482,11 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+        // only render items, if not set to hidden in config
+        if (!ConfigHandler.hideParticlesAndMovingParts) {
+            RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
+        }
         super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
-        RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
     }
 
     @Override

@@ -5,6 +5,7 @@ import codechicken.lib.math.MathHelper;
 import codechicken.multipart.api.MultiPartType;
 import codechicken.multipart.api.part.TMultiPart;
 import codechicken.translocators.client.render.RenderTranslocator;
+import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.TranslocatorsModContent;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -198,7 +199,10 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-        RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
+        // // only render fluid, if not set to hidden in config
+        if (!ConfigHandler.hideParticlesAndMovingParts) {
+            RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
+        }
         super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
     }
 

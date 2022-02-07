@@ -19,6 +19,7 @@ public class ConfigHandler {
 
     public static ConfigTag config;
     public static boolean disableCraftingGrid;
+    public static boolean hideParticlesAndMovingParts;
     public static Tags.IOptionalNamedTag<Item> regulateTag;
 
     public static void init(Path file) {
@@ -31,6 +32,11 @@ public class ConfigHandler {
     public static void loadConfig() {
         disableCraftingGrid = config.getTag("disable_crafting_grid")
                 .setComment("Setting this to true will disable the placement of the CraftingGrid.")
+                .setDefaultBoolean(false)
+                .getBoolean();
+
+        hideParticlesAndMovingParts = config.getTag("disable_particles")
+                .setComment("Setting this to true will stop the client from rendering the moving parts, liquids and items")
                 .setDefaultBoolean(false)
                 .getBoolean();
 
