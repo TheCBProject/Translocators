@@ -8,10 +8,14 @@ import codechicken.lib.raytracer.SubHitVoxelShape;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
 import codechicken.lib.vec.*;
-import codechicken.multipart.api.part.*;
+import codechicken.multipart.api.part.ITickablePart;
+import codechicken.multipart.api.part.TFacePart;
+import codechicken.multipart.api.part.TMultiPart;
+import codechicken.multipart.api.part.TNormalOcclusionPart;
 import codechicken.multipart.block.TileMultiPart;
 import codechicken.multipart.util.PartRayTraceResult;
 import codechicken.translocators.client.render.RenderTranslocator;
+import codechicken.translocators.handler.ConfigHandler;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.SoundType;
@@ -454,7 +458,10 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
         RenderTranslocator.renderInsert(this, ccrs, mStack, buffers, packedLight, packedOverlay, partialTicks);
-        RenderTranslocator.renderLinks(this, ccrs, mStack, buffers);
+        // only render links, if not set to hidden in config
+        if (!ConfigHandler.hideParticlesAndMovingParts) {
+            RenderTranslocator.renderLinks(this, ccrs, mStack, buffers);
+        }
     }
 
     @Override
