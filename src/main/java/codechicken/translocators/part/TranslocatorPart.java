@@ -3,34 +3,31 @@ package codechicken.translocators.part;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.raytracer.IndexedCuboid6;
-import codechicken.lib.raytracer.SubHitVoxelShape;
-import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.RenderUtils;
-import codechicken.lib.vec.*;
+import codechicken.lib.raytracer.IndexedVoxelShape;
+import codechicken.lib.raytracer.MultiIndexedVoxelShape;
+import codechicken.lib.vec.Cuboid6;
+import codechicken.lib.vec.Rotation;
+import codechicken.lib.vec.Transformation;
+import codechicken.lib.vec.Vector3;
 import codechicken.multipart.api.part.*;
-import codechicken.multipart.block.TileMultiPart;
+import codechicken.multipart.block.TileMultipart;
 import codechicken.multipart.util.PartRayTraceResult;
-import codechicken.translocators.client.render.RenderTranslocator;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.block.SoundType;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
+import net.covers1624.quack.collection.FastStream;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +39,7 @@ import java.util.stream.Collectors;
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public abstract class TranslocatorPart extends TMultiPart implements TFacePart, TNormalOcclusionPart, ITickablePart {
+public abstract class TranslocatorPart extends BaseMultipart implements FacePart, NormalOcclusionPart, TickablePart {
 
     public static final SoundType PLACEMENT_SOUND = new SoundType(1.0F, 1.0F, null, null, SoundEvents.STONE_STEP, null, null);
 
@@ -80,7 +77,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
             };
             boxShapes[i] = boxes[i].shape();
             basePartShapes[i] = Arrays.stream(base_parts[i]).map(Cuboid6::shape).toArray(VoxelShape[]::new);
-            basePartsJoined[i] = Arrays.stream(basePartShapes[i]).reduce(VoxelShapes.empty(), VoxelShapes::or);
+            basePartsJoined[i] = Arrays.stream(basePartShapes[i]).reduce(Shapes.empty(), Shapes::or);
         }
     }
 
@@ -104,7 +101,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     //region Data
     //region NBT
     @Override
-    public void save(CompoundNBT tag) {
+    public void save(CompoundTag tag) {
         tag.putByte("side", side);
         tag.putBoolean("invert_redstone", invert_redstone);
         tag.putBoolean("redstone", redstone);
@@ -112,7 +109,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public void load(CompoundNBT tag) {
+    public void load(CompoundTag tag) {
         side = tag.getByte("side");
         invert_redstone = tag.getBoolean("invert_redstone");
         redstone = tag.getBoolean("redstone");
@@ -194,20 +191,15 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     //endregion
 
     @Override
-    public void onPartChanged(TMultiPart part) {
-        if (!world().isClientSide()) {
+    public void onPartChanged(MultiPart part) {
+        if (!level().isClientSide()) {
             onNeighborBlockChanged(pos());
         }
         super.onPartChanged(part);
     }
 
     @Override
-    public boolean solid(int side) {
-        return false;
-    }
-
-    @Override
-    public SoundType getPlacementSound(ItemUseContext context) {
+    public SoundType getPlacementSound(UseOnContext context) {
         return PLACEMENT_SOUND;
     }
 
@@ -226,7 +218,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public VoxelShape getShape(ISelectionContext ctx) {
+    public VoxelShape getShape(CollisionContext ctx) {
         return boxShapes[side];
     }
 
@@ -236,20 +228,22 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public VoxelShape getCollisionShape(ISelectionContext ctx) {
+    public VoxelShape getCollisionShape(CollisionContext ctx) {
         //TODO add merging to VoxelShapeCache.
-        return VoxelShapes.or(boxShapes[side], getInsertBounds().shape());
+        return Shapes.or(boxShapes[side], getInsertBounds().shape());
     }
 
     @Override
     public VoxelShape getInteractionShape() {
         Cuboid6 insert = getInsertBounds();
         VoxelShape insertShape = insert.shape();
-        List<IndexedCuboid6> parts = Lists.newArrayList(base_parts[side]).stream()//
-                .map(b -> new IndexedCuboid6(HIT_BASE, b))//
-                .collect(Collectors.toList());
-        parts.add(new IndexedCuboid6(HIT_INSERT, getInsertBounds()));
-        return new SubHitVoxelShape(VoxelShapes.or(basePartsJoined[side], insertShape), parts);
+        return new MultiIndexedVoxelShape(
+                Shapes.or(basePartsJoined[side], insertShape),
+                FastStream.of(basePartShapes[side])
+                        .map(e -> new IndexedVoxelShape(e, HIT_BASE))
+                        .concat(FastStream.of(new IndexedVoxelShape(insertShape, HIT_INSERT)))
+                        .toImmutableSet()
+        );
     }
 
     @Override
@@ -263,9 +257,9 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     public void tick() {
         b_insertpos = a_insertpos;
         a_insertpos = MathHelper.approachExp(a_insertpos, a_eject ? 1 : 0, 0.5, 0.1);
-        if (!world().isClientSide()) {
+        if (!level().isClientSide()) {
             b_eject = a_eject;
-            a_eject = (redstone && world().hasNeighborSignal(pos())) != invert_redstone;
+            a_eject = (redstone && level().hasNeighborSignal(pos())) != invert_redstone;
             if (a_eject != b_eject) {
                 markUpdate();
             }
@@ -273,9 +267,9 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
-        if (world().isClientSide()) {
-            return ActionResultType.SUCCESS;
+    public InteractionResult activate(Player player, PartRayTraceResult hit, ItemStack held, InteractionHand hand) {
+        if (level().isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
         if (held.isEmpty() && player.isCrouching()) {
             stripModifiers();
@@ -291,7 +285,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
             if (!player.abilities.instabuild) {
                 held.shrink(1);
             }
-            if (world().hasNeighborSignal(pos()) == invert_redstone == a_eject) {
+            if (level().hasNeighborSignal(pos()) == invert_redstone == a_eject) {
                 invert_redstone = !invert_redstone;
             }
             markUpdate();
@@ -304,7 +298,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
         } else {
             openGui(player);
         }
-        return ActionResultType.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     /**
@@ -312,8 +306,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
      *
      * @param player The player.
      */
-    public void openGui(PlayerEntity player) {
-
+    public void openGui(Player player) {
     }
 
     /**
@@ -372,7 +365,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     @Override
-    public ItemStack pickItem(PartRayTraceResult hit) {
+    public ItemStack getCloneStack(PartRayTraceResult hit) {
         return getItem();
     }
 
@@ -382,7 +375,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
 
     public abstract boolean canStay();
 
-    public TranslocatorPart setupPlacement(PlayerEntity player, Direction side) {
+    public TranslocatorPart setupPlacement(Player player, Direction side) {
         this.side = (byte) (side.ordinal() ^ 1);
         return this;
     }
@@ -402,8 +395,8 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
      */
     @SuppressWarnings ("BooleanMethodIsAlwaysInverted")
     public boolean canEject() {
-        if (!world().isClientSide()) {
-            boolean b = (redstone && world().hasNeighborSignal(pos())) != invert_redstone;
+        if (!level().isClientSide()) {
+            boolean b = (redstone && level().hasNeighborSignal(pos())) != invert_redstone;
             if (b != a_eject) {
                 return b;
             }
@@ -412,7 +405,7 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     public boolean canConnect(int side) {
-        TMultiPart other = tile().getSlottedPart(side);
+        MultiPart other = tile().getSlottedPart(side);
         return other instanceof TranslocatorPart && getTType() == ((TranslocatorPart) other).getTType();
     }
 
@@ -426,45 +419,45 @@ public abstract class TranslocatorPart extends TMultiPart implements TFacePart, 
     }
 
     protected void dropItem(ItemStack stack) {
-        TileMultiPart.dropItem(stack, world(), Vector3.fromTileCenter(tile()));
+        TileMultipart.dropItem(stack, level(), Vector3.fromTileCenter(tile()));
     }
 
     public int getIconIndex() {
         int i = 0;
         if (redstone) {
-            i |= world().hasNeighborSignal(pos()) ? 0x02 : 0x01;
+            i |= level().hasNeighborSignal(pos()) ? 0x02 : 0x01;
         }
         if (fast) {
             i |= 0x04;
         }
         return i;
     }
-
-    @Override
-    public boolean renderStatic(RenderType layer, CCRenderState ccrs) {
-        if (layer == RenderType.solid()) {
-            ccrs.reset();
-            RenderTranslocator.renderStatic(ccrs, this);
-        }
-        return false;
-    }
-
-    @Override
-    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-        CCRenderState ccrs = CCRenderState.instance();
-        ccrs.reset();
-        RenderTranslocator.renderInsert(this, ccrs, mStack, buffers, packedLight, packedOverlay, partialTicks);
-        RenderTranslocator.renderLinks(this, ccrs, mStack, buffers);
-    }
-
-    @Override
-    public boolean drawHighlight(PartRayTraceResult hit, ActiveRenderInfo info, MatrixStack mStack, IRenderTypeBuffer getter, float partialTicks) {
-        if (hit.subHit == HIT_INSERT) {
-            RenderUtils.bufferHitbox(new Matrix4(mStack).translate(hit.getBlockPos()), getter, info, getInsertBounds());
-            return true;
-        }
-        return false;
-    }
+//
+//    @Override
+//    public boolean renderStatic(RenderType layer, CCRenderState ccrs) {
+//        if (layer == RenderType.solid()) {
+//            ccrs.reset();
+//            RenderTranslocator.renderStatic(ccrs, this);
+//        }
+//        return false;
+//    }
+//
+//    @Override
+//    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+//        CCRenderState ccrs = CCRenderState.instance();
+//        ccrs.reset();
+//        RenderTranslocator.renderInsert(this, ccrs, mStack, buffers, packedLight, packedOverlay, partialTicks);
+//        RenderTranslocator.renderLinks(this, ccrs, mStack, buffers);
+//    }
+//
+//    @Override
+//    public boolean drawHighlight(PartRayTraceResult hit, ActiveRenderInfo info, MatrixStack mStack, IRenderTypeBuffer getter, float partialTicks) {
+//        if (hit.subHit == HIT_INSERT) {
+//            RenderUtils.bufferHitbox(new Matrix4(mStack).translate(hit.getBlockPos()), getter, info, getInsertBounds());
+//            return true;
+//        }
+//        return false;
+//    }
 
     @Override
     public Cuboid6 getRenderBounds() {

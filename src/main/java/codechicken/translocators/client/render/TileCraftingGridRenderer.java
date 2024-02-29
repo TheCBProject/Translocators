@@ -9,26 +9,25 @@ import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorTextures;
 import codechicken.translocators.tile.TileCraftingGrid;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.world.item.ItemStack;
 
-public class TileCraftingGridRenderer extends TileEntityRenderer<TileCraftingGrid> {
+public class TileCraftingGridRenderer implements BlockEntityRenderer<TileCraftingGrid> {
 
-    public TileCraftingGridRenderer(TileEntityRendererDispatcher rendererDispatcherIn) {
-        super(rendererDispatcherIn);
+    public TileCraftingGridRenderer(BlockEntityRendererProvider.Context ctx) {
     }
 
     @Override
-    public void render(TileCraftingGrid tile, float partialTicks, MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay) {
+    public void render(TileCraftingGrid tile, float partialTicks, PoseStack mStack, MultiBufferSource buffers, int packedLight, int packedOverlay) {
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
@@ -67,7 +66,7 @@ public class TileCraftingGridRenderer extends TileEntityRenderer<TileCraftingGri
             mStack.pushPose();
             mStack.translate(pos.x, pos.y, pos.z);
             mStack.scale(0.35f, 0.35f, 0.35f);
-            itemRenderer.renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers);
+            itemRenderer.renderStatic(stack, ItemTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers, (int) tile.getBlockPos().asLong());
             mStack.popPose();
         }
 
@@ -79,7 +78,7 @@ public class TileCraftingGridRenderer extends TileEntityRenderer<TileCraftingGri
             float bob = (float) (Math.sin(((float) CCRenderEventHandler.renderTime + spin) / 20.0F) * 0.1F + 0.1F);
             mStack.translate(0, bob + 0.25, 0);
             mStack.mulPose(Vector3f.YP.rotation(((float) CCRenderEventHandler.renderTime + spin) / 30.0F));
-            itemRenderer.renderStatic(tile.result, ItemCameraTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers);
+            itemRenderer.renderStatic(tile.result, ItemTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers, (int) tile.getBlockPos().asLong());
             mStack.popPose();
         }
 

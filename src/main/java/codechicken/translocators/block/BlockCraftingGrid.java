@@ -3,44 +3,49 @@ package codechicken.translocators.block;
 import codechicken.lib.raytracer.IndexedVoxelShape;
 import codechicken.lib.raytracer.MultiIndexedVoxelShape;
 import codechicken.lib.raytracer.RayTracer;
+import codechicken.lib.raytracer.SubHitBlockHitResult;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Translation;
 import codechicken.translocators.handler.ConfigHandler;
+import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.tile.TileCraftingGrid;
 import com.google.common.collect.ImmutableSet;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
-import net.minecraft.loot.LootParameters;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 import static codechicken.lib.vec.Vector3.CENTER;
 
-public class BlockCraftingGrid extends Block {
+public class BlockCraftingGrid extends Block implements EntityBlock {
 
     private static final IndexedVoxelShape BASE = new IndexedVoxelShape(new Cuboid6(0, 0, 0, 1, 0.005, 1).shape(), 0);
     private static final IndexedVoxelShape[][] BUTTONS = new IndexedVoxelShape[4][9];
@@ -65,44 +70,48 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TileCraftingGrid(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (type != TranslocatorsModContent.tileCraftingGridType.get()) return null;
+        return (level1, pos, state1, t) -> {
+            if (!level1.isClientSide) {
+                ((TileCraftingGrid) t).tickServer();
+            }
+        };
     }
 
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TileCraftingGrid();
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
         VoxelShape shape = BASE;
-        TileEntity t = worldIn.getBlockEntity(pos);
-        if (t instanceof TileCraftingGrid) {
-            TileCraftingGrid tile = (TileCraftingGrid) t;
+        if (level.getBlockEntity(pos) instanceof TileCraftingGrid tile) {
             shape = SHAPES[tile.rotation];
         }
         return shape;
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         BlockPos beneath = pos.below();
         return world.getBlockState(beneath).isFaceSturdy(world, beneath, Direction.UP);
     }
 
     @Override
-    public BlockRenderType getRenderShape(BlockState state) {
-        return BlockRenderType.INVISIBLE;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
     }
 
     @Override
-    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid) {
-        return willHarvest || super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
+    public boolean onDestroyedByPlayer(BlockState state, Level world, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+        return willHarvest || super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
     }
 
     @Override
-    public void playerDestroy(World worldIn, PlayerEntity player, BlockPos pos, BlockState state, @Nullable TileEntity te, ItemStack stack) {
+    public void playerDestroy(Level worldIn, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity te, ItemStack stack) {
         super.playerDestroy(worldIn, player, pos, state, te, stack);
         worldIn.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
     }
@@ -110,7 +119,7 @@ public class BlockCraftingGrid extends Block {
     @Override
     public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
         List<ItemStack> stacks = new ArrayList<>();
-        TileCraftingGrid tcraft = (TileCraftingGrid) builder.getOptionalParameter(LootParameters.BLOCK_ENTITY);
+        TileCraftingGrid tcraft = (TileCraftingGrid) builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
         if (tcraft != null) {
             for (ItemStack item : tcraft.items) {
                 if (item != null) {
@@ -123,31 +132,31 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult blockHit) {
         if (world.isClientSide()) {
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
 
         TileCraftingGrid tcraft = (TileCraftingGrid) world.getBlockEntity(pos);
 
-        if (hit != null) {
+        if (blockHit instanceof SubHitBlockHitResult hit) {
             if (hit.subHit > 0) {
                 tcraft.activate(hit.subHit - 1, player);
             }
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return ActionResultType.FAIL;
+        return InteractionResult.FAIL;
     }
 
-    public boolean placeBlock(World world, PlayerEntity player, BlockPos pos, Direction side) {
+    public boolean placeBlock(Level world, Player player, BlockPos pos, Direction side) {
         if (ConfigHandler.disableCraftingGrid || side != Direction.UP) {
             return false;
         }
 
         BlockState state = world.getBlockState(pos);
 
-        BlockRayTraceResult hit = RayTracer.retrace(player);
-        BlockItemUseContext ctx = new BlockItemUseContext(player, Hand.MAIN_HAND, ItemStack.EMPTY, hit);
+        BlockHitResult hit = RayTracer.retrace(player);
+        BlockPlaceContext ctx = new BlockPlaceContext(player, InteractionHand.MAIN_HAND, ItemStack.EMPTY, hit);
 
         if (!state.canBeReplaced(ctx)) {
             pos = pos.above();
@@ -157,7 +166,7 @@ public class BlockCraftingGrid extends Block {
             return false;
         }
 
-        player.swing(Hand.MAIN_HAND);
+        player.swing(InteractionHand.MAIN_HAND);
         if (!world.setBlockAndUpdate(pos, defaultBlockState())) {
             return false;
         }
@@ -167,12 +176,12 @@ public class BlockCraftingGrid extends Block {
     }
 
     @Override
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
         return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : stateIn;
     }
 
     @Override
-    public void setPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         ((TileCraftingGrid) world.getBlockEntity(pos)).onPlaced(placer);
     }
 }

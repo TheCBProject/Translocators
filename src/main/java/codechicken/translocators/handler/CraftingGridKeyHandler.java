@@ -3,21 +3,20 @@ package codechicken.translocators.handler;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.network.TranslocatorNetwork;
-import net.minecraft.block.BlockState;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 
-public class CraftingGridKeyHandler extends KeyBinding {
+public class CraftingGridKeyHandler extends KeyMapping {
 
     public static final CraftingGridKeyHandler instance = new CraftingGridKeyHandler();
     private boolean wasPressed = false;
@@ -49,11 +48,11 @@ public class CraftingGridKeyHandler extends KeyBinding {
         }
 
         //place the grid
-        RayTraceResult hit = mc.hitResult;
-        if (hit == null || hit.getType() != Type.BLOCK) {
+        HitResult hit = mc.hitResult;
+        if (hit == null || hit.getType() != HitResult.Type.BLOCK) {
             return;
         }
-        BlockRayTraceResult blockHit = (BlockRayTraceResult) hit;
+        BlockHitResult blockHit = (BlockHitResult) hit;
         BlockPos aboveHit = blockHit.getBlockPos().above();
         BlockState state = mc.level.getBlockState(blockHit.getBlockPos());
         if (state.getBlock() == TranslocatorsModContent.blockCraftingGrid.get()) {
@@ -61,7 +60,7 @@ public class CraftingGridKeyHandler extends KeyBinding {
             packet.writePos(blockHit.getBlockPos());
             packet.sendToServer();
 
-            mc.player.swing(Hand.MAIN_HAND);
+            mc.player.swing(InteractionHand.MAIN_HAND);
         } else if (TranslocatorsModContent.blockCraftingGrid.get().placeBlock(mc.level, mc.player, aboveHit, blockHit.getDirection())) {
             PacketCustom packet = new PacketCustom(TranslocatorNetwork.NET_CHANNEL, TranslocatorNetwork.S_CRAFTING_GRID_PLACE);
             packet.writePos(aboveHit);

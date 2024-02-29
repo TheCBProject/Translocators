@@ -1,12 +1,14 @@
 package codechicken.translocators.handler;
 
-import codechicken.lib.config.ConfigTag;
-import codechicken.lib.config.StandardConfigFile;
+import codechicken.lib.config.ConfigCategory;
+import codechicken.lib.config.ConfigFile;
+import codechicken.lib.config.ConfigValue;
+import codechicken.translocators.Translocators;
 import codechicken.translocators.init.TranslocatorsModContent;
-import net.minecraft.item.Item;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.Tags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 import java.nio.file.Path;
 
@@ -17,27 +19,29 @@ public class ConfigHandler {
 
     private static boolean initialized;
 
-    public static ConfigTag config;
+    public static ConfigCategory config;
     public static boolean disableCraftingGrid;
-    public static Tags.IOptionalNamedTag<Item> regulateTag;
+    public static TagKey<Item> regulateTag;
 
     public static void init(Path file) {
         if (!initialized) {
-            config = new StandardConfigFile(file).load();
+            config = new ConfigFile(Translocators.MOD_ID)
+                    .path(file)
+                    .load();
             initialized = true;
         }
     }
 
     public static void loadConfig() {
-        disableCraftingGrid = config.getTag("disable_crafting_grid")
+        disableCraftingGrid = config.getValue("disable_crafting_grid")
                 .setComment("Setting this to true will disable the placement of the CraftingGrid.")
                 .setDefaultBoolean(false)
                 .getBoolean();
 
-        ConfigTag filterItem = config.getTag("filter_item")
-                .setDefaultString(TranslocatorsModContent.regulateItemsTag.getName().toString())
+        ConfigValue filterItem = config.getValue("filter_item")
+                .setDefaultString(TranslocatorsModContent.regulateItemsTag.location().toString())
                 .setComment("The Tag of Items able to set an ItemTranslocator into Regulate mode.");
-        regulateTag = ItemTags.createOptional(new ResourceLocation(filterItem.getString()));
+        regulateTag = ItemTags.create(new ResourceLocation(filterItem.getString()));
         config.save();
     }
 }

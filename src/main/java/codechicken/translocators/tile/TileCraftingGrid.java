@@ -4,42 +4,36 @@ import codechicken.lib.data.MCDataByteBuf;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
-import codechicken.lib.vec.Cuboid6;
-import codechicken.lib.vec.Rotation;
-import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorsModContent;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.world.GameRules;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.fml.hooks.BasicEventHooks;
+import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 
-import static codechicken.lib.vec.Vector3.CENTER;
-
-public class TileCraftingGrid extends TileEntity implements ITickableTileEntity {
+public class TileCraftingGrid extends BlockEntity {
 
     public ItemStack[] items = ArrayUtils.fill(new ItemStack[9], ItemStack.EMPTY);
     public ItemStack result = ItemStack.EMPTY;
@@ -47,33 +41,29 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
 
     public int timeout = 400;//20 seconds
 
-    public TileCraftingGrid() {
-        super(TranslocatorsModContent.tileCraftingGridType.get());
+    public TileCraftingGrid(BlockPos pos, BlockState state) {
+        super(TranslocatorsModContent.tileCraftingGridType.get(), pos, state);
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT tag) {
-        super.save(tag);
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         tag.put("items", InventoryUtils.writeItemStacksToTag(items));
         tag.putInt("timeout", timeout);
-        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT tag) {
-        super.load(state, tag);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         InventoryUtils.readItemStacksFromTag(items, tag.getList("items", 10));
         timeout = tag.getInt("timeout");
     }
 
-    @Override
-    public void tick() {
-        if (!level.isClientSide()) {
-            timeout--;
-            if (timeout == 0) {
-                dropItems();
-                level.removeBlock(getBlockPos(), false);
-            }
+    public void tickServer() {
+        timeout--;
+        if (timeout == 0) {
+            dropItems();
+            level.removeBlock(getBlockPos(), false);
         }
     }
 
@@ -87,26 +77,30 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        MCDataByteBuf packet = new MCDataByteBuf();
-        writeToPacket(packet);
-        return packet.toTilePacket(getBlockPos());
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this, e -> {
+            MCDataByteBuf packet = new MCDataByteBuf();
+            writeToPacket(packet);
+            CompoundTag tag = new CompoundTag();
+            packet.writeToNBT(tag, "data");
+            return tag;
+        });
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
+    public CompoundTag getUpdateTag() {
         MCDataByteBuf packet = new MCDataByteBuf();
         writeToPacket(packet);
         return packet.writeToNBT(super.getUpdateTag(), "data");
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        readFromPacket(MCDataByteBuf.fromTilePacket(pkt));
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        readFromPacket(MCDataByteBuf.readFromNBT(pkt.getTag(), "data"));
     }
 
     @Override
-    public void handleUpdateTag(BlockState state, CompoundNBT tag) {
+    public void handleUpdateTag(CompoundTag tag) {
         readFromPacket(MCDataByteBuf.readFromNBT(tag, "data"));
     }
 
@@ -127,8 +121,8 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         updateResult();
     }
 
-    public void activate(int subHit, PlayerEntity player) {
-        ItemStack held = player.inventory.getSelected();
+    public void activate(int subHit, Player player) {
+        ItemStack held = player.getInventory().getSelected();
         if (held.isEmpty()) {
             if (!items[subHit].isEmpty()) {
                 giveOrDropItem(items[subHit], player);
@@ -153,10 +147,10 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
     }
 
     private void updateResult() {
-        CraftingInventory craftMatrix = getCraftMatrix();
+        CraftingContainer craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<ICraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, craftMatrix, level);
+            Optional<CraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
                 result = mresult.get().assemble(craftMatrix);
                 return;
@@ -168,38 +162,38 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         result = ItemStack.EMPTY;
     }
 
-    private void giveOrDropItem(ItemStack stack, PlayerEntity player) {
-        if (player.inventory.add(stack)) {
+    private void giveOrDropItem(ItemStack stack, Player player) {
+        if (player.getInventory().add(stack)) {
             player.inventoryMenu.broadcastChanges();
         } else {
             ItemUtils.dropItem(stack, level, Vector3.fromTileCenter(this));
         }
     }
 
-    public void craft(ServerPlayerEntity player) {
-        CraftingInventory craftMatrix = getCraftMatrix();
+    public void craft(ServerPlayer player) {
+        CraftingContainer craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<ICraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, craftMatrix, level);
+            Optional<CraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
-                ICraftingRecipe recipe = mresult.get();
+                CraftingRecipe recipe = mresult.get();
                 if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(recipe)) {
-                    doCraft(recipe,recipe.assemble(craftMatrix), craftMatrix, player);
+                    doCraft(recipe, recipe.assemble(craftMatrix), craftMatrix, player);
                     break;
                 }
             }
 
             rotateItems(craftMatrix);
         }
-        player.swing(Hand.MAIN_HAND);
+        player.swing(InteractionHand.MAIN_HAND);
         dropItems();
         level.removeBlock(getBlockPos(), false);
     }
 
-    private CraftingInventory getCraftMatrix() {
-        CraftingInventory craftMatrix = new CraftingInventory(new Container(null, 0) {
+    private CraftingContainer getCraftMatrix() {
+        CraftingContainer craftMatrix = new CraftingContainer(new AbstractContainerMenu(null, 0) {
             @Override
-            public boolean stillValid(PlayerEntity player) {
+            public boolean stillValid(Player player) {
                 return true;
             }
         }, 3, 3);
@@ -211,11 +205,11 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         return craftMatrix;
     }
 
-    private void doCraft(ICraftingRecipe recipe, ItemStack mresult, CraftingInventory craftMatrix, PlayerEntity player) {
+    private void doCraft(CraftingRecipe recipe, ItemStack mresult, CraftingContainer craftMatrix, Player player) {
         giveOrDropItem(mresult, player);
 
         mresult.onCraftedBy(level, player, mresult.getCount());
-        BasicEventHooks.firePlayerCraftingEvent(player, mresult, craftMatrix);
+        ForgeEventFactory.firePlayerCraftingEvent(player, mresult, craftMatrix);
         if (!recipe.isSpecial()) {
             player.awardRecipes(Collections.singleton(recipe));
         }
@@ -249,7 +243,7 @@ public class TileCraftingGrid extends TileEntity implements ITickableTileEntity 
         }
     }
 
-    private void rotateItems(CraftingInventory inv) {
+    private void rotateItems(CraftingContainer inv) {
         int[] slots = new int[] { 0, 1, 2, 5, 8, 7, 6, 3 };
         ItemStack[] arrangement = new ItemStack[9];
         arrangement[4] = inv.getItem(4);

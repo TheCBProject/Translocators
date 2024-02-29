@@ -7,30 +7,26 @@ import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.util.ServerUtils;
-import codechicken.multipart.api.MultiPartType;
-import codechicken.multipart.api.part.TMultiPart;
-import codechicken.multipart.api.part.redstone.IRedstonePart;
+import codechicken.multipart.api.MultipartType;
+import codechicken.multipart.api.part.MultiPart;
+import codechicken.multipart.api.part.redstone.RedstonePart;
 import codechicken.multipart.util.PartRayTraceResult;
-import codechicken.translocators.client.render.RenderTranslocator;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.TranslocatorsModContent;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.EmptyHandler;
 
@@ -41,10 +37,7 @@ import java.util.List;
 /**
  * Created by covers1624 on 10/11/2017.
  */
-public class ItemTranslocatorPart extends TranslocatorPart implements IRedstonePart {
-
-    @CapabilityInject (IItemHandler.class)
-    public static Capability<IItemHandler> ITEM_CAP = null;
+public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePart {
 
     public boolean regulate;
     public boolean signal;
@@ -55,7 +48,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     public List<MovingItem> movingItems = new LinkedList<>();
 
     @Override
-    public MultiPartType<?> getType() {
+    public MultipartType<?> getType() {
         return TranslocatorsModContent.itemTranslocatorPartType.get();
     }
 
@@ -83,13 +76,13 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(ITEM_CAP, Direction.BY_3D_DATA[side]).isPresent();
+        return capCache().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.BY_3D_DATA[side]).isPresent();
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (world().isClientSide()) {
+        if (level().isClientSide()) {
             movingItems.removeIf(MovingItem::update);
         } else {
             if (a_eject) {
@@ -97,7 +90,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_3D_DATA[i], EmptyHandler.INSTANCE);
+                        handlers[i] = capCache().getCapabilityOr(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.BY_3D_DATA[i], EmptyHandler.INSTANCE);
                     } else {
                         handlers[i] = EmptyHandler.INSTANCE;
                     }
@@ -143,14 +136,13 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
             if (signal) {
                 IItemHandler[] handlers = new IItemHandler[6];
                 for (int i = 0; i < 6; i++) {
-                    handlers[i] = capCache().getCapabilityOr(ITEM_CAP, Direction.BY_3D_DATA[side], EmptyHandler.INSTANCE);
+                    handlers[i] = capCache().getCapabilityOr(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.BY_3D_DATA[side], EmptyHandler.INSTANCE);
                 }
                 if (a_eject) {
                     boolean allSatisfied = true;
                     for (int i = 0; i < 6; i++) {
-                        TMultiPart other = tile().getSlottedPart(i);
-                        if (other instanceof ItemTranslocatorPart) {
-                            ItemTranslocatorPart otherPart = (ItemTranslocatorPart) other;
+                        MultiPart other = tile().getSlottedPart(i);
+                        if (other instanceof ItemTranslocatorPart otherPart) {
                             if (!otherPart.a_eject) {
                                 if (!otherPart.isSatisfied(handlers[i])) {
                                     allSatisfied = false;
@@ -229,9 +221,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         int outputCount = 0;
         int[] outputQuantities = new int[6];
         for (int i = 0; i < 6; i++) {
-            TMultiPart p = tile().getSlottedPart(i);
-            if (p instanceof ItemTranslocatorPart) {
-                ItemTranslocatorPart part = (ItemTranslocatorPart) p;
+            MultiPart p = tile().getSlottedPart(i);
+            if (p instanceof ItemTranslocatorPart part) {
                 if (!part.canEject() && part.redstone == rspass && i != side) {
                     outputQuantities[i] = getInsertableAmount(move, part, attached[i]);
                     if (outputQuantities[i] > 0) {
@@ -247,7 +238,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 continue;
             }
 
-            qty = Math.min(qty, move.getCount() / outputCount + world().random.nextInt(move.getCount() % outputCount + 1));
+            qty = Math.min(qty, move.getCount() / outputCount + level().random.nextInt(move.getCount() % outputCount + 1));
             outputCount--;
 
             if (qty == 0) {
@@ -349,26 +340,26 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public ActionResultType activate(PlayerEntity player, PartRayTraceResult hit, ItemStack held, Hand hand) {
-        if (world().isClientSide()) {
-            return ActionResultType.SUCCESS;
+    public InteractionResult activate(Player player, PartRayTraceResult hit, ItemStack held, InteractionHand hand) {
+        if (level().isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (stack.getItem().is(ConfigHandler.regulateTag) && !regulate) {
+        if (stack.is(ConfigHandler.regulateTag) && !regulate) {
             regulateStack = ItemUtils.copyStack(stack, 1);
             regulate = true;
             if (!player.abilities.instabuild) {
                 stack.shrink(1);
             }
             markUpdate();
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         } else if (stack.getItem() == Items.IRON_INGOT && !signal) {
             signal = true;
             if (!player.abilities.instabuild) {
                 stack.shrink(1);
             }
             markUpdate();
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         return super.activate(player, hit, stack, hand);
     }
@@ -389,11 +380,11 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public void openGui(PlayerEntity player) {
+    public void openGui(Player player) {
         openItemGui(player, filters, regulate ? "gui.translocators.regulate" : "gui.translocators.filter");
     }
 
-    private void openItemGui(PlayerEntity player, ItemStack[] filters, String name) {
+    private void openItemGui(Player player, ItemStack[] filters, String name) {
         class Inv extends InventorySimple {
 
             public Inv(ItemStack[] items, int limit) {
@@ -405,11 +396,11 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
                 markUpdate();
             }
         }
-        INamedContainerProvider provider = new SimpleNamedContainerProvider(
+        MenuProvider provider = new SimpleMenuProvider(
                 (id, inv, p) -> new ContainerItemTranslocator(id, inv, new Inv(filters, filterStackLimit())),
-                new TranslationTextComponent(name)
+                new TranslatableComponent(name)
         );
-        ServerUtils.openContainer((ServerPlayerEntity) player, provider, p -> {
+        ServerUtils.openContainer((ServerPlayer) player, provider, p -> {
             p.writeShort(filterStackLimit());
         });
     }
@@ -427,8 +418,8 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     public void setPowering(boolean b) {
         if ((signal || !b) && b != a_powering) {
             a_powering = b;
-            world().updateNeighborsAt(pos(), Blocks.REDSTONE_WIRE);
-            world().updateNeighborsAt(pos().relative(Direction.BY_3D_DATA[side]), Blocks.REDSTONE_WIRE);
+            level().updateNeighborsAt(pos(), Blocks.REDSTONE_WIRE);
+            level().updateNeighborsAt(pos().relative(Direction.BY_3D_DATA[side]), Blocks.REDSTONE_WIRE);
             markUpdate();
         }
     }
@@ -444,17 +435,17 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
     }
 
     @Override
-    public void save(CompoundNBT tag) {
+    public void save(CompoundTag tag) {
         super.save(tag);
         tag.putBoolean("regulate", regulate);
         tag.putBoolean("signal", signal);
         tag.putBoolean("powering", a_powering);
         tag.put("filters", InventoryUtils.writeItemStacksToTag(filters, 65536));
-        tag.put("regulateStack", regulateStack.save(new CompoundNBT()));
+        tag.put("regulateStack", regulateStack.save(new CompoundTag()));
     }
 
     @Override
-    public void load(CompoundNBT tag) {
+    public void load(CompoundTag tag) {
         super.load(tag);
         regulate = tag.getBoolean("regulate");
         signal = tag.getBoolean("signal");
@@ -479,12 +470,12 @@ public class ItemTranslocatorPart extends TranslocatorPart implements IRedstoneP
         signal = (flags & (1 << 4)) != 0;
         a_powering = (flags & (1 << 5)) != 0;
     }
-
-    @Override
-    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
-        RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
-    }
+//
+//    @Override
+//    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+//        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
+//        RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
+//    }
 
     @Override
     public int strongPowerLevel(int side) {

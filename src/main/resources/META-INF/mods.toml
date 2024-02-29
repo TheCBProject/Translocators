@@ -1,12 +1,12 @@
 modLoader="javafml"
-loaderVersion="[${forge_version},)"
+loaderVersion="[${lang_version},)"
 issueTrackerURL="https://github.com/TheCBProject/Translocators"
 license="The MIT License (MIT)"
 
 [[mods]]
 	modId="translocators"
 	displayName="Translocators"
-	version="${version}"
+    version="${file.jarVersion}"
 
 	updateJSONURL="https://version-check.covers1624.net/check/?mod=Translocators&mc=${mc_version}"
 	displayURL="https://www.curseforge.com/minecraft/mc-mods/translocators-1-8"
@@ -24,7 +24,7 @@ Translocates stuff!
 [[dependencies.translocators]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.5]"
+    versionRange="[1.18.2]"
     ordering="NONE"
     side="BOTH"
 [[dependencies.translocators]]

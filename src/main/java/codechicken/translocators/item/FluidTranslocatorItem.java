@@ -1,6 +1,6 @@
 package codechicken.translocators.item;
 
-import codechicken.multipart.api.MultiPartType;
+import codechicken.multipart.api.MultipartType;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import net.minecraftforge.common.capabilities.Capability;
@@ -16,7 +16,7 @@ public class FluidTranslocatorItem extends TranslocatorItem<FluidTranslocatorPar
     }
 
     @Override
-    public MultiPartType<FluidTranslocatorPart> getType() {
+    public MultipartType<FluidTranslocatorPart> getType() {
         return TranslocatorsModContent.fluidTranslocatorPartType.get();
     }
 

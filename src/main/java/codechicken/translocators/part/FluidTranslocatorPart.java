@@ -2,17 +2,13 @@ package codechicken.translocators.part;
 
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.math.MathHelper;
-import codechicken.multipart.api.MultiPartType;
-import codechicken.multipart.api.part.TMultiPart;
-import codechicken.translocators.client.render.RenderTranslocator;
+import codechicken.multipart.api.MultipartType;
+import codechicken.multipart.api.part.MultiPart;
 import codechicken.translocators.init.TranslocatorsModContent;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
@@ -23,9 +19,6 @@ import java.util.*;
  * Created by covers1624 on 10/11/2017.
  */
 public class FluidTranslocatorPart extends TranslocatorPart {
-
-    @CapabilityInject (IFluidHandler.class)
-    public static Capability<IFluidHandler> FLUID_CAP = null;
 
     public List<MovingLiquid> movingLiquids = new LinkedList<>();
     public List<MovingLiquid> exitingLiquids = new LinkedList<>();
@@ -41,20 +34,20 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     @Override
-    public MultiPartType<?> getType() {
+    public MultipartType<?> getType() {
         return TranslocatorsModContent.fluidTranslocatorPartType.get();
     }
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(FLUID_CAP, Direction.BY_3D_DATA[side]).isPresent();
+        return capCache().getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, Direction.BY_3D_DATA[side]).isPresent();
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        if (world().isClientSide()) {
+        if (level().isClientSide()) {
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
                 if (m.update()) {
@@ -71,7 +64,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(FLUID_CAP, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
+                        attached[i] = capCache().getCapabilityOr(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
@@ -98,7 +91,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
             int fit = outaccess.fill(move, FluidAction.SIMULATE);
             int spread = outputs.length - k;
-            fit = Math.min(fit, move.getAmount() / spread + world().random.nextInt(move.getAmount() % spread + 1));
+            fit = Math.min(fit, move.getAmount() / spread + level().random.nextInt(move.getAmount() % spread + 1));
 
             if (fit == 0) {
                 continue;
@@ -118,7 +111,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         int a = 0;
         int r_a = 0;
         for (int i = 0; i < 6; i++) {
-            TMultiPart p = tile().getSlottedPart(i);
+            MultiPart p = tile().getSlottedPart(i);
             if (p instanceof FluidTranslocatorPart) {
                 FluidTranslocatorPart part = (FluidTranslocatorPart) p;
                 //If the part can accept stuffs.
@@ -196,11 +189,11 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         }
     }
 
-    @Override
-    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-        RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
-        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
-    }
+//    @Override
+//    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
+//        RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
+//        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
+//    }
 
     //    @Override
 //    public void renderDynamic(Vector3 pos, int pass, float delta) {

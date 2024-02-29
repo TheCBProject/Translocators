@@ -4,10 +4,8 @@ import codechicken.lib.packet.ICustomPacketHandler.IServerPacketHandler;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.tile.TileCraftingGrid;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
 import static codechicken.translocators.network.TranslocatorNetwork.S_CRAFTING_GRID_EXECUTE;
 import static codechicken.translocators.network.TranslocatorNetwork.S_CRAFTING_GRID_PLACE;
@@ -15,17 +13,14 @@ import static codechicken.translocators.network.TranslocatorNetwork.S_CRAFTING_G
 public class TranslocatorSPH implements IServerPacketHandler {
 
     @Override
-    public void handlePacket(PacketCustom packet, ServerPlayerEntity sender, IServerPlayNetHandler handler) {
+    public void handlePacket(PacketCustom packet, ServerPlayer sender, ServerGamePacketListenerImpl handler) {
         switch (packet.getType()) {
-            case S_CRAFTING_GRID_PLACE:
-                TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level, sender, packet.readPos(), packet.readDirection());
-                break;
-            case S_CRAFTING_GRID_EXECUTE:
-                TileEntity tile = sender.level.getBlockEntity(packet.readPos());
-                if (tile instanceof TileCraftingGrid) {
-                    ((TileCraftingGrid) tile).craft(sender);
+            case S_CRAFTING_GRID_PLACE -> TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level, sender, packet.readPos(), packet.readDirection());
+            case S_CRAFTING_GRID_EXECUTE -> {
+                if (sender.level.getBlockEntity(packet.readPos()) instanceof TileCraftingGrid tile) {
+                    tile.craft(sender);
                 }
-                break;
+            }
         }
     }
 }
