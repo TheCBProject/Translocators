@@ -10,29 +10,32 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import org.lwjgl.glfw.GLFW;
 
-public class CraftingGridKeyHandler extends KeyMapping {
+public class CraftingGridKeyHandler {
 
-    public static final CraftingGridKeyHandler instance = new CraftingGridKeyHandler();
-    private boolean wasPressed = false;
+    public static final KeyMapping CRAFTING_KEY = new KeyMapping("key.craftingGrid", GLFW.GLFW_KEY_C, "key.categories.gameplay");
+    private static boolean wasPressed = false;
 
-    private CraftingGridKeyHandler() {
-        super("key.craftingGrid", GLFW.GLFW_KEY_C, "key.categories.gameplay");
+    public static void init(IEventBus modBus) {
+        modBus.addListener(CraftingGridKeyHandler::registerKeyBinding);
+        MinecraftForge.EVENT_BUS.addListener(CraftingGridKeyHandler::onClientTick);
     }
 
-    @SubscribeEvent
-    @OnlyIn (Dist.CLIENT)
-    public void tick(TickEvent.ClientTickEvent event) {
+    private static void registerKeyBinding(RegisterKeyMappingsEvent event) {
+        event.register(CRAFTING_KEY);
+    }
+
+    private static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
 
-        boolean pressed = isDown();
+        boolean pressed = CRAFTING_KEY.isDown();
         if (pressed != wasPressed) {
             wasPressed = pressed;
             if (pressed) {
@@ -41,7 +44,7 @@ public class CraftingGridKeyHandler extends KeyMapping {
         }
     }
 
-    private void onKeyPressed() {
+    private static void onKeyPressed() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) {
             return;

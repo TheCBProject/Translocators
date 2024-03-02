@@ -4,7 +4,7 @@ import codechicken.multipart.api.MultipartType;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 /**
  * Created by covers1624 on 4/20/20.
@@ -22,6 +22,6 @@ public class FluidTranslocatorItem extends TranslocatorItem<FluidTranslocatorPar
 
     @Override
     public Capability<?> getTargetCapability() {
-        return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY;
+        return ForgeCapabilities.FLUID_HANDLER;
     }
 }

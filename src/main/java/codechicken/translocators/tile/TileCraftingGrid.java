@@ -3,6 +3,7 @@ package codechicken.translocators.tile;
 import codechicken.lib.data.MCDataByteBuf;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
+import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
@@ -19,8 +20,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -30,7 +33,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class TileCraftingGrid extends BlockEntity {
@@ -132,7 +137,7 @@ public class TileCraftingGrid extends BlockEntity {
             if (!InventoryUtils.areStacksIdentical(held, items[subHit])) {
                 ItemStack old = items[subHit];
                 items[subHit] = ItemUtils.copyStack(held, 1);
-                player.inventory.removeItem(player.inventory.selected, 1);
+                player.getInventory().removeItem(player.getInventory().selected, 1);
 
                 if (!old.isEmpty()) {
                     giveOrDropItem(old, player);
@@ -152,7 +157,7 @@ public class TileCraftingGrid extends BlockEntity {
         for (int i = 0; i < 4; i++) {
             Optional<CraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
-                result = mresult.get().assemble(craftMatrix);
+                result = mresult.get().assemble(craftMatrix, level.registryAccess());
                 return;
             }
 
@@ -178,7 +183,7 @@ public class TileCraftingGrid extends BlockEntity {
             if (mresult.isPresent()) {
                 CraftingRecipe recipe = mresult.get();
                 if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(recipe)) {
-                    doCraft(recipe, recipe.assemble(craftMatrix), craftMatrix, player);
+                    doCraft(recipe, recipe.assemble(craftMatrix, level.registryAccess()), craftMatrix, player);
                     break;
                 }
             }
@@ -191,12 +196,7 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     private CraftingContainer getCraftMatrix() {
-        CraftingContainer craftMatrix = new CraftingContainer(new AbstractContainerMenu(null, 0) {
-            @Override
-            public boolean stillValid(Player player) {
-                return true;
-            }
-        }, 3, 3);
+        GridCraftingInventory craftMatrix = new GridCraftingInventory();
 
         for (int i = 0; i < 9; i++) {
             craftMatrix.setItem(i, items[i]);
@@ -229,7 +229,7 @@ public class TileCraftingGrid extends BlockEntity {
             if (!remStack.isEmpty()) {
                 if (invStack.isEmpty()) {
                     craftMatrix.setItem(i, remStack);
-                } else if (ItemStack.isSame(invStack, remStack) && ItemStack.tagMatches(invStack, remStack)) {
+                } else if (ItemStack.isSameItemSameTags(invStack, remStack)) {
                     remStack.grow(invStack.getCount());
                     craftMatrix.setItem(i, remStack);
                 } else {
@@ -258,6 +258,35 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     public void onPlaced(LivingEntity entity) {
-        rotation = (int) (entity.yRot * 4 / 360 + 0.5D) & 3;
+        rotation = (int) (entity.getYRot() * 4 / 360 + 0.5D) & 3;
+    }
+
+    private static class GridCraftingInventory extends InventorySimple implements CraftingContainer {
+
+        public GridCraftingInventory() {
+            super(3 * 3);
+        }
+
+        @Override
+        public int getWidth() {
+            return 3;
+        }
+
+        @Override
+        public int getHeight() {
+            return 3;
+        }
+
+        @Override
+        public List<ItemStack> getItems() {
+            return Arrays.asList(items);
+        }
+
+        @Override
+        public void fillStackedContents(StackedContents pContents) {
+            for (ItemStack item : items) {
+                pContents.accountSimpleStack(item);
+            }
+        }
     }
 }

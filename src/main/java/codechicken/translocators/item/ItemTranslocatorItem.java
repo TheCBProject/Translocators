@@ -4,7 +4,7 @@ import codechicken.multipart.api.MultipartType;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.part.ItemTranslocatorPart;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
 /**
  * Created by covers1624 on 4/20/20.
@@ -22,6 +22,6 @@ public class ItemTranslocatorItem extends TranslocatorItem<ItemTranslocatorPart>
 
     @Override
     public Capability<?> getTargetCapability() {
-        return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
+        return ForgeCapabilities.ITEM_HANDLER;
     }
 }

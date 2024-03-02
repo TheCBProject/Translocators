@@ -7,6 +7,7 @@ import codechicken.lib.render.CCModel;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.RenderUtils;
 import codechicken.lib.render.model.OBJParser;
+import codechicken.lib.render.pipeline.attribute.LightCoordAttribute;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.Vector3;
@@ -23,9 +24,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -78,39 +80,36 @@ public class TranslocatorPartRenderer<T extends TranslocatorPart> implements Par
                 .parse();
         plates[0] = models.get("Plate");
         insert = models.get("Insert");
-        insert.computeLightCoords();
         CCModel.generateSidedModels(plates, 0, new Vector3());
-        for (int i = 0; i < 6; i++) {
-            plates[i].computeLightCoords();
-        }
     }
 
     @Override
-    public boolean renderStatic(T part, @Nullable RenderType layer, CCRenderState ccrs) {
+    public void renderStatic(T part, @Nullable RenderType layer, CCRenderState ccrs) {
         Vector3 trans = Vector3.CENTER;
         IconTransformation i_trans = new IconTransformation(TEXTURES[part.getTType()][part.getIconIndex()]);
         ccrs.reset();
         ccrs.setBrightness(part.level(), part.pos());
         plates[part.side].render(ccrs, trans.translation(), i_trans, ccrs.lightMatrix);
-        return true;
     }
 
     @Override
     public void renderDynamic(T part, PoseStack pStack, MultiBufferSource buffers, int packedLight, int packedOverlay, float partialTicks) {
+        BlockPos pos = part.pos();
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
-        Matrix4 mat = new Matrix4(pStack);
         double insertpos = MathHelper.interpolate(part.b_insertpos, part.a_insertpos, partialTicks);
         IconTransformation i_trans = new IconTransformation(TEXTURES[part.getTType()][part.getIconIndex()]);
-        mat.translate(Vector3.CENTER);
-        mat.apply(sideRotations[part.side]);
-        mat.translate(new Vector3(0, -0.5, 0));
-        mat.scale(1, insertpos * 2 / 3 + 1 / 3D, 1);
+
         ccrs.reset();
-        ccrs.bind(RenderType.solid(), buffers);
-        ccrs.lightMatrix.locate(part.level(), part.pos());
+        ccrs.bind(RenderType.solid(), buffers, pStack);
+        ccrs.lightMatrix.locate(part.level(), pos);
         ccrs.brightness = packedLight;
         ccrs.overlay = packedOverlay;
+        Matrix4 mat = new Matrix4()
+                .translate(Vector3.CENTER)
+                .apply(sideRotations[part.side])
+                .translate(new Vector3(0, -0.5, 0))
+                .scale(1, insertpos * 2 / 3 + 1 / 3D, 1);
         insert.render(ccrs, mat, i_trans, ccrs.lightMatrix);
 
         ccrs.reset();
@@ -125,7 +124,7 @@ public class TranslocatorPartRenderer<T extends TranslocatorPart> implements Par
         return true;
     }
 
-    public static void renderItem(int type, PoseStack pStack, ItemTransforms.TransformType transformType, MultiBufferSource buffers, int packedLight, int packedOverlay) {
+    public static void renderItem(int type, PoseStack pStack, ItemDisplayContext ctx, MultiBufferSource buffers, int packedLight, int packedOverlay) {
         CCRenderState ccrs = CCRenderState.instance();
         ccrs.reset();
         ccrs.bind(ITEM_RENDER_TYPE, buffers);
@@ -133,7 +132,7 @@ public class TranslocatorPartRenderer<T extends TranslocatorPart> implements Par
         ccrs.overlay = packedOverlay;
         IconTransformation i_trans = new IconTransformation(TEXTURES[type][0]);
         Vector3 v_trans = Vector3.CENTER.copy().add(0, 0, 0.5);
-        if (transformType == ItemTransforms.TransformType.GROUND) {
+        if (ctx == ItemDisplayContext.GROUND) {
             v_trans.subtract(0, 0.5, 0);
         }
         Matrix4 mat = new Matrix4(pStack);

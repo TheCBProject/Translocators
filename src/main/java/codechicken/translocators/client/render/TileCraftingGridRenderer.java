@@ -10,7 +10,7 @@ import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorTextures;
 import codechicken.translocators.tile.TileCraftingGrid;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,7 +19,9 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Vector3f;
 
 public class TileCraftingGridRenderer implements BlockEntityRenderer<TileCraftingGrid> {
 
@@ -66,7 +68,7 @@ public class TileCraftingGridRenderer implements BlockEntityRenderer<TileCraftin
             mStack.pushPose();
             mStack.translate(pos.x, pos.y, pos.z);
             mStack.scale(0.35f, 0.35f, 0.35f);
-            itemRenderer.renderStatic(stack, ItemTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers, (int) tile.getBlockPos().asLong());
+            itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, packedLight, packedOverlay, mStack, buffers, tile.getLevel(), (int) tile.getBlockPos().asLong());
             mStack.popPose();
         }
 
@@ -77,8 +79,8 @@ public class TileCraftingGridRenderer implements BlockEntityRenderer<TileCraftin
             float spin = (float) (ClientUtils.getRenderTime() * 9 / Math.PI);
             float bob = (float) (Math.sin(((float) CCRenderEventHandler.renderTime + spin) / 20.0F) * 0.1F + 0.1F);
             mStack.translate(0, bob + 0.25, 0);
-            mStack.mulPose(Vector3f.YP.rotation(((float) CCRenderEventHandler.renderTime + spin) / 30.0F));
-            itemRenderer.renderStatic(tile.result, ItemTransforms.TransformType.FIXED, packedLight, packedOverlay, mStack, buffers, (int) tile.getBlockPos().asLong());
+            mStack.mulPose(Axis.YP.rotation(((float) CCRenderEventHandler.renderTime + spin) / 30.0F));
+            itemRenderer.renderStatic(tile.result, ItemDisplayContext.FIXED, packedLight, packedOverlay, mStack, buffers, tile.getLevel(), (int) tile.getBlockPos().asLong());
             mStack.popPose();
         }
 

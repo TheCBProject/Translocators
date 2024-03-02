@@ -282,7 +282,7 @@ public abstract class TranslocatorPart extends BaseMultipart implements FacePart
             }
         } else if (held.getItem() == Items.REDSTONE && !redstone) {
             redstone = true;
-            if (!player.abilities.instabuild) {
+            if (!player.getAbilities().instabuild) {
                 held.shrink(1);
             }
             if (level().hasNeighborSignal(pos()) == invert_redstone == a_eject) {
@@ -291,7 +291,7 @@ public abstract class TranslocatorPart extends BaseMultipart implements FacePart
             markUpdate();
         } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
             fast = true;
-            if (!player.abilities.instabuild) {
+            if (!player.getAbilities().instabuild) {
                 held.shrink(1);
             }
             markUpdate();

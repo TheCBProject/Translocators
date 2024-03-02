@@ -15,9 +15,9 @@ public class TranslocatorSPH implements IServerPacketHandler {
     @Override
     public void handlePacket(PacketCustom packet, ServerPlayer sender, ServerGamePacketListenerImpl handler) {
         switch (packet.getType()) {
-            case S_CRAFTING_GRID_PLACE -> TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level, sender, packet.readPos(), packet.readDirection());
+            case S_CRAFTING_GRID_PLACE -> TranslocatorsModContent.blockCraftingGrid.get().placeBlock(sender.level(), sender, packet.readPos(), packet.readDirection());
             case S_CRAFTING_GRID_EXECUTE -> {
-                if (sender.level.getBlockEntity(packet.readPos()) instanceof TileCraftingGrid tile) {
+                if (sender.level().getBlockEntity(packet.readPos()) instanceof TileCraftingGrid tile) {
                     tile.craft(sender);
                 }
             }

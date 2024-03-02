@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.fluids.FluidAttributes;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -44,10 +44,10 @@ public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<Flui
             return;
         }
 
-        FluidAttributes attribs = stack.getFluid().getAttributes();
-        Material material = ForgeHooksClient.getBlockMaterial(attribs.getStillTexture(stack));
+        IClientFluidTypeExtensions props = IClientFluidTypeExtensions.of(stack.getFluid());
+        Material material = ForgeHooksClient.getBlockMaterial(props.getStillTexture(stack));
         TextureAtlasSprite tex = material.sprite();
-        ccrs.colour = attribs.getColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
+        ccrs.colour = props.getTintColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
         Vector3[] next = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };

@@ -7,8 +7,8 @@ import codechicken.multipart.api.part.MultiPart;
 import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
@@ -40,7 +40,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, Direction.BY_3D_DATA[side]).isPresent();
+        return capCache().getCapability(ForgeCapabilities.FLUID_HANDLER, Direction.BY_3D_DATA[side]).isPresent();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
+                        attached[i] = capCache().getCapabilityOr(ForgeCapabilities.FLUID_HANDLER, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }

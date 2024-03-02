@@ -3,6 +3,7 @@ package codechicken.translocators.item;
 import codechicken.multipart.api.ItemMultipart;
 import codechicken.multipart.api.MultipartType;
 import codechicken.multipart.api.part.MultiPart;
+import codechicken.multipart.util.MultipartPlaceContext;
 import codechicken.translocators.part.TranslocatorPart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +17,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 
 /**
- * //TODO, This name is cancer. Also the IIR name.
  * Created by covers1624 on 10/11/2017.
  */
 public abstract class TranslocatorItem<T extends TranslocatorPart> extends ItemMultipart {
@@ -30,7 +30,7 @@ public abstract class TranslocatorItem<T extends TranslocatorPart> extends ItemM
     public abstract Capability<?> getTargetCapability();
 
     @Override
-    public MultiPart newPart(UseOnContext context) {
+    public MultiPart newPart(MultipartPlaceContext context) {
         Level world = context.getLevel();
         Direction side = context.getClickedFace();
         BlockPos onPos = context.getClickedPos().relative(side.getOpposite());
@@ -42,10 +42,10 @@ public abstract class TranslocatorItem<T extends TranslocatorPart> extends ItemM
         return null;
     }
 
-    @Override
-    public void fillItemCategory(CreativeModeTab group, NonNullList<ItemStack> items) {
-        if (allowdedIn(group)) {
-            items.add(new ItemStack(this, 1));
-        }
-    }
+//    @Override
+//    public void fillItemCategory(CreativeModeTab group, NonNullList<ItemStack> items) {
+//        if (allowdedIn(group)) {
+//            items.add(new ItemStack(this, 1));
+//        }
+//    }
 }

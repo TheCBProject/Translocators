@@ -1,11 +1,13 @@
 package codechicken.translocators.client.render;
 
+import codechicken.lib.model.PerspectiveModelState;
 import codechicken.lib.render.item.IItemRenderer;
 import codechicken.lib.util.TransformUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -20,12 +22,12 @@ public class RenderTranslocatorItem implements IItemRenderer {
     }
 
     @Override
-    public void renderItem(ItemStack stack, ItemTransforms.TransformType transformType, PoseStack pStack, MultiBufferSource buffers, int packedLight, int packedOverlay) {
-        TranslocatorPartRenderer.renderItem(type, pStack, transformType, buffers, packedLight, packedOverlay);
+    public void renderItem(ItemStack stack, ItemDisplayContext ctx, PoseStack pStack, MultiBufferSource buffers, int packedLight, int packedOverlay) {
+        TranslocatorPartRenderer.renderItem(type, pStack, ctx, buffers, packedLight, packedOverlay);
     }
 
     @Override
-    public ModelState getModelTransform() {
+    public PerspectiveModelState getModelState() {
         return TransformUtils.DEFAULT_BLOCK;
     }
 

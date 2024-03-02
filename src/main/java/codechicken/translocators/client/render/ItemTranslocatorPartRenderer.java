@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /**
  * Created by covers1624 on 4/5/23.
@@ -25,7 +26,7 @@ public class ItemTranslocatorPartRenderer extends TranslocatorPartRenderer<ItemT
             pStack.translate(path.x, path.y, path.z);
             pStack.scale(0.5f, 0.5f, 0.5f);
             pStack.scale(0.35f, 0.35f, 0.35f);
-            itemRenderer.renderStatic(m.stack, ItemTransforms.TransformType.FIXED, packedLight, packedOverlay, pStack, buffers, (int) part.pos().asLong());
+            itemRenderer.renderStatic(m.stack, ItemDisplayContext.FIXED, packedLight, packedOverlay, pStack, buffers, part.level(), (int) part.pos().asLong());
             pStack.popPose();
         }
     }
