@@ -50,11 +50,6 @@ public class DataGenerators {
             generated(TranslocatorsModContent.fluidTranslocatorItem).texture(null);
             generated(TranslocatorsModContent.diamondNuggetItem);
         }
-
-        @Override
-        public String getName() {
-            return "Translocators Item models";
-        }
     }
 
     private static class BlockStates extends BlockStateProvider {
@@ -95,16 +90,13 @@ public class DataGenerators {
             tag(Tags.Items.NUGGETS).add(TranslocatorsModContent.diamondNuggetItem.get());
             tag(TranslocatorsModContent.regulateItemsTag).addTags(TranslocatorsModContent.diamondNuggetTag);
         }
-
-        @Override
-        public String getName() {
-            return "Translocators Item tags";
-        }
     }
 
     private static class Recipes extends RecipeProvider {
 
-        public Recipes(PackOutput output) { super(output); }
+        public Recipes(PackOutput output) {
+            super(output, MOD_ID);
+        }
 
         @Override
         protected void registerRecipes() {
@@ -133,11 +125,6 @@ public class DataGenerators {
                     .key('I', Tags.Items.INGOTS_IRON)
                     .key('P', Items.PISTON)
                     .key('L', Tags.Items.GEMS_LAPIS);
-        }
-
-        @Override
-        public String getName() {
-            return "Translocators Recipes";
         }
     }
 }
