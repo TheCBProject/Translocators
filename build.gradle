@@ -75,13 +75,13 @@ def publishingMetadataTask = tasks.register("publishingMetadata") {
                                         'modId'       : 'codechickenlib',
                                         'type'        : 'required',
                                         'modrinthId'  : '2gq0ALnz',
-                                        'curseforgeId': '242818'
+                                        'curseforgeId': 'codechicken-lib-1-8'
                                 ],
                                 [
                                         'modId'       : 'cbmultipart',
                                         'type'        : 'required',
                                         'modrinthId'  : 'LmvnWWSV',
-                                        'curseforgeId': '258426'
+                                        'curseforgeId': 'cb-multipart'
                                 ]
                         ]
                 ]
