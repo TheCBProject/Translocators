@@ -41,11 +41,4 @@ public abstract class TranslocatorItem<T extends TranslocatorPart> extends ItemM
         }
         return null;
     }
-
-//    @Override
-//    public void fillItemCategory(CreativeModeTab group, NonNullList<ItemStack> items) {
-//        if (allowdedIn(group)) {
-//            items.add(new ItemStack(this, 1));
-//        }
-//    }
 }

@@ -19,7 +19,6 @@ public class Translocators {
     public static final String MOD_ID = "translocators";
 
     public Translocators() {
-        FMLJavaModLoadingContext.get().getModEventBus().register(this);
         TranslocatorsModContent.init();
         ConfigHandler.init(Paths.get("./config/translocators.cfg"));
         ConfigHandler.loadConfig();
