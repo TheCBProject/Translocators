@@ -1,3 +1,5 @@
 {
-  "parent": "minecraft:item/generated"
+  "parent": "minecraft:item/generated",
+  "class": "codechicken.translocators.client.render.RenderTranslocatorItem$Fluid",
+  "loader": "codechickenlib:class"
 }

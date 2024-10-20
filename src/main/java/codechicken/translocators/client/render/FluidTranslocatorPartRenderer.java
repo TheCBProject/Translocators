@@ -11,9 +11,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
  * Created by covers1624 on 4/5/23.
@@ -45,7 +45,7 @@ public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<Flui
         }
 
         IClientFluidTypeExtensions props = IClientFluidTypeExtensions.of(stack.getFluid());
-        Material material = ForgeHooksClient.getBlockMaterial(props.getStillTexture(stack));
+        Material material = ClientHooks.getBlockMaterial(props.getStillTexture(stack));
         TextureAtlasSprite tex = material.sprite();
         ccrs.colour = props.getTintColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
 
@@ -76,13 +76,13 @@ public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<Flui
             next[3].set(p).add(a.x * s1 + b.x * s2, a.y * s1 + b.y * s2, a.z * s1 + b.z * s2);
 
             if (di > end) {
-                double u1 = tex.getU(Math.abs(di) * 16);
-                double u2 = tex.getU(Math.abs(di - tess) * 16);
+                double u1 = tex.getU((float) Math.abs(di));
+                double u2 = tex.getU((float) Math.abs(di - tess));
                 for (int i = 0; i < 4; i++) {
                     int j = (i + 1) % 4;
                     Vector3 axis = next[j].copy().subtract(next[i]);
-                    double v1 = tex.getV(Math.abs(next[i].scalarProject(axis)) * 16);
-                    double v2 = tex.getV(Math.abs(next[j].scalarProject(axis)) * 16);
+                    double v1 = tex.getV((float) Math.abs(next[i].scalarProject(axis)));
+                    double v2 = tex.getV((float) Math.abs(next[j].scalarProject(axis)));
 
                     ccrs.vert.set(next[i], u1, v1).apply(mat);
                     ccrs.writeVert();

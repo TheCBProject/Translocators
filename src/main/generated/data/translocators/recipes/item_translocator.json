@@ -1,16 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "RER",
-    "IPI",
-    "RGR"
-  ],
+  "category": "misc",
   "key": {
-    "R": {
-      "tag": "forge:dusts/redstone"
-    },
     "E": {
       "tag": "forge:ender_pearls"
+    },
+    "G": {
+      "tag": "forge:ingots/gold"
     },
     "I": {
       "tag": "forge:ingots/iron"
@@ -18,12 +14,17 @@
     "P": {
       "item": "minecraft:piston"
     },
-    "G": {
-      "tag": "forge:ingots/gold"
+    "R": {
+      "tag": "forge:dusts/redstone"
     }
   },
+  "pattern": [
+    "RER",
+    "IPI",
+    "RGR"
+  ],
   "result": {
-    "item": "translocators:item_translocator",
-    "count": 2
+    "count": 2,
+    "item": "translocators:item_translocator"
   }
 }

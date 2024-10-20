@@ -10,10 +10,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TickEvent;
 import org.lwjgl.glfw.GLFW;
 
 public class CraftingGridKeyHandler {
@@ -23,7 +23,8 @@ public class CraftingGridKeyHandler {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(CraftingGridKeyHandler::registerKeyBinding);
-        MinecraftForge.EVENT_BUS.addListener(CraftingGridKeyHandler::onClientTick);
+
+        NeoForge.EVENT_BUS.addListener(CraftingGridKeyHandler::onClientTick);
     }
 
     private static void registerKeyBinding(RegisterKeyMappingsEvent event) {

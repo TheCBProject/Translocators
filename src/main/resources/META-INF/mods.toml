@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[${lang_version},)"
+loaderVersion="[2,)"
 issueTrackerURL="https://github.com/TheCBProject/Translocators"
 license="The MIT License (MIT)"
 
@@ -16,26 +16,26 @@ Translocates stuff!
     Credits: MouseCop - Textures
 	'''
 [[dependencies.translocators]]
-	modId="forge"
-	mandatory=true
+	modId="neoforge"
+    type="required"
 	versionRange="[${forge_version},)"
 	ordering="NONE"
 	side="BOTH"
 [[dependencies.translocators]]
     modId="minecraft"
-    mandatory=true
-    versionRange="[1.20.1]"
+    type="required"
+    versionRange="[1.20.4]"
     ordering="NONE"
     side="BOTH"
 [[dependencies.translocators]]
     modId="codechickenlib"
-    mandatory=true
+    type="required"
     versionRange="${ccl_version_range}"
     ordering="AFTER"
     side="BOTH"
 [[dependencies.translocators]]
     modId="cb_multipart"
-    mandatory=true
+    type="required"
     versionRange="${cbmp_version_range}"
     ordering="AFTER"
     side="BOTH"

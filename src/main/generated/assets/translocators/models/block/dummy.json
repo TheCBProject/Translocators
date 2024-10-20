@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "translocators:blocks/crafting_grid"
+    "particle": "translocators:block/crafting_grid"
   }
 }

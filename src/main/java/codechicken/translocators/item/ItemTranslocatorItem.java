@@ -3,8 +3,10 @@ package codechicken.translocators.item;
 import codechicken.multipart.api.MultipartType;
 import codechicken.translocators.init.TranslocatorsModContent;
 import codechicken.translocators.part.ItemTranslocatorPart;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraft.core.Direction;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by covers1624 on 4/20/20.
@@ -21,7 +23,7 @@ public class ItemTranslocatorItem extends TranslocatorItem<ItemTranslocatorPart>
     }
 
     @Override
-    public Capability<?> getTargetCapability() {
-        return ForgeCapabilities.ITEM_HANDLER;
+    public BlockCapability<?, @Nullable Direction> getTargetCapability() {
+        return Capabilities.ItemHandler.BLOCK;
     }
 }

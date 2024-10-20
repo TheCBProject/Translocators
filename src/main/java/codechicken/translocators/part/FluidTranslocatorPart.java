@@ -7,11 +7,11 @@ import codechicken.multipart.api.part.MultiPart;
 import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
+import net.neoforged.neoforge.fluids.capability.templates.EmptyFluidHandler;
 
 import java.util.*;
 
@@ -40,7 +40,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(ForgeCapabilities.FLUID_HANDLER, Direction.BY_3D_DATA[side]).isPresent();
+        return capCache().getCapability(Capabilities.FluidHandler.BLOCK, Direction.BY_3D_DATA[side]) != null;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(ForgeCapabilities.FLUID_HANDLER, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
+                        attached[i] = capCache().getCapabilityOr(Capabilities.FluidHandler.BLOCK, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
@@ -73,7 +73,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
                 FluidStack drain = myHandler.drain(fast ? 1000 : 100, FluidAction.SIMULATE);
                 //Check if we have any fluid to transfer.
-                if (drain != null && drain.getAmount() != 0) {
+                if (drain.getAmount() != 0) {
                     List<FluidTransfer> transfers = new ArrayList<>();
                     FluidStack move = drain.copy();
                     spreadOutput(move, getOutputs(), attached, transfers);
@@ -112,8 +112,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         int r_a = 0;
         for (int i = 0; i < 6; i++) {
             MultiPart p = tile().getSlottedPart(i);
-            if (p instanceof FluidTranslocatorPart) {
-                FluidTranslocatorPart part = (FluidTranslocatorPart) p;
+            if (p instanceof FluidTranslocatorPart part) {
                 //If the part can accept stuffs.
                 if (!part.canEject() && i != side) {
                     //Add it to separate arrays.
@@ -189,28 +188,8 @@ public class FluidTranslocatorPart extends TranslocatorPart {
         }
     }
 
-//    @Override
-//    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-//        RenderTranslocator.renderFluid(this, mStack, buffers, partialTicks);
-//        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
-//    }
-
-    //    @Override
-//    public void renderDynamic(Vector3 pos, int pass, float delta) {
-//        RenderTranslocator.renderFluid(this, pos, delta);
-//        super.renderDynamic(pos, pass, delta);
-//    }
-
     //Network object for client sync.
-    private class FluidTransfer {
-
-        int dst;
-        FluidStack fluid;
-
-        public FluidTransfer(int dst, FluidStack fluid) {
-            this.dst = dst;
-            this.fluid = fluid;
-        }
+    private record FluidTransfer(int dst, FluidStack fluid) {
     }
 
     public class MovingLiquid {

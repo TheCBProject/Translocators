@@ -1,29 +1,30 @@
 {
   "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "RER",
-    "IPI",
-    "RLR"
-  ],
+  "category": "misc",
   "key": {
-    "R": {
-      "tag": "forge:dusts/redstone"
-    },
     "E": {
       "tag": "forge:ender_pearls"
     },
     "I": {
       "tag": "forge:ingots/iron"
     },
+    "L": {
+      "tag": "forge:gems/lapis"
+    },
     "P": {
       "item": "minecraft:piston"
     },
-    "L": {
-      "tag": "forge:gems/lapis"
+    "R": {
+      "tag": "forge:dusts/redstone"
     }
   },
+  "pattern": [
+    "RER",
+    "IPI",
+    "RLR"
+  ],
   "result": {
-    "item": "translocators:fluid_translocator",
-    "count": 2
+    "count": 2,
+    "item": "translocators:fluid_translocator"
   }
 }

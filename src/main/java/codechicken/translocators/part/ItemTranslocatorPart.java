@@ -26,9 +26,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.wrapper.EmptyHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.EmptyHandler;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -76,7 +76,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.BY_3D_DATA[side]).isPresent();
+        return capCache().getCapability(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[side]) != null;
     }
 
     @Override
@@ -90,7 +90,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = capCache().getCapabilityOr(ForgeCapabilities.ITEM_HANDLER, Direction.BY_3D_DATA[i], EmptyHandler.INSTANCE);
+                        handlers[i] = capCache().getCapabilityOr(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[i], EmptyHandler.INSTANCE);
                     } else {
                         handlers[i] = EmptyHandler.INSTANCE;
                     }
@@ -136,7 +136,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
             if (signal) {
                 IItemHandler[] handlers = new IItemHandler[6];
                 for (int i = 0; i < 6; i++) {
-                    handlers[i] = capCache().getCapabilityOr(ForgeCapabilities.ITEM_HANDLER, Direction.BY_3D_DATA[side], EmptyHandler.INSTANCE);
+                    handlers[i] = capCache().getCapabilityOr(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[side], EmptyHandler.INSTANCE);
                 }
                 if (a_eject) {
                     boolean allSatisfied = true;
@@ -470,12 +470,6 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
         signal = (flags & (1 << 4)) != 0;
         a_powering = (flags & (1 << 5)) != 0;
     }
-//
-//    @Override
-//    public void renderDynamic(MatrixStack mStack, IRenderTypeBuffer buffers, int packedLight, int packedOverlay, float partialTicks) {
-//        super.renderDynamic(mStack, buffers, packedLight, packedOverlay, partialTicks);
-//        RenderTranslocator.renderItem(this, mStack, buffers, packedLight, packedOverlay, partialTicks);
-//    }
 
     @Override
     public int strongPowerLevel(int side) {

@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shapeless",
+  "category": "misc",
   "ingredients": [
     {
       "item": "minecraft:diamond"
     }
   ],
   "result": {
-    "item": "translocators:diamond_nugget",
-    "count": 9
+    "count": 9,
+    "item": "translocators:diamond_nugget"
   }
 }

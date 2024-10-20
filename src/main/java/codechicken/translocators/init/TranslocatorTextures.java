@@ -3,8 +3,8 @@ package codechicken.translocators.init;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.TextureAtlasStitchedEvent;
 
 /**
  * Created by covers1624 on 14/11/2017.
@@ -25,7 +25,7 @@ public class TranslocatorTextures {
         bus.addListener(TranslocatorTextures::textureStitchPost);
     }
 
-    private static void textureStitchPost(TextureStitchEvent.Post event) {
+    private static void textureStitchPost(TextureAtlasStitchedEvent event) {
         TextureAtlas atlas = event.getAtlas();
         if (!atlas.location().equals(TextureAtlas.LOCATION_BLOCKS)) return;
 

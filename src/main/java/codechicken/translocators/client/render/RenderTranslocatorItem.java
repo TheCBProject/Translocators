@@ -45,4 +45,18 @@ public class RenderTranslocatorItem implements IItemRenderer {
     public boolean usesBlockLight() {
         return true;
     }
+
+    public static class Item extends RenderTranslocatorItem {
+
+        public Item() {
+            super(0);
+        }
+    }
+
+    public static class Fluid extends RenderTranslocatorItem {
+
+        public Fluid() {
+            super(1);
+        }
+    }
 }

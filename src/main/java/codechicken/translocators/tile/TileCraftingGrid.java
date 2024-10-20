@@ -10,6 +10,7 @@ import codechicken.lib.util.ItemUtils;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -26,12 +27,13 @@ import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.EventHooks;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -155,9 +157,9 @@ public class TileCraftingGrid extends BlockEntity {
         CraftingContainer craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<CraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
-                result = mresult.get().assemble(craftMatrix, level.registryAccess());
+                result = mresult.get().value().assemble(craftMatrix, level.registryAccess());
                 return;
             }
 
@@ -179,11 +181,12 @@ public class TileCraftingGrid extends BlockEntity {
         CraftingContainer craftMatrix = getCraftMatrix();
 
         for (int i = 0; i < 4; i++) {
-            Optional<CraftingRecipe> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
             if (mresult.isPresent()) {
-                CraftingRecipe recipe = mresult.get();
-                if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(recipe)) {
-                    doCraft(recipe, recipe.assemble(craftMatrix, level.registryAccess()), craftMatrix, player);
+                RecipeHolder<CraftingRecipe> holder = mresult.get();
+                CraftingRecipe recipe = holder.value();
+                if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(holder)) {
+                    doCraft(holder, recipe.assemble(craftMatrix, level.registryAccess()), craftMatrix, player);
                     break;
                 }
             }
@@ -205,18 +208,21 @@ public class TileCraftingGrid extends BlockEntity {
         return craftMatrix;
     }
 
-    private void doCraft(CraftingRecipe recipe, ItemStack mresult, CraftingContainer craftMatrix, Player player) {
+    private void doCraft(RecipeHolder<CraftingRecipe> holder, ItemStack mresult, CraftingContainer craftMatrix, Player player) {
         giveOrDropItem(mresult, player);
 
         mresult.onCraftedBy(level, player, mresult.getCount());
-        ForgeEventFactory.firePlayerCraftingEvent(player, mresult, craftMatrix);
+        EventHooks.firePlayerCraftingEvent(player, mresult, craftMatrix);
+        player.triggerRecipeCrafted(holder, craftMatrix.getItems());
+
+        CraftingRecipe recipe = holder.value();
         if (!recipe.isSpecial()) {
-            player.awardRecipes(Collections.singleton(recipe));
+            player.awardRecipes(Collections.singleton(holder));
         }
 
-        ForgeHooks.setCraftingPlayer(player);
+        CommonHooks.setCraftingPlayer(player);
         NonNullList<ItemStack> remaining = recipe.getRemainingItems(craftMatrix);
-        ForgeHooks.setCraftingPlayer(null);
+        CommonHooks.setCraftingPlayer(null);
 
         for (int i = 0; i < remaining.size(); i++) {
             ItemStack invStack = craftMatrix.getItem(i);

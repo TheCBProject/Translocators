@@ -2,30 +2,37 @@ package codechicken.translocators.init;
 
 import codechicken.lib.datagen.ItemModelProvider;
 import codechicken.lib.datagen.recipe.RecipeProvider;
+import codechicken.translocators.client.render.RenderTranslocatorItem;
+import net.covers1624.quack.util.CrashLock;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.model.generators.BlockStateProvider;
-import net.minecraftforge.client.model.generators.ModelFile;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.data.BlockTagsProvider;
-import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.common.data.BlockTagsProvider;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import java.util.concurrent.CompletableFuture;
 
 import static codechicken.translocators.Translocators.MOD_ID;
 
-@Mod.EventBusSubscriber (modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class DataGenerators {
 
-    @SubscribeEvent
-    public static void gatherDataGenerators(GatherDataEvent event) {
+    private static final CrashLock LOCK = new CrashLock("Already Initialized.");
+
+    public static void init(IEventBus modBus) {
+        LOCK.lock();
+
+        modBus.addListener(DataGenerators::gatherDataGenerators);
+    }
+
+    private static void gatherDataGenerators(GatherDataEvent event) {
         DataGenerator gen = event.getGenerator();
         PackOutput output = gen.getPackOutput();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
@@ -33,7 +40,7 @@ public class DataGenerators {
 
         gen.addProvider(event.includeClient(), new ItemModels(output, files));
         gen.addProvider(event.includeClient(), new BlockStates(output, files));
-        BlockTags blockTags = new BlockTags(output, lookupProvider, files);
+        BlockTags blockTags = gen.addProvider(event.includeServer(), new BlockTags(output, lookupProvider, files));
         gen.addProvider(event.includeServer(), new ItemTags(output, lookupProvider, blockTags.contentsGetter(), files));
         gen.addProvider(event.includeServer(), new Recipes(output));
     }
@@ -46,8 +53,8 @@ public class DataGenerators {
 
         @Override
         protected void registerModels() {
-            generated(TranslocatorsModContent.itemTranslocatorItem).texture(null);
-            generated(TranslocatorsModContent.fluidTranslocatorItem).texture(null);
+            clazz(TranslocatorsModContent.itemTranslocatorItem, RenderTranslocatorItem.Item.class);
+            clazz(TranslocatorsModContent.fluidTranslocatorItem, RenderTranslocatorItem.Fluid.class);
             generated(TranslocatorsModContent.diamondNuggetItem);
         }
     }
@@ -62,7 +69,7 @@ public class DataGenerators {
         protected void registerStatesAndModels() {
             ModelFile model = models()
                     .withExistingParent("dummy", "block")
-                    .texture("particle", "translocators:blocks/crafting_grid");
+                    .texture("particle", "translocators:block/crafting_grid");
             simpleBlock(TranslocatorsModContent.blockCraftingGrid.get(), model);
         }
     }

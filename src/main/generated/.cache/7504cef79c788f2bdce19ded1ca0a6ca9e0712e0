@@ -1,0 +1,4 @@
+// 1.20.4	2024-09-23T12:56:44.961106271	Tags for minecraft:item mod id translocators
+066595d5295e47124940b94a294b3e09c7fc1844 data/forge/tags/items/nuggets.json
+066595d5295e47124940b94a294b3e09c7fc1844 data/forge/tags/items/nuggets/diamond.json
+31730a223d67604c9b5e88893621ed3113ca3e6a data/translocators/tags/items/regulate.json
