@@ -1,6 +1,6 @@
 package codechicken.translocators.init;
 
-import codechicken.lib.inventory.container.ICCLContainerType;
+import codechicken.lib.inventory.container.CCLMenuType;
 import codechicken.multipart.api.MultipartType;
 import codechicken.multipart.api.SimpleMultipartType;
 import codechicken.translocators.block.BlockCraftingGrid;
@@ -40,8 +40,8 @@ public class TranslocatorsModContent {
     private static final DeferredRegister<MultipartType<?>> PARTS = DeferredRegister.create(MultipartType.MULTIPART_TYPES, MOD_ID);
     private static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, MOD_ID);
 
-    public static TagKey<Item> diamondNuggetTag = ItemTags.create(new ResourceLocation("forge:nuggets/diamond"));
-    public static TagKey<Item> regulateItemsTag = ItemTags.create(new ResourceLocation("translocators:regulate"));
+    public static TagKey<Item> diamondNuggetTag = ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "nuggets/diamond"));
+    public static TagKey<Item> regulateItemsTag = ItemTags.create(ResourceLocation.fromNamespaceAndPath("translocators", "regulate"));
 
     //region Items.
     public static DeferredHolder<Item, ItemTranslocatorItem> itemTranslocatorItem = ITEMS.register("item_translocator", () ->
@@ -73,7 +73,7 @@ public class TranslocatorsModContent {
 
     //region ContainerTypes.
     public static DeferredHolder<MenuType<?>, MenuType<ContainerItemTranslocator>> containerItemTranslocator = MENU_TYPES.register("item_translocator", () ->
-            ICCLContainerType.create(ContainerItemTranslocator::new));
+            CCLMenuType.create(ContainerItemTranslocator::new));
     //endregion.
 
     public static void init(IEventBus modBus) {

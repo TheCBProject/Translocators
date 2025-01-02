@@ -5,12 +5,14 @@ import codechicken.translocators.Translocators;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 
+import static codechicken.translocators.Translocators.MOD_ID;
+
 /**
  * Created by covers1624 on 4/19/20.
  */
 public class TranslocatorNetwork {
 
-    public static final ResourceLocation NET_CHANNEL = new ResourceLocation("translocators:network");
+    public static final ResourceLocation NET_CHANNEL = ResourceLocation.fromNamespaceAndPath(MOD_ID, "network");
     public static final PacketCustomChannel channel = new PacketCustomChannel(NET_CHANNEL)
             .versioned(Translocators.container().getModInfo().getVersion().toString())
             .client(() -> TranslocatorCPH::new)

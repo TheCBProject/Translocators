@@ -16,10 +16,12 @@ import com.google.common.collect.Lists;
 import net.covers1624.quack.collection.FastStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -101,7 +103,7 @@ public abstract class TranslocatorPart extends BaseMultipart implements FacePart
     //region Data
     //region NBT
     @Override
-    public void save(CompoundTag tag) {
+    public void save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putByte("side", side);
         tag.putBoolean("invert_redstone", invert_redstone);
         tag.putBoolean("redstone", redstone);
@@ -109,7 +111,7 @@ public abstract class TranslocatorPart extends BaseMultipart implements FacePart
     }
 
     @Override
-    public void load(CompoundTag tag) {
+    public void load(CompoundTag tag, HolderLookup.Provider registries) {
         side = tag.getByte("side");
         invert_redstone = tag.getBoolean("invert_redstone");
         redstone = tag.getBoolean("redstone");
@@ -267,38 +269,38 @@ public abstract class TranslocatorPart extends BaseMultipart implements FacePart
     }
 
     @Override
-    public InteractionResult activate(Player player, PartRayTraceResult hit, ItemStack held, InteractionHand hand) {
+    public ItemInteractionResult useItemOn(ItemStack stack, Player player, PartRayTraceResult hit, InteractionHand hand) {
         if (level().isClientSide()) {
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
-        if (held.isEmpty() && player.isCrouching()) {
+        if (stack.isEmpty() && player.isCrouching()) {
             stripModifiers();
             markUpdate();
-        } else if (held.isEmpty()) {
+        } else if (stack.isEmpty()) {
             if (hit.subHit == HIT_INSERT) {
                 invert_redstone = !invert_redstone;
             } else {
                 openGui(player);
             }
-        } else if (held.getItem() == Items.REDSTONE && !redstone) {
+        } else if (stack.getItem() == Items.REDSTONE && !redstone) {
             redstone = true;
             if (!player.getAbilities().instabuild) {
-                held.shrink(1);
+                stack.shrink(1);
             }
             if (level().hasNeighborSignal(pos()) == invert_redstone == a_eject) {
                 invert_redstone = !invert_redstone;
             }
             markUpdate();
-        } else if (held.getItem() == Items.GLOWSTONE_DUST && !fast) {
+        } else if (stack.getItem() == Items.GLOWSTONE_DUST && !fast) {
             fast = true;
             if (!player.getAbilities().instabuild) {
-                held.shrink(1);
+                stack.shrink(1);
             }
             markUpdate();
         } else {
             openGui(player);
         }
-        return InteractionResult.SUCCESS;
+        return ItemInteractionResult.SUCCESS;
     }
 
     /**

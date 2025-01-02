@@ -58,12 +58,12 @@ public class TranslocatorPartRenderer<T extends TranslocatorPart> implements Par
             new Vector3(1, 0, 0)
     };
 
-    private static final CustomGradient gradient = new CustomGradient(new ResourceLocation(MOD_ID, "textures/fx/grad.png"));
+    private static final CustomGradient gradient = new CustomGradient(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/fx/grad.png"));
 
     private static final RenderType ITEM_RENDER_TYPE = RenderType.entitySolid(TextureAtlas.LOCATION_BLOCKS);
     private static final RenderType particleType = RenderType.create("translocator_link", DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS, 255, RenderType.CompositeState.builder()
             .setShaderState(RenderType.POSITION_COLOR_TEX_LIGHTMAP_SHADER)
-            .setTextureState(new RenderStateShard.TextureStateShard(new ResourceLocation(MOD_ID, "textures/fx/particle.png"), false, false))
+            .setTextureState(new RenderStateShard.TextureStateShard(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/fx/particle.png"), false, false))
             .setTransparencyState(RenderType.TRANSLUCENT_TRANSPARENCY)
             .setLightmapState(RenderType.LIGHTMAP)
             .createCompositeState(false)
@@ -73,7 +73,7 @@ public class TranslocatorPartRenderer<T extends TranslocatorPart> implements Par
     private static final CCModel insert;
 
     static {
-        Map<String, CCModel> models = new OBJParser(new ResourceLocation(MOD_ID, "models/model.obj"))
+        Map<String, CCModel> models = new OBJParser(ResourceLocation.fromNamespaceAndPath(MOD_ID, "models/model.obj"))
                 .ignoreMtl()
                 .quads()
                 .swapYZ()

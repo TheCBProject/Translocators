@@ -10,7 +10,7 @@ import codechicken.lib.util.ItemUtils;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -22,10 +22,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.StackedContents;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -53,16 +52,16 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
-        tag.put("items", InventoryUtils.writeItemStacksToTag(items));
+    public void saveAdditional(CompoundTag tag, HolderLookup.Provider registryAccess) {
+        super.saveAdditional(tag, registryAccess);
+        tag.put("items", InventoryUtils.writeItemStacksToTag(registryAccess, items));
         tag.putInt("timeout", timeout);
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
-        InventoryUtils.readItemStacksFromTag(items, tag.getList("items", 10));
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registryAccess) {
+        super.loadAdditional(tag, registryAccess);
+        InventoryUtils.readItemStacksFromTag(registryAccess, items, tag.getList("items", 10));
         timeout = tag.getInt("timeout");
     }
 
@@ -85,8 +84,8 @@ public class TileCraftingGrid extends BlockEntity {
 
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this, e -> {
-            MCDataByteBuf packet = new MCDataByteBuf();
+        return ClientboundBlockEntityDataPacket.create(this, (e, r) -> {
+            MCDataByteBuf packet = new MCDataByteBuf(r);
             writeToPacket(packet);
             CompoundTag tag = new CompoundTag();
             packet.writeToNBT(tag, "data");
@@ -95,20 +94,20 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        MCDataByteBuf packet = new MCDataByteBuf();
+    public CompoundTag getUpdateTag(HolderLookup.Provider registryAccess) {
+        MCDataByteBuf packet = new MCDataByteBuf(getLevel().registryAccess());
         writeToPacket(packet);
-        return packet.writeToNBT(super.getUpdateTag(), "data");
+        return packet.writeToNBT(super.getUpdateTag(registryAccess), "data");
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        readFromPacket(MCDataByteBuf.readFromNBT(pkt.getTag(), "data"));
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registryAccess) {
+        readFromPacket(MCDataByteBuf.readFromNBT(pkt.getTag(), "data", getLevel().registryAccess()));
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag) {
-        readFromPacket(MCDataByteBuf.readFromNBT(tag, "data"));
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registryAccess) {
+        readFromPacket(MCDataByteBuf.readFromNBT(tag, "data", getLevel().registryAccess()));
     }
 
     public void writeToPacket(MCDataOutput packet) {
@@ -155,11 +154,12 @@ public class TileCraftingGrid extends BlockEntity {
 
     private void updateResult() {
         CraftingContainer craftMatrix = getCraftMatrix();
+        CraftingInput input = craftMatrix.asCraftInput();
 
         for (int i = 0; i < 4; i++) {
-            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
             if (mresult.isPresent()) {
-                result = mresult.get().value().assemble(craftMatrix, level.registryAccess());
+                result = mresult.get().value().assemble(input, level.registryAccess());
                 return;
             }
 
@@ -179,14 +179,15 @@ public class TileCraftingGrid extends BlockEntity {
 
     public void craft(ServerPlayer player) {
         CraftingContainer craftMatrix = getCraftMatrix();
+        CraftingInput.Positioned positionedInput = craftMatrix.asPositionedCraftInput();
 
         for (int i = 0; i < 4; i++) {
-            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftMatrix, level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, positionedInput.input(), level);
             if (mresult.isPresent()) {
                 RecipeHolder<CraftingRecipe> holder = mresult.get();
                 CraftingRecipe recipe = holder.value();
                 if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(holder)) {
-                    doCraft(holder, recipe.assemble(craftMatrix, level.registryAccess()), craftMatrix, player);
+                    doCraft(holder, recipe.assemble(positionedInput.input(), level.registryAccess()), craftMatrix, positionedInput, player);
                     break;
                 }
             }
@@ -208,7 +209,7 @@ public class TileCraftingGrid extends BlockEntity {
         return craftMatrix;
     }
 
-    private void doCraft(RecipeHolder<CraftingRecipe> holder, ItemStack mresult, CraftingContainer craftMatrix, Player player) {
+    private void doCraft(RecipeHolder<CraftingRecipe> holder, ItemStack mresult, CraftingContainer craftMatrix, CraftingInput.Positioned positionedInput, Player player) {
         giveOrDropItem(mresult, player);
 
         mresult.onCraftedBy(level, player, mresult.getCount());
@@ -220,26 +221,33 @@ public class TileCraftingGrid extends BlockEntity {
             player.awardRecipes(Collections.singleton(holder));
         }
 
+        CraftingInput input = positionedInput.input();
         CommonHooks.setCraftingPlayer(player);
-        NonNullList<ItemStack> remaining = recipe.getRemainingItems(craftMatrix);
+        NonNullList<ItemStack> remaining = recipe.getRemainingItems(input);
         CommonHooks.setCraftingPlayer(null);
 
-        for (int i = 0; i < remaining.size(); i++) {
-            ItemStack invStack = craftMatrix.getItem(i);
-            ItemStack remStack = remaining.get(i);
-            if (!invStack.isEmpty()) {
-                craftMatrix.removeItem(i, 1);
-                invStack = craftMatrix.getItem(i);
-            }
+        for (int rx = 0; rx < input.width(); rx++) {
+            for (int ry = 0; ry < input.height(); ry++) {
+                int x = rx + positionedInput.left();
+                int y = ry + positionedInput.top();
+                int i = x + y * craftMatrix.getWidth();
 
-            if (!remStack.isEmpty()) {
-                if (invStack.isEmpty()) {
-                    craftMatrix.setItem(i, remStack);
-                } else if (ItemStack.isSameItemSameTags(invStack, remStack)) {
-                    remStack.grow(invStack.getCount());
-                    craftMatrix.setItem(i, remStack);
-                } else {
-                    giveOrDropItem(remStack, player);
+                ItemStack invStack = craftMatrix.getItem(i);
+                ItemStack remStack = remaining.get(rx + ry * input.width());
+                if (!invStack.isEmpty()) {
+                    craftMatrix.removeItem(i, 1);
+                    invStack = craftMatrix.getItem(i);
+                }
+
+                if (!remStack.isEmpty()) {
+                    if (invStack.isEmpty()) {
+                        craftMatrix.setItem(i, remStack);
+                    } else if (ItemStack.isSameItemSameComponents(invStack, remStack)) {
+                        remStack.grow(invStack.getCount());
+                        craftMatrix.setItem(i, remStack);
+                    } else {
+                        giveOrDropItem(remStack, player);
+                    }
                 }
             }
         }

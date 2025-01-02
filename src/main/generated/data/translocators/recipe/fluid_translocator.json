@@ -3,19 +3,19 @@
   "category": "misc",
   "key": {
     "E": {
-      "tag": "forge:ender_pearls"
+      "tag": "c:ender_pearls"
     },
     "I": {
-      "tag": "forge:ingots/iron"
+      "tag": "c:ingots/iron"
     },
     "L": {
-      "tag": "forge:gems/lapis"
+      "tag": "c:gems/lapis"
     },
     "P": {
       "item": "minecraft:piston"
     },
     "R": {
-      "tag": "forge:dusts/redstone"
+      "tag": "c:dusts/redstone"
     }
   },
   "pattern": [
@@ -25,6 +25,6 @@
   ],
   "result": {
     "count": 2,
-    "item": "translocators:fluid_translocator"
+    "id": "translocators:fluid_translocator"
   }
 }

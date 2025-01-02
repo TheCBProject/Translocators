@@ -41,7 +41,7 @@ public class ConfigHandler {
         ConfigValue filterItem = config.getValue("filter_item")
                 .setDefaultString(TranslocatorsModContent.regulateItemsTag.location().toString())
                 .setComment("The Tag of Items able to set an ItemTranslocator into Regulate mode.");
-        regulateTag = ItemTags.create(new ResourceLocation(filterItem.getString()));
+        regulateTag = ItemTags.create(ResourceLocation.parse(filterItem.getString()));
         config.save();
     }
 }

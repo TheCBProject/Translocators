@@ -15,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -133,20 +134,20 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult blockHit) {
-        if (world.isClientSide()) {
-            return InteractionResult.SUCCESS;
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult blockHit) {
+        if (level.isClientSide()) {
+            return ItemInteractionResult.SUCCESS;
         }
 
-        TileCraftingGrid tcraft = (TileCraftingGrid) world.getBlockEntity(pos);
+        TileCraftingGrid tcraft = (TileCraftingGrid) level.getBlockEntity(pos);
 
-        if (blockHit instanceof SubHitBlockHitResult hit) {
+        if (RayTracer.retrace(player) instanceof SubHitBlockHitResult hit) {
             if (hit.subHit > 0) {
                 tcraft.activate(hit.subHit - 1, player);
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
-        return InteractionResult.FAIL;
+        return ItemInteractionResult.FAIL;
     }
 
     public boolean placeBlock(Level world, Player player, BlockPos pos, Direction side) {

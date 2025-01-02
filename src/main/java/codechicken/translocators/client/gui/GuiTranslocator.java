@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class GuiTranslocator extends AbstractContainerScreen<ContainerItemTranslocator> {
 
-    private static final ResourceLocation BACKGROUND_TEXTURE = new ResourceLocation("textures/gui/container/dispenser.png");
+    private static final ResourceLocation BACKGROUND_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/dispenser.png");
 
     public GuiTranslocator(ContainerItemTranslocator container, Inventory playerInventory, Component title) {
         super(container, playerInventory, title);

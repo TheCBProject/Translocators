@@ -42,7 +42,7 @@ public class ContainerItemTranslocator extends ContainerExtended {
 
     @Override
     public void sendLargeStack(ItemStack stack, int slot, ServerPlayer player) {
-        PacketCustom packet = new PacketCustom(NET_CHANNEL, C_FILTER_GUI_SET_SLOT);
+        PacketCustom packet = new PacketCustom(NET_CHANNEL, C_FILTER_GUI_SET_SLOT, player.registryAccess());
         packet.writeByte(slot);
         packet.writeItemStack(stack);
         packet.sendToPlayer(player);

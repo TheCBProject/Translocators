@@ -42,7 +42,7 @@ public class DataGenerators {
         gen.addProvider(event.includeClient(), new BlockStates(output, files));
         BlockTags blockTags = gen.addProvider(event.includeServer(), new BlockTags(output, lookupProvider, files));
         gen.addProvider(event.includeServer(), new ItemTags(output, lookupProvider, blockTags.contentsGetter(), files));
-        gen.addProvider(event.includeServer(), new Recipes(output));
+        gen.addProvider(event.includeServer(), new Recipes(lookupProvider, output));
     }
 
     private static class ItemModels extends ItemModelProvider {
@@ -101,8 +101,8 @@ public class DataGenerators {
 
     private static class Recipes extends RecipeProvider {
 
-        public Recipes(PackOutput output) {
-            super(output, MOD_ID);
+        public Recipes(CompletableFuture<HolderLookup.Provider> lookupProvider, PackOutput output) {
+            super(lookupProvider, output, MOD_ID);
         }
 
         @Override

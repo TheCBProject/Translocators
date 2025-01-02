@@ -97,7 +97,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 continue;
             }
 
-            FluidStack add = new FluidStack(move, fit);
+            FluidStack add = move.copyWithAmount(fit);
             outaccess.fill(add, FluidAction.EXECUTE);
             move.shrink(fit);
 
@@ -171,7 +171,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
             boolean found = false;
             for (Iterator<MovingLiquid> iterator = movingLiquids.iterator(); iterator.hasNext(); ) {
                 MovingLiquid m = iterator.next();
-                if (m.liquid.isFluidEqual(t.fluid) && m.dst == t.dst) {
+                if (FluidStack.isSameFluidSameComponents(m.liquid, t.fluid) && m.dst == t.dst) {
                     m.addLiquid(t.fluid.getAmount());
                     found = true;
                     continue;
