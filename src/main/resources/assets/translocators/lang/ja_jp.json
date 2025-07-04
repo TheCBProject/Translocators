@@ -1,0 +1,9 @@
+{
+  "item.translocators.item_translocator": "アイテム転送機",
+  "item.translocators.fluid_translocator": "液体転送機",
+  "tile.craftingGrid.name": "クラフトグリッド",
+  "item.translocators.diamond_nugget": "ダイヤモンド塊",
+  "gui.translocators.regulate": "規制",
+  "gui.translocators.filter": "フィルター",
+  "key.craftingGrid": "クラフトグリッド"
+}
