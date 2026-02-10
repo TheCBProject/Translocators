@@ -8,6 +8,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
@@ -107,7 +108,7 @@ public class DataGenerators {
 
         @Override
         protected void registerRecipes() {
-            shapelessRecipe(Items.DIAMOND)
+            shapelessRecipe(Items.DIAMOND, 1, ResourceLocation.fromNamespaceAndPath(MOD_ID, "diamond_nugget_combine"))
                     .addIngredient(TranslocatorsModContent.diamondNuggetItem.get(), 9);
 
             shapelessRecipe(TranslocatorsModContent.diamondNuggetItem.get(), 9)

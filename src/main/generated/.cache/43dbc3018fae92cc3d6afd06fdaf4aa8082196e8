@@ -1,5 +1,5 @@
-// 1.21.1	2025-01-02T16:13:32.85381434	translocators Recipes.
-ccb12bd8691c8f256c6578d4269cd572089e67ec data/minecraft/recipe/diamond.json
+// 1.21.1	2026-02-10T20:34:19.066194188	translocators Recipes.
 6354e0d7da164c563e28f61cce049c7a94ffd24c data/translocators/recipe/diamond_nugget.json
+ccb12bd8691c8f256c6578d4269cd572089e67ec data/translocators/recipe/diamond_nugget_combine.json
 47d051094007fc3eb2096f788116597159b79178 data/translocators/recipe/fluid_translocator.json
 2c38b7fe8986c9b71ef22a4b67daba938882554c data/translocators/recipe/item_translocator.json
