@@ -5,6 +5,7 @@ import codechicken.lib.math.MathHelper;
 import codechicken.multipart.api.MultipartType;
 import codechicken.multipart.api.part.MultiPart;
 import codechicken.translocators.init.TranslocatorsModContent;
+import net.covers1624.quack.collection.FastStream;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -12,6 +13,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.EmptyFluidHandler;
+import net.neoforged.neoforge.transfer.EmptyResourceHandler;
 
 import java.util.*;
 
@@ -40,7 +42,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(Capabilities.FluidHandler.BLOCK, Direction.BY_3D_DATA[side]) != null;
+        return capCache().getCapability(Capabilities.Fluid.BLOCK, Direction.BY_3D_DATA[side]) != null;
     }
 
     @Override
@@ -64,7 +66,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        attached[i] = capCache().getCapabilityOr(Capabilities.FluidHandler.BLOCK, Direction.BY_3D_DATA[i], EmptyFluidHandler.INSTANCE);
+                        attached[i] = IFluidHandler.of(capCache().getCapabilityOr(Capabilities.Fluid.BLOCK, Direction.BY_3D_DATA[i], EmptyResourceHandler.instance()));
                     } else {
                         attached[i] = EmptyFluidHandler.INSTANCE;
                     }
@@ -147,7 +149,7 @@ public class FluidTranslocatorPart extends TranslocatorPart {
     }
 
     public List<MovingLiquid> getMovingLiquids() {
-        List<MovingLiquid> liquids = new LinkedList<>();
+        List<MovingLiquid> liquids = new ArrayList<>();
         liquids.addAll(movingLiquids);
         liquids.addAll(exitingLiquids);
         return liquids;

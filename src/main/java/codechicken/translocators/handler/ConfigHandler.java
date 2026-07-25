@@ -5,7 +5,7 @@ import codechicken.lib.config.ConfigFile;
 import codechicken.lib.config.ConfigValue;
 import codechicken.translocators.Translocators;
 import codechicken.translocators.init.TranslocatorsModContent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -41,7 +41,7 @@ public class ConfigHandler {
         ConfigValue filterItem = config.getValue("filter_item")
                 .setDefaultString(TranslocatorsModContent.regulateItemsTag.location().toString())
                 .setComment("The Tag of Items able to set an ItemTranslocator into Regulate mode.");
-        regulateTag = ItemTags.create(ResourceLocation.parse(filterItem.getString()));
+        regulateTag = ItemTags.create(Identifier.parse(filterItem.getString()));
         config.save();
     }
 }

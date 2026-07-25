@@ -1,26 +1,23 @@
 package codechicken.translocators.container;
 
-import codechicken.lib.data.MCDataInput;
 import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.container.ContainerExtended;
 import codechicken.lib.inventory.container.SlotDummy;
 import codechicken.lib.packet.PacketCustom;
 import codechicken.translocators.init.TranslocatorsModContent;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-
-import java.util.List;
 
 import static codechicken.translocators.network.TranslocatorNetwork.C_FILTER_GUI_SET_SLOT;
 import static codechicken.translocators.network.TranslocatorNetwork.NET_CHANNEL;
 
 public class ContainerItemTranslocator extends ContainerExtended {
 
-    public ContainerItemTranslocator(int windowId, Inventory playerInv, MCDataInput packet) {
-        this(windowId, playerInv, new InventorySimple(9, packet.readUShort()));
+    public ContainerItemTranslocator(int windowId, Inventory playerInv, FriendlyByteBuf packet) {
+        this(windowId, playerInv, new InventorySimple(9, packet.readUnsignedShort()));
     }
 
     public ContainerItemTranslocator(int windowId, Inventory playerInv, InventorySimple inv) {

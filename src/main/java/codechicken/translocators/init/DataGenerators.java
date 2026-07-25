@@ -1,22 +1,23 @@
 package codechicken.translocators.init;
 
-import codechicken.lib.datagen.ItemModelProvider;
 import codechicken.lib.datagen.recipe.RecipeProvider;
 import codechicken.translocators.client.render.RenderTranslocatorItem;
 import net.covers1624.quack.util.CrashLock;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.ItemModelGenerators;
+import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.data.models.model.ModelLocationUtils;
+import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.tags.ItemTagsProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.data.BlockTagsProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.common.data.ItemTagsProvider;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import java.util.concurrent.CompletableFuture;
@@ -33,52 +34,45 @@ public class DataGenerators {
         modBus.addListener(DataGenerators::gatherDataGenerators);
     }
 
-    private static void gatherDataGenerators(GatherDataEvent event) {
-        DataGenerator gen = event.getGenerator();
-        PackOutput output = gen.getPackOutput();
-        CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
-        ExistingFileHelper files = event.getExistingFileHelper();
-
-        gen.addProvider(event.includeClient(), new ItemModels(output, files));
-        gen.addProvider(event.includeClient(), new BlockStates(output, files));
-        BlockTags blockTags = gen.addProvider(event.includeServer(), new BlockTags(output, lookupProvider, files));
-        gen.addProvider(event.includeServer(), new ItemTags(output, lookupProvider, blockTags.contentsGetter(), files));
-        gen.addProvider(event.includeServer(), new Recipes(lookupProvider, output));
+    private static void gatherDataGenerators(GatherDataEvent.Client event) {
+        event.createProvider(Models::new);
+        event.createProvider(BlockTags::new);
+        event.createProvider(ItemTags::new);
+        event.createProvider(Recipes::new);
     }
 
-    private static class ItemModels extends ItemModelProvider {
+    public static class Models extends ModelProvider {
 
-        public ItemModels(PackOutput output, ExistingFileHelper existingFileHelper) {
-            super(output, MOD_ID, existingFileHelper);
+        public Models(PackOutput output) {
+            super(output, MOD_ID);
         }
 
         @Override
-        protected void registerModels() {
-            clazz(TranslocatorsModContent.itemTranslocatorItem, RenderTranslocatorItem.Item.class);
-            clazz(TranslocatorsModContent.fluidTranslocatorItem, RenderTranslocatorItem.Fluid.class);
-            generated(TranslocatorsModContent.diamondNuggetItem);
-        }
-    }
+        protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
+            blockModels.createParticleOnlyBlock(TranslocatorsModContent.blockCraftingGrid.get());
 
-    private static class BlockStates extends BlockStateProvider {
-
-        public BlockStates(PackOutput output, ExistingFileHelper exFileHelper) {
-            super(output, MOD_ID, exFileHelper);
-        }
-
-        @Override
-        protected void registerStatesAndModels() {
-            ModelFile model = models()
-                    .withExistingParent("dummy", "block")
-                    .texture("particle", "translocators:block/crafting_grid");
-            simpleBlock(TranslocatorsModContent.blockCraftingGrid.get(), model);
+            itemModels.generateFlatItem(TranslocatorsModContent.diamondNuggetItem.get(), ModelTemplates.FLAT_ITEM);
+            itemModels.itemModelOutput.accept(
+                    TranslocatorsModContent.itemTranslocatorItem.get(),
+                    ItemModelUtils.specialModel(
+                            Identifier.withDefaultNamespace("block/block"),
+                            new RenderTranslocatorItem.Unbaked(0)
+                    )
+            );
+            itemModels.itemModelOutput.accept(
+                    TranslocatorsModContent.fluidTranslocatorItem.get(),
+                    ItemModelUtils.specialModel(
+                            Identifier.withDefaultNamespace("block/block"),
+                            new RenderTranslocatorItem.Unbaked(1)
+                    )
+            );
         }
     }
 
     private static class BlockTags extends BlockTagsProvider {
 
-        public BlockTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, ExistingFileHelper files) {
-            super(output, lookupProvider, MOD_ID, files);
+        public BlockTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+            super(output, lookupProvider, MOD_ID);
         }
 
         @Override
@@ -88,8 +82,8 @@ public class DataGenerators {
 
     private static class ItemTags extends ItemTagsProvider {
 
-        public ItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagLookup<Block>> blockTagProvider, ExistingFileHelper files) {
-            super(output, lookupProvider, blockTagProvider, MOD_ID, files);
+        public ItemTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+            super(output, lookupProvider, MOD_ID);
         }
 
         @Override
@@ -102,13 +96,13 @@ public class DataGenerators {
 
     private static class Recipes extends RecipeProvider {
 
-        public Recipes(CompletableFuture<HolderLookup.Provider> lookupProvider, PackOutput output) {
-            super(lookupProvider, output, MOD_ID);
+        public Recipes(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+            super(output, lookupProvider, MOD_ID);
         }
 
         @Override
         protected void registerRecipes() {
-            shapelessRecipe(Items.DIAMOND, 1, ResourceLocation.fromNamespaceAndPath(MOD_ID, "diamond_nugget_combine"))
+            shapelessRecipe(Items.DIAMOND, 1, Identifier.fromNamespaceAndPath(MOD_ID, "diamond_nugget_combine"))
                     .addIngredient(TranslocatorsModContent.diamondNuggetItem.get(), 9);
 
             shapelessRecipe(TranslocatorsModContent.diamondNuggetItem.get(), 9)

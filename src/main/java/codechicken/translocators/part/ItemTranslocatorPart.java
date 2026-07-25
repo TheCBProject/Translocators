@@ -3,7 +3,6 @@ package codechicken.translocators.part;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.inventory.InventorySimple;
 import codechicken.lib.inventory.InventoryUtils;
-import codechicken.lib.inventory.container.CCLMenuType;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
@@ -16,18 +15,18 @@ import codechicken.translocators.container.ContainerItemTranslocator;
 import codechicken.translocators.handler.ConfigHandler;
 import codechicken.translocators.init.TranslocatorsModContent;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.EmptyItemHandler;
+import net.neoforged.neoforge.transfer.EmptyResourceHandler;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -75,7 +74,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
 
     @Override
     public boolean canStay() {
-        return capCache().getCapability(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[side]) != null;
+        return capCache().getCapability(Capabilities.Item.BLOCK, Direction.BY_3D_DATA[side]) != null;
     }
 
     @Override
@@ -89,7 +88,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
                 for (int i = 0; i < 6; i++) {
                     //Fill with empty if the translocator doesnt exist or is the incorrect type.
                     if (canInsert(i) || i == side) {
-                        handlers[i] = capCache().getCapabilityOr(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[i], EmptyItemHandler.INSTANCE);
+                        handlers[i] = IItemHandler.of(capCache().getCapabilityOr(Capabilities.Item.BLOCK, Direction.BY_3D_DATA[i], EmptyResourceHandler.instance()));
                     } else {
                         handlers[i] = EmptyItemHandler.INSTANCE;
                     }
@@ -135,7 +134,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
             if (signal) {
                 IItemHandler[] handlers = new IItemHandler[6];
                 for (int i = 0; i < 6; i++) {
-                    handlers[i] = capCache().getCapabilityOr(Capabilities.ItemHandler.BLOCK, Direction.BY_3D_DATA[side], EmptyItemHandler.INSTANCE);
+                    handlers[i] = IItemHandler.of(capCache().getCapabilityOr(Capabilities.Item.BLOCK, Direction.BY_3D_DATA[side], EmptyResourceHandler.instance()));
                 }
                 if (a_eject) {
                     boolean allSatisfied = true;
@@ -339,9 +338,9 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
     }
 
     @Override
-    public ItemInteractionResult useItemOn(ItemStack stack, Player player, PartRayTraceResult hit, InteractionHand hand) {
+    public InteractionResult useItemOn(ItemStack stack, Player player, PartRayTraceResult hit, InteractionHand hand) {
         if (level().isClientSide()) {
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         if (stack.is(ConfigHandler.regulateTag) && !regulate) {
             regulateStack = ItemUtils.copyStack(stack, 1);
@@ -350,14 +349,14 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
                 stack.shrink(1);
             }
             markUpdate();
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         } else if (stack.getItem() == Items.IRON_INGOT && !signal) {
             signal = true;
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
             markUpdate();
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, player, hit, hand);
     }
@@ -398,9 +397,7 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
                 (id, inv, p) -> new ContainerItemTranslocator(id, inv, new Inv(filters, filterStackLimit())),
                 Component.translatable(name)
         );
-        CCLMenuType.openMenu((ServerPlayer) player, provider, p -> {
-            p.writeShort(filterStackLimit());
-        });
+        player.openMenu(provider, e -> e.writeShort(filterStackLimit()));
     }
 
     private int filterStackLimit() {
@@ -433,23 +430,23 @@ public class ItemTranslocatorPart extends TranslocatorPart implements RedstonePa
     }
 
     @Override
-    public void save(CompoundTag tag, HolderLookup.Provider registries) {
-        super.save(tag, registries);
-        tag.putBoolean("regulate", regulate);
-        tag.putBoolean("signal", signal);
-        tag.putBoolean("powering", a_powering);
-        tag.put("filters", InventoryUtils.writeItemStacksToTag(registries, filters, 65536));
-        tag.put("regulateStack", regulateStack.saveOptional(registries));
+    public void save(ValueOutput output) {
+        super.save(output);
+        output.putBoolean("regulate", regulate);
+        output.putBoolean("signal", signal);
+        output.putBoolean("powering", a_powering);
+        InventoryUtils.writeItemStacksToOutput(output.child("filters"), filters, 65536);
+        output.store("regulateStack", ItemStack.OPTIONAL_CODEC, regulateStack);
     }
 
     @Override
-    public void load(CompoundTag tag, HolderLookup.Provider registries) {
-        super.load(tag, registries);
-        regulate = tag.getBoolean("regulate");
-        signal = tag.getBoolean("signal");
-        a_powering = tag.getBoolean("powering");
-        InventoryUtils.readItemStacksFromTag(registries, filters, tag.getList("filters", 10));
-        regulateStack = ItemStack.parseOptional(registries, tag.getCompound("regulateStack"));
+    public void load(ValueInput input) {
+        super.load(input);
+        regulate = input.getBooleanOr("regulate", false);
+        signal = input.getBooleanOr("signal", false);
+        a_powering = input.getBooleanOr("powering", false);
+        InventoryUtils.readItemStacksFromInput(input.childOrEmpty("filters"), filters);
+        regulateStack = input.read("regulateStack", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
     }
 
     @Override

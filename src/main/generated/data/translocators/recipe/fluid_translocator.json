@@ -2,21 +2,11 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "E": {
-      "tag": "c:ender_pearls"
-    },
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "L": {
-      "tag": "c:gems/lapis"
-    },
-    "P": {
-      "item": "minecraft:piston"
-    },
-    "R": {
-      "tag": "c:dusts/redstone"
-    }
+    "E": "#c:ender_pearls",
+    "I": "#c:ingots/iron",
+    "L": "#c:gems/lapis",
+    "P": "minecraft:piston",
+    "R": "#c:dusts/redstone"
   },
   "pattern": [
     "RER",

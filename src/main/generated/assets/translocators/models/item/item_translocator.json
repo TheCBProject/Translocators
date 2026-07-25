@@ -1,5 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "class": "codechicken.translocators.client.render.RenderTranslocatorItem$Item",
-  "loader": "codechickenlib:class"
-}

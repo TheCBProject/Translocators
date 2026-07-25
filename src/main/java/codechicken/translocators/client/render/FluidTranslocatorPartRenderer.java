@@ -2,40 +2,74 @@ package codechicken.translocators.client.render;
 
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.RenderUtils;
 import codechicken.lib.util.ClientUtils;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.Vector3;
+import codechicken.translocators.client.render.FluidTranslocatorPartRenderer.FluidTranslocatorRenderState;
 import codechicken.translocators.part.FluidTranslocatorPart;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by covers1624 on 4/5/23.
  */
-public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<FluidTranslocatorPart> {
+public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<FluidTranslocatorPart, FluidTranslocatorRenderState> {
 
     @Override
-    public void renderDynamic(FluidTranslocatorPart part, PoseStack pStack, MultiBufferSource buffers, int packedLight, int packedOverlay, float partialTicks) {
-        super.renderDynamic(part, pStack, buffers, packedLight, packedOverlay, partialTicks);
-        CCRenderState ccrs = CCRenderState.instance();
-        ccrs.reset();
-        ccrs.bind(RenderUtils.getFluidRenderType(), buffers);
-        double time = ClientUtils.getRenderTime();
-        Matrix4 mat = new Matrix4(pStack);
-        for (FluidTranslocatorPart.MovingLiquid m : part.getMovingLiquids()) {
-            double start = MathHelper.interpolate(m.b_start, m.a_start, partialTicks);
-            double end = MathHelper.interpolate(m.b_end, m.a_end, partialTicks);
+    public FluidTranslocatorRenderState createDynamicState() {
+        return new FluidTranslocatorRenderState();
+    }
 
-            drawLiquidSpiral(ccrs, mat, part.side, m.dst, m.liquid, start, end, time, 0);
-            if (part.fast) {
-                drawLiquidSpiral(ccrs, mat, part.side, m.dst, m.liquid, start, end, time, 0.5);
-            }
+    @Override
+    public void extractDynamicState(BEState beState, FluidTranslocatorRenderState state, FluidTranslocatorPart part, float partialTick, Vec3 camera, @Nullable CrumblingOverlay breakProgress) {
+        super.extractDynamicState(beState, state, part, partialTick, camera, breakProgress);
+
+        var liquids = part.getMovingLiquids();
+        state.moving = new ArrayList<>(liquids.size());
+
+        for (var moving : liquids) {
+            state.moving.add(new MovingLiquidSnapshot(
+                    moving.liquid.copy(),
+                    moving.dst,
+                    MathHelper.interpolate(moving.b_start, moving.a_start, partialTick),
+                    MathHelper.interpolate(moving.b_end, moving.a_end, partialTick),
+                    moving.fast
+            ));
+        }
+    }
+
+    @Override
+    public void submitDynamic(BEState beState, FluidTranslocatorRenderState state, PoseStack pStack, SubmitNodeCollector collector, CameraRenderState cameraState) {
+        super.submitDynamic(beState, state, pStack, collector, cameraState);
+
+        if (state.moving != null && !state.moving.isEmpty()) {
+            collector.submitCustomGeometry(pStack, RenderTypes.translucentMovingBlock(), (pose, cons) -> {
+                double time = ClientUtils.getRenderTime();
+                var mat = new Matrix4(pose);
+                var ccrs = CCRenderState.instance();
+                ccrs.reset();
+                ccrs.bind(cons, RenderTypes.translucentMovingBlock().format());
+                for (var m : state.moving) {
+                    drawLiquidSpiral(ccrs, mat, state.side, m.dst, m.stack, m.start, m.end, time, 0);
+                    if (m.fast) {
+                        drawLiquidSpiral(ccrs, mat, state.side, m.dst, m.stack, m.start, m.end, time, 0.5);
+                    }
+                }
+            });
         }
     }
 
@@ -46,7 +80,7 @@ public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<Flui
 
         IClientFluidTypeExtensions props = IClientFluidTypeExtensions.of(stack.getFluid());
         Material material = ClientHooks.getBlockMaterial(props.getStillTexture(stack));
-        TextureAtlasSprite tex = material.sprite();
+        TextureAtlasSprite tex = Minecraft.getInstance().getAtlasManager().get(material);
         ccrs.colour = props.getTintColor(stack) << 8 | 255;//Set ccrs.colour opposed to baseColour as we call writeVert manually bellow.
 
         Vector3[] last = new Vector3[] { new Vector3(), new Vector3(), new Vector3(), new Vector3() };
@@ -118,4 +152,17 @@ public class FluidTranslocatorPartRenderer extends TranslocatorPartRenderer<Flui
     private static double sum(Vector3 v) {
         return v.x + v.y + v.z;
     }
+
+    public static class FluidTranslocatorRenderState extends TranslocatorRenderState {
+
+        public @Nullable List<MovingLiquidSnapshot> moving;
+    }
+
+    public record MovingLiquidSnapshot(
+            FluidStack stack,
+            int dst,
+            double start,
+            double end,
+            boolean fast
+    ) { }
 }

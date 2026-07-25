@@ -9,6 +9,8 @@ import codechicken.lib.util.ArrayUtils;
 import codechicken.lib.util.ItemUtils;
 import codechicken.lib.vec.Vector3;
 import codechicken.translocators.init.TranslocatorsModContent;
+import com.mojang.serialization.Codec;
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -22,15 +24,18 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.EventHooks;
 
@@ -52,17 +57,17 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag, HolderLookup.Provider registryAccess) {
-        super.saveAdditional(tag, registryAccess);
-        tag.put("items", InventoryUtils.writeItemStacksToTag(registryAccess, items));
-        tag.putInt("timeout", timeout);
+    public void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        InventoryUtils.writeItemStacksToOutput(output.child("items"), items);
+        output.putInt("timeout", timeout);
     }
 
     @Override
-    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registryAccess) {
-        super.loadAdditional(tag, registryAccess);
-        InventoryUtils.readItemStacksFromTag(registryAccess, items, tag.getList("items", 10));
-        timeout = tag.getInt("timeout");
+    public void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        InventoryUtils.readItemStacksFromInput(input.childOrEmpty("items"), items);
+        timeout = input.getIntOr("timeout", 400);
     }
 
     public void tickServer() {
@@ -101,13 +106,15 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registryAccess) {
-        readFromPacket(MCDataByteBuf.readFromNBT(pkt.getTag(), "data", getLevel().registryAccess()));
+    public void onDataPacket(Connection net, ValueInput input) {
+        var buffer = input.read("data", Codec.BYTE_BUFFER).orElseThrow();
+        readFromPacket(new MCDataByteBuf(Unpooled.wrappedBuffer(buffer), getLevel().registryAccess()));
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registryAccess) {
-        readFromPacket(MCDataByteBuf.readFromNBT(tag, "data", getLevel().registryAccess()));
+    public void handleUpdateTag(ValueInput input) {
+        var buffer = input.read("data", Codec.BYTE_BUFFER).orElseThrow();
+        readFromPacket(new MCDataByteBuf(Unpooled.wrappedBuffer(buffer), getLevel().registryAccess()));
     }
 
     public void writeToPacket(MCDataOutput packet) {
@@ -128,7 +135,7 @@ public class TileCraftingGrid extends BlockEntity {
     }
 
     public void activate(int subHit, Player player) {
-        ItemStack held = player.getInventory().getSelected();
+        ItemStack held = player.getInventory().getSelectedItem();
         if (held.isEmpty()) {
             if (!items[subHit].isEmpty()) {
                 giveOrDropItem(items[subHit], player);
@@ -138,7 +145,7 @@ public class TileCraftingGrid extends BlockEntity {
             if (!InventoryUtils.areStacksIdentical(held, items[subHit])) {
                 ItemStack old = items[subHit];
                 items[subHit] = ItemUtils.copyStack(held, 1);
-                player.getInventory().removeItem(player.getInventory().selected, 1);
+                player.getInventory().removeItem(player.getInventory().getSelectedSlot(), 1);
 
                 if (!old.isEmpty()) {
                     giveOrDropItem(old, player);
@@ -157,7 +164,9 @@ public class TileCraftingGrid extends BlockEntity {
         CraftingInput input = craftMatrix.asCraftInput();
 
         for (int i = 0; i < 4; i++) {
-            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
+            // TODO rewrite, we need to do recipes on the server.
+//            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = Optional.empty();
             if (mresult.isPresent()) {
                 result = mresult.get().value().assemble(input, level.registryAccess());
                 return;
@@ -182,11 +191,13 @@ public class TileCraftingGrid extends BlockEntity {
         CraftingInput.Positioned positionedInput = craftMatrix.asPositionedCraftInput();
 
         for (int i = 0; i < 4; i++) {
-            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, positionedInput.input(), level);
+            // TODO recipes need to be server-side
+//            Optional<RecipeHolder<CraftingRecipe>> mresult = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, positionedInput.input(), level);
+            Optional<RecipeHolder<CraftingRecipe>> mresult = Optional.empty();
             if (mresult.isPresent()) {
                 RecipeHolder<CraftingRecipe> holder = mresult.get();
                 CraftingRecipe recipe = holder.value();
-                if (recipe.isSpecial() || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) || player.getRecipeBook().contains(holder)) {
+                if (recipe.isSpecial() || !player.level().getGameRules().get(GameRules.LIMITED_CRAFTING) || player.getRecipeBook().contains(holder.id())) {
                     doCraft(holder, recipe.assemble(positionedInput.input(), level.registryAccess()), craftMatrix, positionedInput, player);
                     break;
                 }
@@ -212,7 +223,7 @@ public class TileCraftingGrid extends BlockEntity {
     private void doCraft(RecipeHolder<CraftingRecipe> holder, ItemStack mresult, CraftingContainer craftMatrix, CraftingInput.Positioned positionedInput, Player player) {
         giveOrDropItem(mresult, player);
 
-        mresult.onCraftedBy(level, player, mresult.getCount());
+        mresult.onCraftedBy(player, mresult.getCount());
         EventHooks.firePlayerCraftingEvent(player, mresult, craftMatrix);
         player.triggerRecipeCrafted(holder, craftMatrix.getItems());
 
@@ -297,7 +308,7 @@ public class TileCraftingGrid extends BlockEntity {
         }
 
         @Override
-        public void fillStackedContents(StackedContents pContents) {
+        public void fillStackedContents(StackedItemContents pContents) {
             for (ItemStack item : items) {
                 pContents.accountSimpleStack(item);
             }

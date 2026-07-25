@@ -1,62 +1,47 @@
 package codechicken.translocators.client.render;
 
-import codechicken.lib.model.PerspectiveModelState;
-import codechicken.lib.render.item.IItemRenderer;
-import codechicken.lib.util.TransformUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.resources.model.ModelState;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
+import org.joml.Vector3fc;
+
+import java.util.function.Consumer;
 
 /**
  * Created by covers1624 on 18/11/2017.
  */
-public class RenderTranslocatorItem implements IItemRenderer {
+public record RenderTranslocatorItem(int type) implements NoDataSpecialModelRenderer {
 
-    private final int type;
-
-    public RenderTranslocatorItem(int type) {
-        this.type = type;
+    @Override
+    public void getExtents(Consumer<Vector3fc> output) {
+        TranslocatorPartRenderer.itemExtents(output);
     }
 
     @Override
-    public void renderItem(ItemStack stack, ItemDisplayContext ctx, PoseStack pStack, MultiBufferSource buffers, int packedLight, int packedOverlay) {
-        TranslocatorPartRenderer.renderItem(type, pStack, ctx, buffers, packedLight, packedOverlay);
+    public void submit(ItemDisplayContext ctx, PoseStack pStack, SubmitNodeCollector collector, int packedLight, int packedOverlay, boolean hasFoil, int outlineColor) {
+        TranslocatorPartRenderer.submitItem(type, pStack, ctx, collector, packedLight, packedOverlay);
     }
 
-    @Override
-    public PerspectiveModelState getModelState() {
-        return TransformUtils.DEFAULT_BLOCK;
-    }
+    public record Unbaked(int translocatorType) implements SpecialModelRenderer.Unbaked {
 
-    @Override
-    public boolean useAmbientOcclusion() {
-        return true;
-    }
+        public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
+                        Codec.INT.fieldOf("translocatorType").forGetter(Unbaked::translocatorType)
+                ).apply(builder, Unbaked::new)
+        );
 
-    @Override
-    public boolean isGui3d() {
-        return true;
-    }
-
-    @Override
-    public boolean usesBlockLight() {
-        return true;
-    }
-
-    public static class Item extends RenderTranslocatorItem {
-
-        public Item() {
-            super(0);
+        @Override
+        public SpecialModelRenderer<?> bake(BakingContext context) {
+            return new RenderTranslocatorItem(translocatorType);
         }
-    }
 
-    public static class Fluid extends RenderTranslocatorItem {
-
-        public Fluid() {
-            super(1);
+        @Override
+        public MapCodec<? extends SpecialModelRenderer.Unbaked> type() {
+            return MAP_CODEC;
         }
     }
 }

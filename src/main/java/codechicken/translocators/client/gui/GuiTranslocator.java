@@ -3,13 +3,14 @@ package codechicken.translocators.client.gui;
 import codechicken.translocators.container.ContainerItemTranslocator;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
 public class GuiTranslocator extends AbstractContainerScreen<ContainerItemTranslocator> {
 
-    private static final ResourceLocation BACKGROUND_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/dispenser.png");
+    private static final Identifier BACKGROUND_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/dispenser.png");
 
     public GuiTranslocator(ContainerItemTranslocator container, Inventory playerInventory, Component title) {
         super(container, playerInventory, title);
@@ -28,6 +29,6 @@ public class GuiTranslocator extends AbstractContainerScreen<ContainerItemTransl
 
     @Override
     protected void renderBg(GuiGraphics graphics, float f, int i, int j) {
-        graphics.blit(BACKGROUND_TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
     }
 }

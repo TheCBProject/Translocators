@@ -24,6 +24,6 @@ public class FluidTranslocatorItem extends TranslocatorItem<FluidTranslocatorPar
 
     @Override
     public BlockCapability<?, @Nullable Direction> getTargetCapability() {
-        return Capabilities.FluidHandler.BLOCK;
+        return Capabilities.Fluid.BLOCK;
     }
 }

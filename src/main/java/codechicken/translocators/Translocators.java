@@ -29,7 +29,7 @@ public class Translocators {
         ConfigHandler.init(Paths.get("./config/translocators.cfg"));
         ConfigHandler.loadConfig();
         TranslocatorNetwork.init(modBus);
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             ClientInit.init(modBus);
         }
 

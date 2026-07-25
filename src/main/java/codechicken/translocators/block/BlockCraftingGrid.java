@@ -13,17 +13,14 @@ import codechicken.translocators.tile.TileCraftingGrid;
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -31,6 +28,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
@@ -67,8 +65,8 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
         }
     }
 
-    public BlockCraftingGrid() {
-        super(Block.Properties.of().mapColor(MapColor.WOOD).noOcclusion());
+    public BlockCraftingGrid(BlockBehaviour.Properties properties) {
+        super(properties.mapColor(MapColor.WOOD).noOcclusion());
     }
 
     @Override
@@ -81,7 +79,7 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (type != TranslocatorsModContent.tileCraftingGridType.get()) return null;
         return (level1, pos, state1, t) -> {
-            if (!level1.isClientSide) {
+            if (!level1.isClientSide()) {
                 ((TileCraftingGrid) t).tickServer();
             }
         };
@@ -108,8 +106,8 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
     }
 
     @Override
-    public boolean onDestroyedByPlayer(BlockState state, Level world, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
-        return willHarvest || super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
+    public boolean onDestroyedByPlayer(BlockState state, Level world, BlockPos pos, Player player, ItemStack toolStack, boolean willHarvest, FluidState fluid) {
+        return willHarvest || super.onDestroyedByPlayer(state, world, pos, player, toolStack, willHarvest, fluid);
     }
 
     @Override
@@ -134,9 +132,9 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult blockHit) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult blockHit) {
         if (level.isClientSide()) {
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         TileCraftingGrid tcraft = (TileCraftingGrid) level.getBlockEntity(pos);
@@ -145,9 +143,9 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
             if (hit.subHit > 0) {
                 tcraft.activate(hit.subHit - 1, player);
             }
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return ItemInteractionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
     public boolean placeBlock(Level world, Player player, BlockPos pos, Direction side) {
@@ -178,8 +176,8 @@ public class BlockCraftingGrid extends Block implements EntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : stateIn;
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+        return !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : state;
     }
 
     @Override

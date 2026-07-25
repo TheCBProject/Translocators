@@ -2,7 +2,7 @@ package codechicken.translocators.network;
 
 import codechicken.lib.packet.PacketCustomChannel;
 import codechicken.translocators.Translocators;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 
 import static codechicken.translocators.Translocators.MOD_ID;
@@ -12,7 +12,7 @@ import static codechicken.translocators.Translocators.MOD_ID;
  */
 public class TranslocatorNetwork {
 
-    public static final ResourceLocation NET_CHANNEL = ResourceLocation.fromNamespaceAndPath(MOD_ID, "network");
+    public static final Identifier NET_CHANNEL = Identifier.fromNamespaceAndPath(MOD_ID, "network");
     public static final PacketCustomChannel channel = new PacketCustomChannel(NET_CHANNEL)
             .versioned(Translocators.container().getModInfo().getVersion().toString())
             .client(() -> TranslocatorCPH::new)

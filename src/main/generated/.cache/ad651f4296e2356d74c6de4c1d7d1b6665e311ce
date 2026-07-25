@@ -1,0 +1,7 @@
+// 1.21.11	2026-07-25T21:29:49.791644273	Model Definitions - translocators
+0831c5c0aaf5a056b7e10ae9aa17389bf7438220 assets/translocators/blockstates/crafting_grid.json
+dea2dfb232e1434e427d22c8de672d404abb11aa assets/translocators/items/diamond_nugget.json
+ac6b50d2a02ab82bb96fb217740c09eb7f16c918 assets/translocators/items/fluid_translocator.json
+72e00dde1c2fb94465e1dd5efd25977dad6f06ca assets/translocators/items/item_translocator.json
+077068972ab198bfb7b8c34d18907d0c19ee1c9e assets/translocators/models/block/crafting_grid.json
+da255926859262bfe389edf0508370a46f27b10b assets/translocators/models/item/diamond_nugget.json

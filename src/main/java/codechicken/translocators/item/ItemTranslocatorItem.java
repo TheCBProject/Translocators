@@ -24,6 +24,6 @@ public class ItemTranslocatorItem extends TranslocatorItem<ItemTranslocatorPart>
 
     @Override
     public BlockCapability<?, @Nullable Direction> getTargetCapability() {
-        return Capabilities.ItemHandler.BLOCK;
+        return Capabilities.Item.BLOCK;
     }
 }

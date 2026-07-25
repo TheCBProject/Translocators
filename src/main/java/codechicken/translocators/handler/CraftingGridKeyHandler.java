@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class CraftingGridKeyHandler {
 
-    public static final KeyMapping CRAFTING_KEY = new KeyMapping("key.craftingGrid", GLFW.GLFW_KEY_C, "key.categories.gameplay");
+    public static final KeyMapping CRAFTING_KEY = new KeyMapping("key.craftingGrid", GLFW.GLFW_KEY_C, KeyMapping.Category.GAMEPLAY);
     private static boolean wasPressed = false;
 
     public static void init(IEventBus modBus) {
